@@ -1,0 +1,50 @@
+/* Main placeholder container */
+@font-face {
+  font-family: "Google Sans";
+  src: url(chrome-extension://__MSG_@@extension_id__/fonts/GoogleSans-VariableFont_GRAD,opsz,wght.ttf)
+       format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Google Sans";
+  src: url(chrome-extension://__MSG_@@extension_id__/fonts/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf)
+       format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+.microlearn-placeholder {
+  background: #E7FEEC;
+  color: #0d0f5d;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  font-family: "Google Sans",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* Header text */
+.microlearn-header {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* Body text */
+.microlearn-body {
+  font-size: 13px;
+  opacity: 0.9;
+}
