@@ -59,7 +59,7 @@ body {
   background: #ffffff;
   border-radius: 14px;
   padding: 14px;
-  box-shadow: 0 4px 12px #E7FEEC(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 /* ---------- Row ---------- */
@@ -112,4 +112,116 @@ input:checked + .slider {
 
 input:checked + .slider:before {
   transform: translateX(20px);
+}
+
+/* ---------- Card spacing ---------- */
+
+.card + .card {
+  margin-top: 10px;
+}
+
+/* ---------- Field Label ---------- */
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+
+/* ---------- Text Input ---------- */
+
+.text-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.text-input:focus {
+  border-color: #8FFAA6;
+  background: #fff;
+}
+
+.text-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ---------- API Status ---------- */
+
+.api-status {
+  font-size: 11px;
+  margin-top: 5px;
+  min-height: 14px;
+}
+
+.api-status.success { color: #16a34a; }
+.api-status.error   { color: #dc2626; }
+
+/* ---------- Topic Grid ---------- */
+
+.topic-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.topic-chip {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: inherit;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.topic-chip:hover {
+  background: #e5e7eb;
+}
+
+.topic-chip.active {
+  background: #E7FEEC;
+  border-color: #8FFAA6;
+  color: #0d0f5d;
+  font-weight: 600;
+}
+
+/* ---------- Save Button ---------- */
+
+.save-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 0;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #0d0f5d;
+  background: #E7FEEC;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.save-btn:hover {
+  background: #d4fce3;
+}
+
+.save-btn:active {
+  transform: scale(0.97);
 }
