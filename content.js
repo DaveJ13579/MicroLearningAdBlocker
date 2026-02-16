@@ -1,16 +1,26 @@
 (function () {
 
+  // ══════════════════════════════════════════════════════════════════════════════
+  // CONSTANTS
+  // ══════════════════════════════════════════════════════════════════════════════
+
   const PROCESSED_ATTR = "data-microlearn-replaced";
   const FALLBACK = "💡 Stay curious — ask questions every day.";
 
-  // ── Pending queue ─────────────────────────────────────
-  // Placeholders accumulate here. A flush sends them all
-  // at once and blocks new flushes until the response arrives.
+  // ══════════════════════════════════════════════════════════════════════════════
+  // STATE
+  // ══════════════════════════════════════════════════════════════════════════════
+
   let pending = [];
   let isFlushing = false;
   let flushTimer = null;
+  let observer = null;
+  let pollInterval = null;
 
-  // ── Creates a placeholder with loading state ──────────
+  // ══════════════════════════════════════════════════════════════════════════════
+  // PLACEHOLDER CREATION & UPDATES
+  // ══════════════════════════════════════════════════════════════════════════════
+
   function createPlaceholder(width, height) {
     const wrapper = document.createElement("div");
     wrapper.className = "microlearn-placeholder";
@@ -23,7 +33,6 @@
     return wrapper;
   }
 
-  // ── Sets lesson text and topic on a placeholder ────────────────
   function setLesson(placeholder, lessonData) {
     const topicEl = placeholder.querySelector(".microlearn-topic");
     const bodyEl = placeholder.querySelector(".microlearn-body");
@@ -33,7 +42,6 @@
       return;
     }
     
-    // Handle both old format (string) and new format (object)
     let text, topic;
     if (typeof lessonData === 'string') {
       text = lessonData;
@@ -46,9 +54,8 @@
       topic = null;
     }
     
-    console.log("MicroLearn: setting lesson", placeholder.style.width, "x", placeholder.style.height, "->", (text || FALLBACK).slice(0, 40));
+    console.log("MicroLearn: setting lesson ->", (text || FALLBACK).slice(0, 40));
     
-    // Set topic if available
     if (topic && topicEl) {
       topicEl.textContent = topic;
       topicEl.classList.remove("microlearn-loading");
@@ -56,26 +63,25 @@
       topicEl.style.display = "none";
     }
     
-    // Set lesson text
     bodyEl.textContent = text || FALLBACK;
     bodyEl.classList.remove("microlearn-loading");
     
-    // Check if text is truncated by comparing scroll height to client height
-    // We need to wait a tick for the DOM to update
+    // Add tooltip if text is truncated
     setTimeout(() => {
       if (bodyEl.scrollHeight > bodyEl.clientHeight) {
-        // Text is truncated, add tooltip with full text
         bodyEl.title = text || FALLBACK;
         bodyEl.style.cursor = "help";
       }
     }, 10);
   }
 
-  // ── Sends all pending placeholders in one message ─────
+  // ══════════════════════════════════════════════════════════════════════════════
+  // BATCHING & API CALLS
+  // ══════════════════════════════════════════════════════════════════════════════
+
   function flush() {
     flushTimer = null;
 
-    // If already waiting on a response, reschedule after a short delay
     if (isFlushing) {
       flushTimer = setTimeout(flush, 200);
       return;
@@ -83,7 +89,6 @@
 
     if (pending.length === 0) return;
 
-    // Grab everything queued so far and clear the queue
     const toFill = pending.splice(0);
     isFlushing = true;
 
@@ -96,7 +101,6 @@
           if (chrome.runtime.lastError) {
             console.warn("MicroLearn:", chrome.runtime.lastError.message);
             toFill.forEach((p) => setLesson(p, FALLBACK));
-            // Flush anything that queued up while we were waiting
             if (pending.length > 0) scheduleFlush();
             return;
           }
@@ -104,7 +108,6 @@
           const lessons = (response && response.lessons) ? response.lessons : [];
           toFill.forEach((p, i) => setLesson(p, lessons[i] || FALLBACK));
 
-          // Flush anything that queued up while we were waiting
           if (pending.length > 0) scheduleFlush();
         }
       );
@@ -117,11 +120,13 @@
 
   function scheduleFlush() {
     clearTimeout(flushTimer);
-    // 300ms debounce collapses rapid MutationObserver bursts into one batch
     flushTimer = setTimeout(flush, 300);
   }
 
-  // ── Finds all unprocessed ads with valid dimensions ──
+  // ══════════════════════════════════════════════════════════════════════════════
+  // AD DETECTION & REPLACEMENT
+  // ══════════════════════════════════════════════════════════════════════════════
+
   function findNewAds() {
     const candidates = document.querySelectorAll(
       '.ad-slot, ' +
@@ -147,13 +152,10 @@
     return newAds;
   }
 
-  // ── Scans for new ads, queues placeholders ────────────
   function scanAndReplaceAds() {
     const newAds = findNewAds();
     if (newAds.length === 0) return;
 
-    // Pause the observer while replacing so DOM mutations
-    // caused by replaceWith() don't re-trigger this function
     if (observer) observer.disconnect();
 
     newAds.forEach(({ el, rect }) => {
@@ -163,7 +165,6 @@
       pending.push(placeholder);
     });
 
-    // Reconnect observer after all replacements are done
     if (observer) {
       observer.observe(document.body, { childList: true, subtree: true });
     }
@@ -171,16 +172,14 @@
     scheduleFlush();
   }
 
-  // ── MutationObserver + polling ────────────────────────
-  let observer = null;
-  let pollInterval = null;
+  // ══════════════════════════════════════════════════════════════════════════════
+  // ENABLE/DISABLE
+  // ══════════════════════════════════════════════════════════════════════════════
 
   function enableMicroLearn() {
     scanAndReplaceAds();
-
     observer = new MutationObserver(() => scanAndReplaceAds());
     observer.observe(document.body, { childList: true, subtree: true });
-
     pollInterval = setInterval(scanAndReplaceAds, 2000);
   }
 
@@ -194,7 +193,10 @@
     location.reload();
   }
 
-  // ── Initialise ────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════════
+  // INITIALIZATION
+  // ══════════════════════════════════════════════════════════════════════════════
+
   chrome.storage.sync.get(["enabled"], (result) => {
     if (result.enabled !== false) enableMicroLearn();
   });
