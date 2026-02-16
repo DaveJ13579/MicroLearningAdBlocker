@@ -1,126 +1,208 @@
 (function () {
 
-  // Attribute used to mark ads already replaced
   const PROCESSED_ATTR = "data-microlearn-replaced";
+  const FALLBACK = "💡 Stay curious — ask questions every day.";
 
-  // ── Pick a random topic from the saved list ──────────
-  function pickTopic(topics) {
-    return topics[Math.floor(Math.random() * topics.length)];
-  }
+  // ── Pending queue ─────────────────────────────────────
+  // Placeholders accumulate here. A flush sends them all
+  // at once and blocks new flushes until the response arrives.
+  let pending = [];
+  let isFlushing = false;
+  let flushTimer = null;
 
-  // ── Creates the learning placeholder box ──────────────
-  function createMicroLearnPlaceholder(width, height) {
+  // ── Creates a placeholder with loading state ──────────
+  function createPlaceholder(width, height) {
     const wrapper = document.createElement("div");
     wrapper.className = "microlearn-placeholder";
-
     if (width)  wrapper.style.width  = width  + "px";
     if (height) wrapper.style.height = height + "px";
-
-    // Start with loading state
     wrapper.innerHTML =
       '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading lesson…</div>';
-
+      '<div class="microlearn-topic microlearn-loading">Loading...</div>' +
+      '<div class="microlearn-body microlearn-loading">Loading…</div>';
     return wrapper;
   }
 
-
-  // ── Replaces a detected ad with learning content ─────
-  function replaceAd(ad, apiKey, topics) {
-    if (ad.hasAttribute(PROCESSED_ATTR)) return;
-
-    const rect = ad.getBoundingClientRect();
-    if (rect.width < 50 || rect.height < 50) return;
-
-    const placeholder = createMicroLearnPlaceholder(rect.width, rect.height);
-    placeholder.setAttribute(PROCESSED_ATTR, "true");
-
-    // Swap the ad out immediately so the user sees the card
-    ad.replaceWith(placeholder);
-
-    // Pick a topic and ask the background worker for a lesson
-    const topic = pickTopic(topics);
-
-    chrome.runtime.sendMessage(
-      { type: "FETCH_LESSON", apiKey: apiKey, topic: topic },
-      (response) => {
-        const bodyEl = placeholder.querySelector(".microlearn-body");
-        if (!bodyEl) return; // element was removed from DOM
-
-        if (response && response.lesson) {
-          bodyEl.textContent = response.lesson;
-          bodyEl.classList.remove("microlearn-loading");
-        } else {
-          // Fallback: show a static tip so the card isn't empty
-          bodyEl.textContent = "💡 Tip: Stay curious — ask questions every day.";
-          bodyEl.classList.remove("microlearn-loading");
-        }
+  // ── Sets lesson text and topic on a placeholder ────────────────
+  function setLesson(placeholder, lessonData) {
+    const topicEl = placeholder.querySelector(".microlearn-topic");
+    const bodyEl = placeholder.querySelector(".microlearn-body");
+    
+    if (!bodyEl) {
+      console.warn("MicroLearn: bodyEl missing on placeholder");
+      return;
+    }
+    
+    // Handle both old format (string) and new format (object)
+    let text, topic;
+    if (typeof lessonData === 'string') {
+      text = lessonData;
+      topic = null;
+    } else if (lessonData && typeof lessonData === 'object') {
+      text = lessonData.text;
+      topic = lessonData.topic;
+    } else {
+      text = FALLBACK;
+      topic = null;
+    }
+    
+    console.log("MicroLearn: setting lesson", placeholder.style.width, "x", placeholder.style.height, "->", (text || FALLBACK).slice(0, 40));
+    
+    // Set topic if available
+    if (topic && topicEl) {
+      topicEl.textContent = topic;
+      topicEl.classList.remove("microlearn-loading");
+    } else if (topicEl) {
+      topicEl.style.display = "none";
+    }
+    
+    // Set lesson text
+    bodyEl.textContent = text || FALLBACK;
+    bodyEl.classList.remove("microlearn-loading");
+    
+    // Check if text is truncated by comparing scroll height to client height
+    // We need to wait a tick for the DOM to update
+    setTimeout(() => {
+      if (bodyEl.scrollHeight > bodyEl.clientHeight) {
+        // Text is truncated, add tooltip with full text
+        bodyEl.title = text || FALLBACK;
+        bodyEl.style.cursor = "help";
       }
-    );
+    }, 10);
   }
 
-  // ── Scans page for common ad containers ──────────────
-  function scanAndReplaceAds(apiKey, topics) {
-    const ads = document.querySelectorAll(
+  // ── Sends all pending placeholders in one message ─────
+  function flush() {
+    flushTimer = null;
+
+    // If already waiting on a response, reschedule after a short delay
+    if (isFlushing) {
+      flushTimer = setTimeout(flush, 200);
+      return;
+    }
+
+    if (pending.length === 0) return;
+
+    // Grab everything queued so far and clear the queue
+    const toFill = pending.splice(0);
+    isFlushing = true;
+
+    try {
+      chrome.runtime.sendMessage(
+        { type: "FETCH_LESSONS", count: toFill.length },
+        (response) => {
+          isFlushing = false;
+
+          if (chrome.runtime.lastError) {
+            console.warn("MicroLearn:", chrome.runtime.lastError.message);
+            toFill.forEach((p) => setLesson(p, FALLBACK));
+            // Flush anything that queued up while we were waiting
+            if (pending.length > 0) scheduleFlush();
+            return;
+          }
+
+          const lessons = (response && response.lessons) ? response.lessons : [];
+          toFill.forEach((p, i) => setLesson(p, lessons[i] || FALLBACK));
+
+          // Flush anything that queued up while we were waiting
+          if (pending.length > 0) scheduleFlush();
+        }
+      );
+    } catch (err) {
+      isFlushing = false;
+      console.warn("MicroLearn: context invalidated, refresh the page.", err.message);
+      toFill.forEach((p) => setLesson(p, FALLBACK));
+    }
+  }
+
+  function scheduleFlush() {
+    clearTimeout(flushTimer);
+    // 300ms debounce collapses rapid MutationObserver bursts into one batch
+    flushTimer = setTimeout(flush, 300);
+  }
+
+  // ── Finds all unprocessed ads with valid dimensions ──
+  function findNewAds() {
+    const candidates = document.querySelectorAll(
       '.ad-slot, ' +
       '[data-ad-label-text="Advertisement"], ' +
       '[data-desktop-slot-id], ' +
       'iframe[id^="google_ads_iframe"], ' +
       'gwd-google-ad, ' +
       '#ad, ' +
-      'iframe[id^="ape_"]'
+      'iframe[id^="ape_"], ' +
+      'div.uitk-layout-grid:has(a[href*="doubleclick.net"]), ' +
+      'div.uitk-layout-grid:has(a[href*="adform.net"]), ' +
+      'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"])'
     );
-    ads.forEach((ad) => replaceAd(ad, apiKey, topics));
+
+    const newAds = [];
+    candidates.forEach((ad) => {
+      if (ad.hasAttribute(PROCESSED_ATTR)) return;
+      const rect = ad.getBoundingClientRect();
+      if (rect.width < 50 || rect.height < 50) return;
+      newAds.push({ el: ad, rect: rect });
+    });
+
+    return newAds;
   }
 
-  // ── MutationObserver + polling for late-loading ads ──
+  // ── Scans for new ads, queues placeholders ────────────
+  function scanAndReplaceAds() {
+    const newAds = findNewAds();
+    if (newAds.length === 0) return;
+
+    // Pause the observer while replacing so DOM mutations
+    // caused by replaceWith() don't re-trigger this function
+    if (observer) observer.disconnect();
+
+    newAds.forEach(({ el, rect }) => {
+      const placeholder = createPlaceholder(rect.width, rect.height);
+      placeholder.setAttribute(PROCESSED_ATTR, "true");
+      el.replaceWith(placeholder);
+      pending.push(placeholder);
+    });
+
+    // Reconnect observer after all replacements are done
+    if (observer) {
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    scheduleFlush();
+  }
+
+  // ── MutationObserver + polling ────────────────────────
   let observer = null;
   let pollInterval = null;
-  let savedApiKey = "";
-  let savedTopics = ["Science", "History"];
 
   function enableMicroLearn() {
-    scanAndReplaceAds(savedApiKey, savedTopics);
+    scanAndReplaceAds();
 
-    // Catch ads added to the DOM
-    observer = new MutationObserver(() => {
-      scanAndReplaceAds(savedApiKey, savedTopics);
-    });
+    observer = new MutationObserver(() => scanAndReplaceAds());
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Catch ads that exist but are unsized until their content loads
-    pollInterval = setInterval(() => {
-      scanAndReplaceAds(savedApiKey, savedTopics);
-    }, 2000);
+    pollInterval = setInterval(scanAndReplaceAds, 2000);
   }
 
   function disableMicroLearn() {
     if (observer) observer.disconnect();
     observer = null;
-
     if (pollInterval) clearInterval(pollInterval);
     pollInterval = null;
-
+    clearTimeout(flushTimer);
+    flushTimer = null;
     location.reload();
   }
 
-  // ── Initialise: load settings then act ────────────────
-  chrome.storage.sync.get(["enabled", "apiKey", "topics"], (result) => {
-    savedApiKey = result.apiKey || "";
-    savedTopics = (Array.isArray(result.topics) && result.topics.length > 0)
-      ? result.topics
-      : ["Science", "History"];
-
+  // ── Initialise ────────────────────────────────────────
+  chrome.storage.sync.get(["enabled"], (result) => {
     if (result.enabled !== false) enableMicroLearn();
   });
 
-  // ── React to toggle / setting changes at runtime ─────
   chrome.storage.onChanged.addListener((changes) => {
     if ("enabled" in changes) {
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
     }
-    if ("apiKey" in changes)  savedApiKey = changes.apiKey.newValue || "";
-    if ("topics" in changes)  savedTopics = changes.topics.newValue || savedTopics;
   });
 
 })();

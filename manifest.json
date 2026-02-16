@@ -4,7 +4,7 @@
   "description": "Replaces ads with learning content",
   "version": "1.0.0",
 
-  "permissions": ["storage"],
+  "permissions": ["storage", "tabs"],
 
   "host_permissions": ["https://api.anthropic.com/*"],
 
@@ -40,7 +40,10 @@
     {
       "resources": [
         "images/*",
-        "fonts/*"
+        "fonts/*",
+        "preferences.html",
+        "preferences.css",
+        "preferences.js"
       ],
       "matches": ["<all_urls>"]
     }
