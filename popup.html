@@ -28,6 +28,29 @@
       </div>
     </div>
 
+    <!-- API key card -->
+    <div class="card">
+      <label class="field-label" for="apiKeyInput">Anthropic API Key</label>
+      <input
+        type="password"
+        id="apiKeyInput"
+        class="text-input"
+        placeholder="sk-ant-..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div id="apiStatus" class="api-status"></div>
+    </div>
+
+    <!-- Topics card -->
+    <div class="card">
+      <label class="field-label">Learning Topics</label>
+      <div class="topic-grid" id="topicGrid"></div>
+    </div>
+
+    <!-- Save button -->
+    <button class="save-btn" id="saveBtn">Save Settings</button>
+
     <script src="popup.js"></script>
   </body>
 </html>
