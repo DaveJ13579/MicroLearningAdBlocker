@@ -1,28 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const toggle = document.getElementById("toggle");
-  const statusText = document.getElementById("statusText");
+  const toggle       = document.getElementById("toggle");
+  const statusText   = document.getElementById("statusText");
+  const customizeBtn = document.getElementById("customizeBtn");
 
-  if (!toggle || !statusText) {
-    console.error("Popup elements not found");
-    return;
-  }
-
-  // Update label
+  // ── Toggle ────────────────────────────────────────────
   function updateStatus(enabled) {
-    statusText.textContent = enabled ? "Status: On" : "Status: Off";
+    statusText.textContent = enabled ? "On" : "Off";
   }
 
-  // Load saved state
-  chrome.storage.sync.get("enabled", ({ enabled }) => {
-    const isEnabled = enabled !== false;
-    toggle.checked = isEnabled;
-    updateStatus(isEnabled);
+  toggle.addEventListener("change", () => {
+    chrome.storage.sync.set({ enabled: toggle.checked });
+    updateStatus(toggle.checked);
   });
 
-  // Toggle changed
-  toggle.addEventListener("change", () => {
-    const isEnabled = toggle.checked;
-    chrome.storage.sync.set({ enabled: isEnabled });
+  // ── Open preferences page ─────────────────────────────
+  customizeBtn.addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("preferences.html") });
+  });
+
+  // ── Load saved state ──────────────────────────────────
+  chrome.storage.sync.get(["enabled"], (result) => {
+    const isEnabled = result.enabled !== false;
+    toggle.checked = isEnabled;
     updateStatus(isEnabled);
   });
 });

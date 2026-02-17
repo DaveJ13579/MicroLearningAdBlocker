@@ -5,28 +5,31 @@
     <title>MicroLearn</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
-
   <body>
+
     <!-- Header -->
     <div class="header">
-      <img src="images/logo1.png" class="logo" />
-      <div>
+      <div class="logo-wrap">
+        <img src="images/logo1.png" class="logo" />
+      </div>
+      <div class="header-text">
         <h1>MicroLearn</h1>
         <p>Replace ads with learning.</p>
       </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle" />
+        <span class="slider"></span>
+      </label>
     </div>
 
-    <!-- Status card -->
-    <div class="card">
-      <div class="row">
-        <span id="statusText">Status: On</span>
-
-        <label class="switch">
-          <input type="checkbox" id="toggle" />
-          <span class="slider"></span>
-        </label>
-      </div>
+    <!-- Status row -->
+    <div class="card status-card">
+      <span class="status-label">Status:</span>
+      <span id="statusText" class="status-value">On</span>
     </div>
+
+    <!-- Customize button -->
+    <button class="customize-btn" id="customizeBtn">Customize Your Learning</button>
 
     <script src="popup.js"></script>
   </body>

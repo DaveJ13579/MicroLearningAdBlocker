@@ -1,4 +1,5 @@
-/* Main placeholder container */
+/* MicroLearn placeholder card */
+
 @font-face {
   font-family: "Google Sans";
   src: url(chrome-extension://__MSG_@@extension_id__/fonts/GoogleSans-VariableFont_GRAD,opsz,wght.ttf)
@@ -25,26 +26,110 @@
   align-items: center;
 
   text-align: center;
-  font-family: "Google Sans",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Google Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
   padding: 16px;
   box-sizing: border-box;
+  overflow: hidden;
+  container-type: inline-size;
 }
 
-/* Header text */
+/* Label — small and unobtrusive, sits above the fact */
 .microlearn-header {
-  font-size: 16px;
+  font-size: 9px;
   font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.4;
   margin-bottom: 8px;
-  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/* Body text */
+/* Topic label — slightly larger, sits between header and fact */
+.microlearn-topic {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 6px;
+  color: #0d6b2a;
+  flex-shrink: 0;
+}
+
+/* The fact — scales down to fit any container */
 .microlearn-body {
-  font-size: 13px;
-  opacity: 0.9;
+  font-size: clamp(11px, 2.5cqw, 16px);
+  font-weight: 700;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+/* Default: allow up to 10 lines for most containers */
+.microlearn-body {
+  -webkit-line-clamp: 10;
+}
+
+/* Tall narrow containers (skyscrapers) - allow even more lines */
+.microlearn-placeholder[style*="height: 600px"],
+.microlearn-placeholder[style*="height: 250px"][style*="width: 300px"],
+.microlearn-placeholder[style*="height: 500px"],
+.microlearn-placeholder[style*="height: 400px"] {
+  padding: 12px;
+}
+
+.microlearn-placeholder[style*="height: 600px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 500px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 400px"] .microlearn-body {
+  -webkit-line-clamp: 15;
+}
+
+/* Leaderboard / banner shapes — wide and short (e.g. 728x90, 970x90, 320x50)
+   These have very limited height so we cut font size and clamp to fewer lines */
+.microlearn-placeholder[style*="height: 90px"],
+.microlearn-placeholder[style*="height: 50px"],
+.microlearn-placeholder[style*="height: 60px"],
+.microlearn-placeholder[style*="height: 66px"] {
+  padding: 8px 16px;
+  flex-direction: row;
+  gap: 12px;
+  text-align: left;
+}
+
+.microlearn-placeholder[style*="height: 90px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-header {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  margin-bottom: 0;
+  margin-right: 0;
+  flex-shrink: 0;
+}
+
+.microlearn-placeholder[style*="height: 90px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-body {
+  font-size: clamp(10px, 1.8cqw, 13px);
+  -webkit-line-clamp: 3;
+  line-height: 1.25;
+}
+
+/* Loading pulse animation */
+@keyframes microlearn-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.7; }
+}
+
+.microlearn-loading {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  animation: microlearn-pulse 1.4s ease-in-out infinite;
 }

@@ -1,92 +1,209 @@
 (function () {
 
-  // Attribute used to mark ads already replaced
-  const PROCESSED_ATTR = "data-microlearn-replaced";
+  // ══════════════════════════════════════════════════════════════════════════════
+  // CONSTANTS
+  // ══════════════════════════════════════════════════════════════════════════════
 
-  // Creates the learning placeholder box
-  function createMicroLearnPlaceholder(width, height) {
+  const PROCESSED_ATTR = "data-microlearn-replaced";
+  const FALLBACK = "💡 Stay curious — ask questions every day.";
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // STATE
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  let pending = [];
+  let isFlushing = false;
+  let flushTimer = null;
+  let observer = null;
+  let pollInterval = null;
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // PLACEHOLDER CREATION & UPDATES
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  function createPlaceholder(width, height) {
     const wrapper = document.createElement("div");
     wrapper.className = "microlearn-placeholder";
-
-    // Match original ad size
-    if (width) wrapper.style.width = width + "px";
+    if (width)  wrapper.style.width  = width  + "px";
     if (height) wrapper.style.height = height + "px";
-
-    // Placeholder content
-    wrapper.innerHTML = `
-      <div class="microlearn-header">MicroLearn</div>
-      <div class="microlearn-body">MicroLearn content goes here</div>
-    `;
-
+    wrapper.innerHTML =
+      '<div class="microlearn-header">MicroLearn</div>' +
+      '<div class="microlearn-topic microlearn-loading">Loading...</div>' +
+      '<div class="microlearn-body microlearn-loading">Loading…</div>';
     return wrapper;
   }
 
-  // Replaces a detected ad with learning content
-  function replaceAd(ad) {
-    // Prevent double replacement
-    if (ad.hasAttribute(PROCESSED_ATTR)) return;
-
-    // Skip very small elements
-    const rect = ad.getBoundingClientRect();
-    if (rect.width < 50 || rect.height < 50) return;
-
-    // Create replacement content
-    const placeholder = createMicroLearnPlaceholder(rect.width, rect.height);
-
-    // Mark as processed
-    placeholder.setAttribute(PROCESSED_ATTR, "true");
-
-    // Completely replace ad element
-    ad.replaceWith(placeholder);
+  function setLesson(placeholder, lessonData) {
+    const topicEl = placeholder.querySelector(".microlearn-topic");
+    const bodyEl = placeholder.querySelector(".microlearn-body");
+    
+    if (!bodyEl) {
+      console.warn("MicroLearn: bodyEl missing on placeholder");
+      return;
+    }
+    
+    let text, topic;
+    if (typeof lessonData === 'string') {
+      text = lessonData;
+      topic = null;
+    } else if (lessonData && typeof lessonData === 'object') {
+      text = lessonData.text;
+      topic = lessonData.topic;
+    } else {
+      text = FALLBACK;
+      topic = null;
+    }
+    
+    console.log("MicroLearn: setting lesson ->", (text || FALLBACK).slice(0, 40));
+    
+    if (topic && topicEl) {
+      topicEl.textContent = topic;
+      topicEl.classList.remove("microlearn-loading");
+    } else if (topicEl) {
+      topicEl.style.display = "none";
+    }
+    
+    bodyEl.textContent = text || FALLBACK;
+    bodyEl.classList.remove("microlearn-loading");
+    
+    // Add tooltip if text is truncated
+    setTimeout(() => {
+      if (bodyEl.scrollHeight > bodyEl.clientHeight) {
+        bodyEl.title = text || FALLBACK;
+        bodyEl.style.cursor = "help";
+      }
+    }, 10);
   }
 
-  // Finds common ad containers
-  function scanAndReplaceAds() {
-    const ads = document.querySelectorAll(
-      ".ad-slot, \
-       [data-ad-label-text='Advertisement'], \
-       [data-desktop-slot-id], \
-       iframe[id^='google_ads_iframe']"
+  // ══════════════════════════════════════════════════════════════════════════════
+  // BATCHING & API CALLS
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  function flush() {
+    flushTimer = null;
+
+    if (isFlushing) {
+      flushTimer = setTimeout(flush, 200);
+      return;
+    }
+
+    if (pending.length === 0) return;
+
+    const toFill = pending.splice(0);
+    isFlushing = true;
+
+    try {
+      chrome.runtime.sendMessage(
+        { type: "FETCH_LESSONS", count: toFill.length },
+        (response) => {
+          isFlushing = false;
+
+          if (chrome.runtime.lastError) {
+            console.warn("MicroLearn:", chrome.runtime.lastError.message);
+            toFill.forEach((p) => setLesson(p, FALLBACK));
+            if (pending.length > 0) scheduleFlush();
+            return;
+          }
+
+          const lessons = (response && response.lessons) ? response.lessons : [];
+          toFill.forEach((p, i) => setLesson(p, lessons[i] || FALLBACK));
+
+          if (pending.length > 0) scheduleFlush();
+        }
+      );
+    } catch (err) {
+      isFlushing = false;
+      console.warn("MicroLearn: context invalidated, refresh the page.", err.message);
+      toFill.forEach((p) => setLesson(p, FALLBACK));
+    }
+  }
+
+  function scheduleFlush() {
+    clearTimeout(flushTimer);
+    flushTimer = setTimeout(flush, 300);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // AD DETECTION & REPLACEMENT
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  function findNewAds() {
+    const candidates = document.querySelectorAll(
+      '.ad-slot, ' +
+      '[data-ad-label-text="Advertisement"], ' +
+      '[data-desktop-slot-id], ' +
+      'iframe[id^="google_ads_iframe"], ' +
+      'gwd-google-ad, ' +
+      '#ad, ' +
+      'iframe[id^="ape_"], ' +
+      'div.uitk-layout-grid:has(a[href*="doubleclick.net"]), ' +
+      'div.uitk-layout-grid:has(a[href*="adform.net"]), ' +
+      'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"])'
     );
 
-    ads.forEach(replaceAd);
+    const newAds = [];
+    candidates.forEach((ad) => {
+      if (ad.hasAttribute(PROCESSED_ATTR)) return;
+      const rect = ad.getBoundingClientRect();
+      if (rect.width < 50 || rect.height < 50) return;
+      newAds.push({ el: ad, rect: rect });
+    });
+
+    return newAds;
   }
 
-  // MutationObserver watches for dynamically loaded ads
-  let observer = null;
+  function scanAndReplaceAds() {
+    const newAds = findNewAds();
+    if (newAds.length === 0) return;
+
+    if (observer) observer.disconnect();
+
+    newAds.forEach(({ el, rect }) => {
+      const placeholder = createPlaceholder(rect.width, rect.height);
+      placeholder.setAttribute(PROCESSED_ATTR, "true");
+      el.replaceWith(placeholder);
+      pending.push(placeholder);
+    });
+
+    if (observer) {
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    scheduleFlush();
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // ENABLE/DISABLE
+  // ══════════════════════════════════════════════════════════════════════════════
 
   function enableMicroLearn() {
-    // Replace existing ads
     scanAndReplaceAds();
-
-    // Watch for new ads
-    observer = new MutationObserver(scanAndReplaceAds);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    observer = new MutationObserver(() => scanAndReplaceAds());
+    observer.observe(document.body, { childList: true, subtree: true });
+    pollInterval = setInterval(scanAndReplaceAds, 2000);
   }
 
   function disableMicroLearn() {
-    // Stop watching DOM
     if (observer) observer.disconnect();
     observer = null;
-
-    // Reload page to restore ads
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = null;
+    clearTimeout(flushTimer);
+    flushTimer = null;
     location.reload();
   }
 
-  // Load saved enabled/disabled state
-  chrome.storage.sync.get("enabled", ({ enabled }) => {
-    if (enabled !== false) enableMicroLearn();
+  // ══════════════════════════════════════════════════════════════════════════════
+  // INITIALIZATION
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  chrome.storage.sync.get(["enabled"], (result) => {
+    if (result.enabled !== false) enableMicroLearn();
   });
 
-  // Listen for toggle changes
-  chrome.storage.onChanged.addListener(changes => {
+  chrome.storage.onChanged.addListener((changes) => {
     if ("enabled" in changes) {
-      changes.enabled.newValue
-        ? enableMicroLearn()
-        : disableMicroLearn();
+      changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
     }
   });
 
