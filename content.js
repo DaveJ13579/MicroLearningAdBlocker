@@ -53,14 +53,231 @@
     return topics[Math.floor(Math.random() * topics.length)];
   }
 
+  function ensureMicroLearnSplashCss() {
+    try {
+      if (document.getElementById("microlearn-splash-css")) return;
+
+      const style = document.createElement("style");
+      style.id = "microlearn-splash-css";
+      style.textContent = `
+        @keyframes mlFadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes mlLogoDrop {
+          0% { opacity: 0; transform: translateY(-18px) scale(0.92); }
+          60% { opacity: 1; transform: translateY(4px) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes mlLineSweep {
+          0% { transform: translateX(-30%); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: translateX(30%); opacity: 0.9; }
+        }
+
+        @keyframes mlLinePulse {
+          0% { opacity: 0.15; }
+          50% { opacity: 0.35; }
+          100% { opacity: 0.15; }
+        }
+
+        .mlWrap {
+          width: 100%;
+          height: 100%;
+          min-height: 90px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .mlSplash {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: 90px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: mlFadeIn 180ms ease both;
+        }
+
+        .mlLines {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0.9;
+        }
+
+        .mlLines::before {
+          content: "";
+          position: absolute;
+          inset: -20%;
+          background:
+            repeating-linear-gradient(
+              115deg,
+              rgba(255,165,0,0.00) 0px,
+              rgba(255,165,0,0.00) 14px,
+              rgba(255,165,0,0.18) 14px,
+              rgba(255,165,0,0.18) 16px
+            );
+          filter: blur(0.2px);
+          animation: mlLinePulse 900ms ease-in-out infinite;
+        }
+
+        .mlLines .mlSweep {
+          position: absolute;
+          left: 10%;
+          right: 10%;
+          top: 50%;
+          height: 2px;
+          background: linear-gradient(
+            90deg,
+            rgba(255,165,0,0.00),
+            rgba(255,165,0,0.55),
+            rgba(255,165,0,0.00)
+          );
+          transform: translateY(-50%);
+          animation: mlLineSweep 650ms ease both;
+        }
+
+        .mlLogoBlock {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          text-align: center;
+          padding: 10px 12px;
+          border-radius: 14px;
+          background: rgba(255,255,255,0.7);
+          box-shadow: 0 6px 22px rgba(0,0,0,0.08);
+          backdrop-filter: blur(3px);
+          animation: mlLogoDrop 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+        }
+
+        .mlLogo {
+          width: 44px;
+          height: 44px;
+          object-fit: contain;
+          display: block;
+        }
+
+        .mlEmojiLogo {
+          width: 44px;
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 34px;
+          line-height: 1;
+        }
+
+        .mlTag {
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.2px;
+        }
+
+        .mlSub {
+          font-size: 12px;
+          opacity: 0.75;
+        }
+
+        .mlContent {
+          display: none;
+          width: 100%;
+          height: 100%;
+          animation: mlFadeIn 180ms ease both;
+        }
+
+        .microlearn-header {
+          font-weight: 800;
+          font-size: 14px;
+        }
+
+        .microlearn-body {
+          margin-top: 8px;
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .microlearn-loading {
+          opacity: 0.75;
+        }
+      `;
+      document.documentElement.appendChild(style);
+    } catch (e) {
+      // silent
+    }
+  }
+
   function createMicroLearnPlaceholder() {
+    ensureMicroLearnSplashCss();
+
     const wrapper = document.createElement("div");
     wrapper.className = "microlearn-placeholder";
     wrapper.setAttribute(PROCESSED_ATTR, "true");
 
-    wrapper.innerHTML =
-      '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading lesson…</div>';
+    // Inline styles so it works even without content.css
+    wrapper.style.boxSizing = "border-box";
+    wrapper.style.borderRadius = "14px";
+    wrapper.style.border = "2px solid rgba(255,165,0,0.95)";
+    wrapper.style.background = "rgba(255,255,255,0.94)";
+    wrapper.style.color = "#111";
+    wrapper.style.padding = "12px";
+    wrapper.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+    wrapper.style.overflow = "hidden";
+    wrapper.style.position = "relative";
+
+    // If logo.png does not exist, image will fail and we fall back to emoji.
+    const logoUrl = chrome.runtime.getURL("logo.png");
+
+    wrapper.innerHTML = `
+      <div class="mlWrap">
+        <div class="mlSplash">
+          <div class="mlLines">
+            <div class="mlSweep"></div>
+          </div>
+
+          <div class="mlLogoBlock">
+            <img class="mlLogo" alt="MicroLearn logo" src="${logoUrl}" />
+            <div class="mlEmojiLogo" style="display:none;">👀</div>
+            <div class="mlTag">MicroLearn</div>
+            <div class="mlSub">Quick reset, then a tip</div>
+          </div>
+        </div>
+
+        <div class="mlContent">
+          <div class="microlearn-header">MicroLearn</div>
+          <div class="microlearn-body microlearn-loading">Loading lesson…</div>
+        </div>
+      </div>
+    `;
+
+    // Fallback if logo fails to load
+    const img = wrapper.querySelector(".mlLogo");
+    const emoji = wrapper.querySelector(".mlEmojiLogo");
+    if (img) {
+      img.addEventListener("error", () => {
+        try {
+          img.style.display = "none";
+          if (emoji) emoji.style.display = "flex";
+        } catch (e) {}
+      });
+    }
+
+    // Swap splash to content after the interruption
+    const splash = wrapper.querySelector(".mlSplash");
+    const content = wrapper.querySelector(".mlContent");
+
+    const DELAY_MS = 5000;
+
+    setTimeout(() => {
+      if (splash) splash.style.display = "none";
+      if (content) content.style.display = "block";
+    }, DELAY_MS);
 
     return wrapper;
   }
@@ -166,7 +383,6 @@
     const vh = Math.max(1, window.innerHeight);
 
     if (rect.width < 50 || rect.height < 50) return true;
-
     if (rect.height > vh * 1.3 && rect.height > 900) return true;
 
     const area = rect.width * rect.height;
@@ -459,7 +675,6 @@
     stopAll();
     scanAndReplaceAds(savedApiKey, savedTopics);
 
-    // IMPORTANT: never call .observe on a null observer
     try { if (observer) observer.disconnect(); } catch (e) {}
     observer = new MutationObserver(() => {
       if (killed) return;
@@ -646,7 +861,6 @@
 
       function scan(root) {
         const scope = root instanceof Element ? root : document;
-
         const spans = scope.querySelectorAll("span");
 
         for (const s of spans) {
@@ -659,10 +873,8 @@
         }
       }
 
-      // Initial scan
       scan(document);
 
-      // Dedicated observer so it never conflicts with MicroLearn
       let raf = 0;
       const fbObserver = new MutationObserver((mutations) => {
         if (raf) cancelAnimationFrame(raf);
