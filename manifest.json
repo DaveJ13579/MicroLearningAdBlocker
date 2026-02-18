@@ -3,11 +3,15 @@
   "name": "MicroLearn AdBlocker",
   "description": "Replaces ads with learning content",
   "version": "1.0.0",
-  "permissions": ["storage"],
+
+  "permissions": ["storage", "tabs"],
+
   "host_permissions": ["https://api.anthropic.com/*"],
+
   "background": {
     "service_worker": "background.js"
   },
+
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -16,11 +20,13 @@
       "128": "images/logo1.png"
     }
   },
+
   "icons": {
     "16": "images/logo1.png",
     "48": "images/logo1.png",
     "128": "images/logo1.png"
   },
+
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -29,11 +35,17 @@
       "run_at": "document_idle"
     }
   ],
+
   "web_accessible_resources": [
     {
-      "resources": ["logo.png"],
+      "resources": [
+        "images/*",
+        "fonts/*",
+        "preferences.html",
+        "preferences.css",
+        "preferences.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ]
-
 }
