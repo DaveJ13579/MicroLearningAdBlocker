@@ -9,7 +9,13 @@ const POOL_KEY = "lessonPool";
 const USED_KEY = "usedLessonIds";
 const HISTORICAL_FACTS_KEY = "historicalFacts";
 const MAX_HISTORICAL_FACTS = 30;
-const PARALLEL_REQUESTS = 5;
+
+// Lower parallel requests to reduce rate limit pressure
+const PARALLEL_REQUESTS = 2;
+
+// Keep the avoid list small so prompts do not explode
+const AVOID_CAP = 6;
+const MAX_AVOID_IN_RUN = 12;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // API HELPERS
@@ -17,23 +23,22 @@ const PARALLEL_REQUESTS = 5;
 
 function getSizeGuidance(width, height) {
   const area = width * height;
-  if (area < 30000) {
-    return { maxWords: 10 };
-  } else if (area < 80000) {
-    return { maxWords: 20 };
-  } else {
-    return { maxWords: 35 };
-  }
+  if (area < 30000) return { maxWords: 10 };
+  if (area < 80000) return { maxWords: 20 };
+  return { maxWords: 35 };
 }
 
 async function fetchSingleLesson(apiKey, topic, width, height, lessonIndex, historicalFacts = []) {
   const { maxWords } = getSizeGuidance(width, height);
 
-  const avoidClause = historicalFacts.length > 0
-    ? " CRITICAL: You must pick a completely different subtopic/angle than these already-used facts: " +
-      historicalFacts.map((f, i) => (i + 1) + ". " + f).join(" ") +
-      " Do NOT write about the same concept or example mentioned above."
-    : "";
+  const recentFacts = Array.isArray(historicalFacts) ? historicalFacts.slice(-AVOID_CAP) : [];
+
+  const avoidClause =
+    recentFacts.length > 0
+      ? " CRITICAL: You must pick a completely different subtopic/angle than these already-used facts: " +
+        recentFacts.map((f, i) => (i + 1) + ". " + f).join(" ") +
+        " Do NOT write about the same concept or example mentioned above."
+      : "";
 
   const diversityHints = [
     "Write a key term or concept with its definition.",
@@ -47,7 +52,7 @@ async function fetchSingleLesson(apiKey, topic, width, height, lessonIndex, hist
     "Write a foundational concept or framework overview.",
     "Write a practical example or real-world application."
   ];
-  
+
   const diversityHint = diversityHints[lessonIndex % diversityHints.length];
 
   const prompt = `Write a single micro-learning fact about: ${topic}
@@ -94,11 +99,13 @@ ${avoidClause}`;
       .replace(/\s*\n\s*/g, " ")
       .trim();
     return clean;
-  } else if (data.error) {
-    throw new Error(data.error.message || "API error");
-  } else {
-    throw new Error("Unexpected response format");
   }
+
+  if (data.error) {
+    throw new Error(data.error.message || "API error");
+  }
+
+  throw new Error("Unexpected response format");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -110,58 +117,70 @@ async function generatePool(apiKey, topics) {
 
   const storage = await chrome.storage.local.get([HISTORICAL_FACTS_KEY]);
   const historicalFacts = storage[HISTORICAL_FACTS_KEY] || [];
-  
+
   console.log("MicroLearn: loaded", historicalFacts.length, "historical facts to avoid");
 
   const lessons = [];
   const allFactsToAvoid = [...historicalFacts];
-  
+
   for (let batchStart = 0; batchStart < POOL_SIZE; batchStart += PARALLEL_REQUESTS) {
     const batchSize = Math.min(PARALLEL_REQUESTS, POOL_SIZE - batchStart);
     const batchPromises = [];
-    
+
     for (let i = 0; i < batchSize; i++) {
       const lessonIndex = batchStart + i;
       const topic = topics[lessonIndex % topics.length];
-      
+
       const promise = fetchSingleLesson(apiKey, topic, 970, 250, lessonIndex, allFactsToAvoid)
-        .then(text => {
+        .then((text) => {
           console.log("MicroLearn: lesson", lessonIndex + 1, "of", POOL_SIZE, "generated");
           return { id: lessonIndex, topic: topic, text: text };
         })
-        .catch(err => {
+        .catch((err) => {
           console.error("MicroLearn: failed lesson", lessonIndex, "-", err.message);
           return null;
         });
-      
+
       batchPromises.push(promise);
     }
-    
+
     const batchResults = await Promise.all(batchPromises);
-    const successfulLessons = batchResults.filter(lesson => lesson !== null);
+    const successfulLessons = batchResults.filter((lesson) => lesson !== null);
     lessons.push(...successfulLessons);
-    
-    successfulLessons.forEach(lesson => {
+
+    successfulLessons.forEach((lesson) => {
       if (lesson && lesson.text) {
         allFactsToAvoid.push(lesson.text);
       }
     });
-    
-    console.log("MicroLearn: batch complete -", lessons.length, "successful lessons so far,", allFactsToAvoid.length, "facts to avoid for next batch");
+
+    // Cap the in-run avoid list so prompts do not explode
+    if (allFactsToAvoid.length > MAX_AVOID_IN_RUN) {
+      allFactsToAvoid.splice(0, allFactsToAvoid.length - MAX_AVOID_IN_RUN);
+    }
+
+    console.log(
+      "MicroLearn: batch complete -",
+      lessons.length,
+      "successful lessons so far,",
+      allFactsToAvoid.length,
+      "facts to avoid for next batch"
+    );
   }
 
   if (lessons.length > 0) {
     await chrome.storage.local.set({ [POOL_KEY]: lessons, [USED_KEY]: [] });
-    
-    const newFacts = lessons.map(l => l.text);
+
+    // Keep a small history for next generation
+    const newFacts = lessons.map((l) => l.text).slice(-MAX_HISTORICAL_FACTS);
     await chrome.storage.local.set({ [HISTORICAL_FACTS_KEY]: newFacts });
-    
+
     console.log("MicroLearn: pool saved -", lessons.length, "lessons ready");
     console.log("MicroLearn: historical facts updated - storing", newFacts.length, "facts for next generation");
   } else {
     console.error("MicroLearn: no lessons generated successfully");
   }
-  
+
   return lessons;
 }
 
@@ -214,34 +233,39 @@ async function getLessons(count) {
 
 async function triggerAutoRegeneration() {
   console.log("MicroLearn: auto-regeneration triggered");
-  
-  const result = await chrome.storage.sync.get(["apiKey", "topics", "subjects", "selectedSubjects", "groups", "activeGroupId"]);
-  
+
+  const result = await chrome.storage.sync.get([
+    "apiKey",
+    "topics",
+    "subjects",
+    "selectedSubjects",
+    "groups",
+    "activeGroupId"
+  ]);
+
   if (!result.apiKey) {
     console.warn("MicroLearn: cannot auto-regenerate - no API key set");
     return;
   }
-  
+
   let topicsToUse = [];
-  
+
   if (result.selectedSubjects && result.selectedSubjects.length > 0) {
     topicsToUse = result.selectedSubjects;
   } else if (result.activeGroupId && result.groups) {
-    const activeGroup = result.groups.find(g => g.id === result.activeGroupId);
-    if (activeGroup) {
-      topicsToUse = activeGroup.subjects;
-    }
+    const activeGroup = result.groups.find((g) => g.id === result.activeGroupId);
+    if (activeGroup) topicsToUse = activeGroup.subjects;
   } else if (result.topics && result.topics.length > 0) {
     topicsToUse = result.topics;
   }
-  
+
   if (topicsToUse.length === 0) {
     console.warn("MicroLearn: cannot auto-regenerate - no topics selected");
     return;
   }
-  
+
   console.log("MicroLearn: auto-regenerating with topics:", topicsToUse);
-  
+
   try {
     await generatePool(result.apiKey, topicsToUse);
     console.log("MicroLearn: auto-regeneration complete!");

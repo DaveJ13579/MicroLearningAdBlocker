@@ -22,10 +22,10 @@
 
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: stretch;
 
-  text-align: center;
+  text-align: left;
   font-family: "Google Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
   padding: 16px;
@@ -132,4 +132,103 @@
   font-weight: 400;
   letter-spacing: 0.5px;
   animation: microlearn-pulse 1.4s ease-in-out infinite;
+}
+
+/* MicroLearn splash (pattern interruption) */
+
+@keyframes mlGrowPop {
+  0%   { transform: scale(0.92); opacity: 0; }
+  15%  { transform: scale(1.00); opacity: 1; }
+  75%  { transform: scale(1.10); opacity: 1; }
+  100% { transform: scale(1.18); opacity: 0; }
+}
+
+.microlearn-placeholder {
+  position: relative;
+}
+
+.microlearn-placeholder .ml-hidden {
+  display: none;
+}
+
+/* Splash overlay so it does not affect layout */
+.microlearn-placeholder .ml-splash {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+/* Static, subtle background */
+.microlearn-placeholder .ml-splash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255,165,0,0.10), rgba(255,165,0,0.00) 48%),
+    radial-gradient(circle at 82% 78%, rgba(255,165,0,0.08), rgba(255,165,0,0.00) 52%);
+  opacity: 1;
+}
+
+.microlearn-placeholder .ml-splash-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.microlearn-placeholder .ml-splash-logoWrap {
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.78);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.10);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  animation: mlGrowPop 900ms ease-out both;
+}
+
+.microlearn-placeholder .ml-splash-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  display: block;
+}
+
+.microlearn-placeholder .ml-splash-text {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  opacity: 0.85;
+}
+
+/* Keep content layout stable */
+/* Center content inside the ad replacement */
+.microlearn-placeholder .ml-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* vertical center */
+  align-items: center;       /* horizontal center */
+  text-align: center;
+  height: 100%;
+  width: 100%;
+}
+
+.ml-hidden { display: none !important; }
+.ml-splash { z-index: 2; }
+.ml-content { z-index: 1; }
+
+.microlearn-placeholder .ml-splash {
+  pointer-events: none;
 }

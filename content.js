@@ -7,6 +7,9 @@
   const PROCESSED_ATTR = "data-microlearn-replaced";
   const FALLBACK = "💡 Stay curious — ask questions every day.";
 
+  const SPLASH_MS = 4000;
+  const LOGO_PATH = "images/logo2.png";
+
   // ══════════════════════════════════════════════════════════════════════════════
   // STATE
   // ══════════════════════════════════════════════════════════════════════════════
@@ -21,15 +24,41 @@
   // PLACEHOLDER CREATION & UPDATES
   // ══════════════════════════════════════════════════════════════════════════════
 
-  function createPlaceholder(width, height) {
+ function createPlaceholder(width, height) {
     const wrapper = document.createElement("div");
     wrapper.className = "microlearn-placeholder";
-    if (width)  wrapper.style.width  = width  + "px";
+    if (width) wrapper.style.width = width + "px";
     if (height) wrapper.style.height = height + "px";
-    wrapper.innerHTML =
-      '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-topic microlearn-loading">Loading...</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading…</div>';
+
+    const logoUrl = chrome.runtime.getURL(LOGO_PATH);
+
+   wrapper.innerHTML = `
+      <div class="ml-splash" aria-hidden="true">
+        <div class="ml-splash-inner">
+          <div class="ml-splash-logoWrap">
+            <img class="ml-splash-logo" src="${logoUrl}" alt="MicroLearn" />
+          </div>
+        </div>
+      </div>
+
+      <div class="ml-content ml-hidden">
+        <div class="microlearn-header">MicroLearn</div>
+        <div class="microlearn-topic microlearn-loading">Loading...</div>
+        <div class="microlearn-body microlearn-loading"></div>
+      </div>
+    `;
+
+    const splash = wrapper.querySelector(".ml-splash");
+    const content = wrapper.querySelector(".ml-content");
+
+    // Hard hide content until splash ends
+    if (content) content.classList.add("ml-hidden");
+
+    setTimeout(() => {
+      if (splash) splash.classList.add("ml-hidden");
+      if (content) content.classList.remove("ml-hidden");
+    }, SPLASH_MS);
+
     return wrapper;
   }
 
@@ -83,7 +112,7 @@
     flushTimer = null;
 
     if (isFlushing) {
-      flushTimer = setTimeout(flush, 200);
+      flushTimer = setTimeout(flush, 300);
       return;
     }
 
@@ -138,8 +167,11 @@
       'iframe[id^="ape_"], ' +
       'div.uitk-layout-grid:has(a[href*="doubleclick.net"]), ' +
       'div.uitk-layout-grid:has(a[href*="adform.net"]), ' +
-      'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"])'
-    );
+      'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"]), ' +
+      '.ad-slot-header, ' +
+      '[data-ssp="pbm"], ' +
+      '[id^="bx-campaign-"]'
+  );
 
     const newAds = [];
     candidates.forEach((ad) => {
