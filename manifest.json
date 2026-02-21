@@ -15,16 +15,16 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "images/logo1.png",
-      "48": "images/logo1.png",
-      "128": "images/logo1.png"
+      "16": "images/logo 5.1.png",
+      "48": "images/logo 5.1.png",
+      "128": "images/logo 5.1.png"
     }
   },
 
   "icons": {
-    "16": "images/logo1.png",
-    "48": "images/logo1.png",
-    "128": "images/logo1.png"
+    "16": "images/logo 5.1.png",
+    "48": "images/logo 5.1.png",
+    "128": "images/logo 5.1.png"
   },
 
   "content_scripts": [
