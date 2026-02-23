@@ -1,62 +1,63 @@
-.ml-card {
-  border-radius: 12px;
-  padding: 16px;
-  font-family: system-ui;
-  color: #111;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  transition: transform 0.2s ease;
-  margin: 8px 0;
-}
+// background.js - service worker
+// Relays Claude API requests from content scripts, which may be
+// blocked by a host page Content-Security-Policy.
 
-.ml-card:hover {
-  transform: translateY(-3px);
-}
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type !== "FETCH_LESSON") return false;
 
-.ml-card.dark {
-  background: #1e1e1e;
-  color: white;
-}
+  const { apiKey, topic } = msg;
 
-.ml-header {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
+  // Basic guard
+  if (!apiKey || !topic) {
+    console.log("FETCH_LESSON blocked: missing apiKey or topic");
+    sendResponse({ error: "Missing apiKey or topic." });
+    return true;
+  }
 
-.ml-body {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
+  const prompt =
+    "Give me one micro-learning fact about " +
+    topic +
+    ". " +
+    "Exactly one sentence. " +
+    "Make it surprising or interesting. " +
+    "No headers, no bullet points, no extra text.";
 
-.ml-footer {
-  font-size: 12px;
-  opacity: 0.7;
-}
+  console.log("Fetching lesson for topic:", topic);
 
-/* Topic gradients */
+  fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 60,
+      messages: [{ role: "user", content: prompt }]
+    })
+  })
+    .then((res) => {
+      console.log("API status:", res.status);
+      return res.json();
+    })
+    .then((data) => {
+      console.log("API response:", JSON.stringify(data));
 
-.ml-card.science {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-}
+      if (data.content && data.content[0] && data.content[0].text) {
+        sendResponse({ lesson: data.content[0].text.trim() });
+      } else if (data.error) {
+        sendResponse({ error: data.error.message || "API error" });
+      } else {
+        sendResponse({ error: "Unexpected response format." });
+      }
+    })
+    .catch((err) => {
+      console.log("API fetch error:", err.message);
+      sendResponse({ error: err.message || "Network error" });
+    });
 
-.ml-card.tech {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-}
-
-.ml-card.history {
-  background: linear-gradient(135deg, #f7971e, #ffd200);
-}
-
-.ml-progress {
-  height: 6px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 4px;
-  margin-top: 8px;
-  overflow: hidden;
-}
-
-.ml-progress-fill {
-  height: 100%;
-  width: 40%;
-  background: white;
-}
+  // Return true so the channel stays open until sendResponse fires
+  return true;
+});
