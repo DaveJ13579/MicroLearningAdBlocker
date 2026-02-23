@@ -62,26 +62,28 @@ document.addEventListener("DOMContentLoaded", () => {
     updateStatus(isEnabled);
   });
 
-  // ── Save button ───────────────────────────────────────
-  saveBtn.addEventListener("click", () => {
-    const key = apiKeyInput.value.trim();
+ saveBtn.addEventListener("click", () => {
+  const key = apiKeyInput.value.trim();
 
-    // Loose format check
-    if (key && !key.startsWith("sk-ant-")) {
-      showStatus("Key should start with sk-ant-…", "error");
-      return;
-    }
+  if (key && !key.startsWith("sk-ant-")) {
+    showStatus("Key should start with sk-ant-…", "error");
+    return;
+  }
 
-    const topics = [...activeTopics];
-    if (topics.length === 0) {
-      showStatus("Select at least one topic.", "error");
-      return;
-    }
+  const topics = [...activeTopics];
+  if (topics.length === 0) {
+    showStatus("Select at least one topic.", "error");
+    return;
+  }
 
-    chrome.storage.sync.set({ apiKey: key, topics: topics }, () => {
-      showStatus(key ? "Saved ✓" : "Key cleared ✓", "success");
+  chrome.storage.sync.set({ apiKey: key, topics: topics }, () => {
+    showStatus(key ? "Saved ✓" : "Key cleared ✓", "success");
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) chrome.tabs.reload(tabs[0].id);
     });
   });
+});
 
   // ── Status helper ─────────────────────────────────────
   function showStatus(msg, type) {
