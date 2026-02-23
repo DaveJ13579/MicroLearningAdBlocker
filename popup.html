@@ -5,51 +5,31 @@
     <title>MicroLearn</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
-
   <body>
+
     <!-- Header -->
     <div class="header">
-      <img src="images/logo1.png" class="logo" />
-      <div>
+      <div class="logo-wrap">
+        <img src="images/logo 5.1.png" class="logo" />
+      </div>
+      <div class="header-text">
         <h1>MicroLearn</h1>
         <p>Replace ads with learning.</p>
       </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle" />
+        <span class="slider"></span>
+      </label>
     </div>
 
-    <!-- Status card -->
-    <div class="card">
-      <div class="row">
-        <span id="statusText">Status: On</span>
-
-        <label class="switch">
-          <input type="checkbox" id="toggle" />
-          <span class="slider"></span>
-        </label>
-      </div>
+    <!-- Status row -->
+    <div class="card status-card">
+      <span class="status-label">Status:</span>
+      <span id="statusText" class="status-value">On</span>
     </div>
 
-    <!-- API key card -->
-    <div class="card">
-      <label class="field-label" for="apiKeyInput">Anthropic API Key</label>
-      <input
-        type="password"
-        id="apiKeyInput"
-        class="text-input"
-        placeholder="sk-ant-..."
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <div id="apiStatus" class="api-status"></div>
-    </div>
-
-    <!-- Topics card -->
-    <div class="card">
-      <label class="field-label">Learning Topics</label>
-      <div class="topic-grid" id="topicGrid"></div>
-    </div>
-
-    <!-- Save button -->
-    <button class="save-btn" id="saveBtn">Save Settings</button>
+    <!-- Customize button -->
+    <button class="customize-btn" id="customizeBtn">Customize Your Learning</button>
 
     <script src="popup.js"></script>
   </body>

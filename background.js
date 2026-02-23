@@ -1,6 +1,5 @@
 // background.js - service worker
-// Relays Claude API requests from content scripts, which may be
-// blocked by a host page Content-Security-Policy.
+// Relays Claude API requests from content scripts
 
 // Diversity hints for educational content
 const educationalHints = [
@@ -104,7 +103,7 @@ Rules:
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 40,
+      max_tokens: 60,
       messages: [{ role: "user", content: prompt }]
     })
   })
@@ -116,7 +115,13 @@ Rules:
       console.log("API response:", JSON.stringify(data));
 
       if (data.content && data.content[0] && data.content[0].text) {
-        sendResponse({ lesson: data.content[0].text.trim() });
+        const text = data.content[0].text.trim()
+          .replace(/\*\*(.+?)\*\*/g, "$1")
+          .replace(/\*(.+?)\*/g, "$1")
+          .replace(/^#{1,6}\s+/gm, "")
+          .replace(/`(.+?)`/g, "$1")
+          .trim();
+        sendResponse({ lesson: text });
       } else if (data.error) {
         sendResponse({ error: data.error.message || "API error" });
       } else {

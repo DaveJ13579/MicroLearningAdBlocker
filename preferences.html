@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MicroLearn – Customize Your Learning</title>
+    <link rel="stylesheet" href="preferences.css" />
+  </head>
+  <body>
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <div class="logo-wrap">
+          <img src="images/logo 5.1.png" class="logo" />
+        </div>
+        <div class="header-brand">
+          <div class="brand">MicroLearn</div>
+          <div class="tagline">Replace Ads With Learning</div>
+        </div>
+      </div>
+
+      <div class="header-divider"></div>
+
+      <div class="header-right">
+        <div class="page-title">Customize<br>Your Learning</div>
+      </div>
+
+      <button class="settings-icon-btn" id="settingsBtn" title="API Settings">⚙️</button>
+    </div>
+
+    <!-- Content Mode Toggle — segmented control -->
+    <div class="card mode-card">
+      <input type="checkbox" id="modeToggle" />
+      <div class="mode-toggle-row">
+        <div class="mode-option" id="modeOptionLeft">
+          <div class="mode-label">Learning Facts</div>
+          <div class="mode-description">Educational content on your chosen topics</div>
+        </div>
+        <div class="mode-divider"></div>
+        <div class="mode-option" id="modeOptionRight">
+          <div class="mode-label">Mental Health</div>
+          <div class="mode-description">Supportive tips and coping strategies</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Learning Path Tabs (only visible in Learning Facts mode) -->
+    <div id="learningPathSection" class="learning-path-section">
+      <div class="section-label">Learning Path</div>
+      <div class="card learning-path-card">
+        <div class="learning-path-tabs">
+          <button class="path-tab active" id="ccnaTab" data-path="ccna">CCNA</button>
+          <button class="path-tab" id="securityPlusTab" data-path="security+">Security+</button>
+          <button class="path-tab" id="customTab" data-path="custom">Custom</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two column layout -->
+    <div class="columns" id="topicSelection">
+
+      <!-- Learner Groups (LEFT) -->
+      <div class="column">
+        <div class="col-header">
+          <div class="section-label">Learner Groups</div>
+        </div>
+        <div class="card list-card">
+          <ul class="group-list" id="groupList"></ul>
+        </div>
+        <button class="add-btn" id="createGroupBtn">+ Create New Group</button>
+      </div>
+
+      <!-- Learning Subjects Library (RIGHT) -->
+      <div class="column">
+        <div class="col-header">
+          <div class="section-label">Learning Subjects</div>
+        </div>
+        <div class="card subjects-card">
+          <div class="subjects-library" id="subjectsList"></div>
+          <div class="add-subject-row">
+            <input
+              type="text"
+              id="addSubjectInput"
+              class="text-input add-subject-input"
+              placeholder="Add custom topic..."
+            />
+            <button class="add-subject-btn" id="addSubjectBtn">+</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Save bar -->
+    <div class="save-bar">
+      <button class="save-btn" id="saveBtn">Save &amp; Regenerate</button>
+      <div id="saveStatus" class="save-status"></div>
+    </div>
+
+    <!-- Modal overlay -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal" id="modal">
+        <button class="modal-close" id="modalClose">✕</button>
+        <div class="modal-title" id="modalTitle">New Group</div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-actions" id="modalActions"></div>
+      </div>
+    </div>
+
+    <script src="preferences.js"></script>
+  </body>
+</html>

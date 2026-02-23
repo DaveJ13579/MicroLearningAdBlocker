@@ -1,10 +1,19 @@
 (function () {
 
-  // Attribute used to mark ads already replaced
   const PROCESSED_ATTR = "data-microlearn-replaced";
+  const FALLBACK_HEADLINE = "Stay curious — ask questions every day.";
+  const FALLBACK_TAGLINE = "Learning transforms how you see the world.";
 
-  // ── Pick a random topic from the saved list ──────────
-  // Returns { topic, type } object
+  // ── Topic Management ─────────────────────────────────
+  // Default topics with types
+  const DEFAULT_TOPICS = [
+    { topic: "Security+ (SY0-701)", type: "educational" }
+  ];
+
+  let savedApiKey = "";
+  let savedTopics = DEFAULT_TOPICS;
+
+  // Pick a random topic from the saved list
   function pickTopic(topics) {
     const item = topics[Math.floor(Math.random() * topics.length)];
     // Handle both old string format and new object format
@@ -14,26 +23,7 @@
     return item;
   }
 
-  // ── Creates the learning placeholder box ──────────────
-  function createMicroLearnPlaceholder(width, height) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "microlearn-placeholder";
-
-    if (width)  wrapper.style.width  = width  + "px";
-    if (height) wrapper.style.height = height + "px";
-
-    // Start with loading state
-    wrapper.innerHTML =
-      '<div class="microlearn-brand">MicroLearn</div>' +
-      '<div class="microlearn-content">' +
-        '<div class="microlearn-headline microlearn-loading">Loading lesson…</div>' +
-        '<div class="microlearn-tagline"></div>' +
-      '</div>';
-
-    return wrapper;
-  }
-
-  // ── Parses the API response into headline and tagline ──
+  // Parse HEADLINE/TAGLINE from API response
   function parseLesson(text) {
     const headlineMatch = text.match(/HEADLINE:\s*(.+)/i);
     const taglineMatch = text.match(/TAGLINE:\s*(.+)/i);
@@ -44,103 +34,225 @@
         tagline: taglineMatch[1].trim()
       };
     }
-
-    // Fallback: couldn't parse, return full text as headline
+    // Fallback: couldn't parse
     return null;
   }
 
+  // ── Extension State ──────────────────────────────────
+  let observer = null;
+  let pollInterval = null;
 
-  // ── Replaces a detected ad with learning content ─────
-  function replaceAd(ad, apiKey, topics) {
+  function isExtensionAlive() {
+    try {
+      return !!(chrome && chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ── Splash Animation ─────────────────────────────────
+  const SPLASH_MS = 3000;
+  const SPLASH_FADE_MS = 700;
+
+  const SPLASH_IMAGES = [
+    "images/testpic1.png",
+    // add more later
+  ];
+
+  let splashIndex = 0;
+
+  function getNextSplashUrl() {
+    const path = SPLASH_IMAGES[splashIndex % SPLASH_IMAGES.length];
+    splashIndex += 1;
+
+    try {
+      if (!isExtensionAlive()) return null;
+      return chrome.runtime.getURL(path);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ── Placeholder Creation ─────────────────────────────
+  function createPlaceholder(width, height) {
+    const el = document.createElement("div");
+    el.className = "microlearn-placeholder ml-has-splash";
+    if (width) el.style.width = width + "px";
+    if (height) el.style.height = height + "px";
+
+    const splashUrl = getNextSplashUrl();
+
+    // If extension context is invalidated, fall back to normal card (no splash)
+    if (!splashUrl) {
+      el.innerHTML = `
+        <div class="ml-content">
+          <div class="microlearn-brand">MicroLearn</div>
+          <div class="microlearn-headline microlearn-loading">Loading...</div>
+          <div class="microlearn-tagline"></div>
+        </div>
+      `;
+      return el;
+    }
+
+    // Normal splash path
+    el.style.backgroundImage = `url("${splashUrl}")`;
+    el.style.backgroundSize = "cover";
+    el.style.backgroundPosition = "center";
+    el.style.backgroundRepeat = "no-repeat";
+
+    el.innerHTML = `
+      <div class="ml-splash" aria-hidden="true">
+        <img class="ml-splash-img" src="${splashUrl}" alt="" />
+      </div>
+
+      <div class="ml-content ml-hidden">
+        <div class="microlearn-brand">MicroLearn</div>
+        <div class="microlearn-headline microlearn-loading">Loading...</div>
+        <div class="microlearn-tagline"></div>
+      </div>
+    `;
+
+    const splash = el.querySelector(".ml-splash");
+    const content = el.querySelector(".ml-content");
+
+    if (content) content.classList.add("ml-hidden");
+
+    setTimeout(() => {
+      if (!el.isConnected) return;
+
+      if (splash) splash.classList.add("ml-fadeout");
+
+      setTimeout(() => {
+        if (!el.isConnected) return;
+
+        if (splash) splash.remove();
+        if (content) content.classList.remove("ml-hidden");
+      }, SPLASH_FADE_MS);
+    }, SPLASH_MS);
+
+    return el;
+  }
+
+  // ── Set Lesson Content ───────────────────────────────
+  function setLesson(placeholder, headline, tagline) {
+    const headlineEl = placeholder.querySelector(".microlearn-headline");
+    const taglineEl = placeholder.querySelector(".microlearn-tagline");
+    if (!headlineEl) return;
+
+    headlineEl.textContent = headline;
+    headlineEl.classList.remove("microlearn-loading");
+
+    if (taglineEl) {
+      taglineEl.textContent = tagline;
+    }
+
+    // Add tooltip if text overflows
+    setTimeout(() => {
+      if (headlineEl.scrollHeight > headlineEl.clientHeight) {
+        headlineEl.title = headline;
+        headlineEl.style.cursor = "help";
+      }
+    }, 10);
+  }
+
+  // ── Ad Detection & Replacement ───────────────────────
+  const AD_SELECTORS = [
+    ".ad-slot",
+    '[data-ad-label-text="Advertisement"]',
+    "[data-desktop-slot-id]",
+    'iframe[id^="google_ads_iframe"]',
+    "gwd-google-ad",
+    "#ad",
+    'iframe[id^="ape_"]',
+    'div.uitk-layout-grid:has(a[href*="doubleclick.net"])',
+    'div.uitk-layout-grid:has(a[href*="adform.net"])',
+    'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"])',
+    'div[data-testid="text-ads-container"]'
+  ].join(", ");
+
+  function replaceAd(ad) {
     if (ad.hasAttribute(PROCESSED_ATTR)) return;
 
     const rect = ad.getBoundingClientRect();
     if (rect.width < 50 || rect.height < 50) return;
 
-    const placeholder = createMicroLearnPlaceholder(rect.width, rect.height);
+    const placeholder = createPlaceholder(rect.width, rect.height);
     placeholder.setAttribute(PROCESSED_ATTR, "true");
 
-    // Swap the ad out immediately so the user sees the card
     ad.replaceWith(placeholder);
 
-    // Pick a topic and ask the background worker for a lesson
-    const { topic, type: contentType } = pickTopic(topics);
+    // Pick a topic and fetch lesson
+    const { topic, type: contentType } = pickTopic(savedTopics);
+
+    if (!isExtensionAlive() || !savedApiKey) {
+      setLesson(placeholder, FALLBACK_HEADLINE, FALLBACK_TAGLINE);
+      return;
+    }
 
     chrome.runtime.sendMessage(
-      { type: "FETCH_LESSON", apiKey: apiKey, topic: topic, contentType: contentType },
+      { type: "FETCH_LESSON", apiKey: savedApiKey, topic: topic, contentType: contentType },
       (response) => {
-        const headlineEl = placeholder.querySelector(".microlearn-headline");
-        const taglineEl = placeholder.querySelector(".microlearn-tagline");
-        if (!headlineEl) return; // element was removed from DOM
+        if (chrome.runtime.lastError) {
+          console.warn("MicroLearn:", chrome.runtime.lastError.message);
+          setLesson(placeholder, FALLBACK_HEADLINE, FALLBACK_TAGLINE);
+          return;
+        }
 
         if (response && response.lesson) {
           const parsed = parseLesson(response.lesson);
 
           if (parsed) {
-            headlineEl.textContent = parsed.headline;
-            taglineEl.textContent = parsed.tagline;
+            setLesson(placeholder, parsed.headline, parsed.tagline);
           } else {
-            // Fallback: parsing failed, show full response as headline
-            headlineEl.textContent = response.lesson;
-            taglineEl.textContent = "";
+            // Fallback: parsing failed, show full response
+            setLesson(placeholder, response.lesson, "");
           }
-          headlineEl.classList.remove("microlearn-loading");
         } else {
-          // Fallback: show a static tip so the card isn't empty
-          headlineEl.textContent = "Stay curious — ask questions every day.";
-          taglineEl.textContent = "Learning transforms how you see the world.";
-          headlineEl.classList.remove("microlearn-loading");
+          setLesson(placeholder, FALLBACK_HEADLINE, FALLBACK_TAGLINE);
         }
       }
     );
   }
 
-  // ── Scans page for common ad containers ──────────────
-  function scanAndReplaceAds(apiKey, topics) {
-    const ads = document.querySelectorAll(
-      '.ad-slot, ' +
-      '[data-ad-label-text="Advertisement"], ' +
-      '[data-desktop-slot-id], ' +
-      'iframe[id^="google_ads_iframe"], ' +
-      'gwd-google-ad, ' +
-      '#ad, ' +
-      'iframe[id^="ape_"]'
-    );
-    ads.forEach((ad) => replaceAd(ad, apiKey, topics));
+  function scanAndReplaceAds() {
+    if (!isExtensionAlive()) return;
+
+    const candidates = document.querySelectorAll(AD_SELECTORS);
+    const newAds = [];
+
+    candidates.forEach(ad => {
+      if (ad.hasAttribute(PROCESSED_ATTR)) return;
+      const rect = ad.getBoundingClientRect();
+      if (rect.width < 50 || rect.height < 50) return;
+      newAds.push(ad);
+    });
+
+    if (!newAds.length) return;
+
+    observer?.disconnect();
+
+    newAds.forEach(ad => replaceAd(ad));
+
+    if (observer) observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  // ── MutationObserver + polling for late-loading ads ──
-  let observer = null;
-  let pollInterval = null;
-  let savedApiKey = "";
-  let savedTopics = [{ topic: "Security+ (SY0-701)", type: "educational" }];
-
+  // ── Enable / Disable ─────────────────────────────────
   function enableMicroLearn() {
-    scanAndReplaceAds(savedApiKey, savedTopics);
-
-    // Catch ads added to the DOM
-    observer = new MutationObserver(() => {
-      scanAndReplaceAds(savedApiKey, savedTopics);
-    });
+    scanAndReplaceAds();
+    observer = new MutationObserver(scanAndReplaceAds);
     observer.observe(document.body, { childList: true, subtree: true });
-
-    // Catch ads that exist but are unsized until their content loads
-    pollInterval = setInterval(() => {
-      scanAndReplaceAds(savedApiKey, savedTopics);
-    }, 2000);
+    pollInterval = setInterval(scanAndReplaceAds, 2000);
   }
 
   function disableMicroLearn() {
-    if (observer) observer.disconnect();
+    observer?.disconnect();
     observer = null;
-
-    if (pollInterval) clearInterval(pollInterval);
+    clearInterval(pollInterval);
     pollInterval = null;
-
     location.reload();
   }
 
-  // ── Initialise: load settings then act ────────────────
+  // ── Init ─────────────────────────────────────────────
   chrome.storage.sync.get(["enabled", "apiKey", "topics"], (result) => {
     savedApiKey = result.apiKey || "";
 
@@ -148,25 +260,34 @@
     if (Array.isArray(result.topics) && result.topics.length > 0) {
       // Check if old string format
       if (typeof result.topics[0] === "string") {
-        // Convert old format to new default
-        savedTopics = [{ topic: "Security+ (SY0-701)", type: "educational" }];
+        savedTopics = DEFAULT_TOPICS;
       } else {
         savedTopics = result.topics;
       }
     } else {
-      savedTopics = [{ topic: "Security+ (SY0-701)", type: "educational" }];
+      savedTopics = DEFAULT_TOPICS;
     }
 
     if (result.enabled !== false) enableMicroLearn();
   });
 
-  // ── React to toggle / setting changes at runtime ─────
-  chrome.storage.onChanged.addListener((changes) => {
+  chrome.storage.onChanged.addListener(changes => {
     if ("enabled" in changes) {
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
     }
-    if ("apiKey" in changes)  savedApiKey = changes.apiKey.newValue || "";
-    if ("topics" in changes)  savedTopics = changes.topics.newValue || savedTopics;
+    if ("apiKey" in changes) {
+      savedApiKey = changes.apiKey.newValue || "";
+    }
+    if ("topics" in changes) {
+      const newTopics = changes.topics.newValue;
+      if (Array.isArray(newTopics) && newTopics.length > 0) {
+        if (typeof newTopics[0] === "string") {
+          savedTopics = DEFAULT_TOPICS;
+        } else {
+          savedTopics = newTopics;
+        }
+      }
+    }
   });
 
 })();
