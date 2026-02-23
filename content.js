@@ -9,16 +9,93 @@
   let observer     = null;
   let pollInterval = null;
 
+  function isExtensionAlive() {
+    try {
+      return !!(chrome && chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
   // ── Placeholder ───────────────────────────────────────
+  const SPLASH_MS = 3000;
+  const SPLASH_FADE_MS = 700;
+
+  const SPLASH_IMAGES = [
+    "images/testpic1.png",
+    // add more later
+  ];
+
+  let splashIndex = 0;
+
+  function getNextSplashUrl() {
+    const path = SPLASH_IMAGES[splashIndex % SPLASH_IMAGES.length];
+    splashIndex += 1;
+
+    try {
+      if (!isExtensionAlive()) return null;
+      return chrome.runtime.getURL(path);
+    } catch (e) {
+      return null;
+    }
+  }
+
   function createPlaceholder(width, height) {
     const el = document.createElement("div");
-    el.className = "microlearn-placeholder";
-    if (width)  el.style.width  = width  + "px";
+    el.className = "microlearn-placeholder ml-has-splash";
+    if (width) el.style.width = width + "px";
     if (height) el.style.height = height + "px";
-    el.innerHTML =
-      '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-topic microlearn-loading">Loading...</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading…</div>';
+
+    const splashUrl = getNextSplashUrl();
+
+    // If extension context is invalidated, fall back to normal card (no splash)
+    if (!splashUrl) {
+      el.innerHTML = `
+        <div class="ml-content">
+          <div class="microlearn-header">MicroLearn</div>
+          <div class="microlearn-topic microlearn-loading">Loading...</div>
+          <div class="microlearn-body microlearn-loading">Loading…</div>
+        </div>
+      `;
+      return el;
+    }
+
+    // Normal splash path
+    el.style.backgroundImage = `url("${splashUrl}")`;
+    el.style.backgroundSize = "cover";
+    el.style.backgroundPosition = "center";
+    el.style.backgroundRepeat = "no-repeat";
+
+    el.innerHTML = `
+      <div class="ml-splash" aria-hidden="true">
+        <img class="ml-splash-img" src="${splashUrl}" alt="" />
+      </div>
+
+      <div class="ml-content ml-hidden">
+        <div class="microlearn-header">MicroLearn</div>
+        <div class="microlearn-topic microlearn-loading">Loading...</div>
+        <div class="microlearn-body microlearn-loading">Loading…</div>
+      </div>
+    `;
+
+    const splash = el.querySelector(".ml-splash");
+    const content = el.querySelector(".ml-content");
+
+    if (content) content.classList.add("ml-hidden");
+
+    setTimeout(() => {
+      if (!el.isConnected) return;
+
+      if (splash) splash.classList.add("ml-fadeout");
+
+      setTimeout(() => {
+        if (!el.isConnected) return;
+
+        if (splash) splash.remove();
+        if (content) content.classList.remove("ml-hidden");
+      }, SPLASH_FADE_MS);
+    }, SPLASH_MS);
+
     return el;
   }
 
@@ -58,6 +135,11 @@
     isFlushing   = true;
 
     try {
+      if (!isExtensionAlive()) {
+        toFill.forEach(p => setLesson(p, FALLBACK));
+        isFlushing = false;
+        return;
+      }
       chrome.runtime.sendMessage({ type: "FETCH_LESSONS", count: toFill.length }, response => {
         isFlushing = false;
         if (chrome.runtime.lastError) {
@@ -97,6 +179,9 @@
   ].join(", ");
 
   function scanAndReplaceAds() {
+
+      if (!isExtensionAlive()) return;
+
     const candidates = document.querySelectorAll(AD_SELECTORS);
     const newAds = [];
 
