@@ -1,0 +1,62 @@
+.ml-card {
+  border-radius: 12px;
+  padding: 16px;
+  font-family: system-ui;
+  color: #111;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+  margin: 8px 0;
+}
+
+.ml-card:hover {
+  transform: translateY(-3px);
+}
+
+.ml-card.dark {
+  background: #1e1e1e;
+  color: white;
+}
+
+.ml-header {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.ml-body {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.ml-footer {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Topic gradients */
+
+.ml-card.science {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.ml-card.tech {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.ml-card.history {
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+}
+
+.ml-progress {
+  height: 6px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.ml-progress-fill {
+  height: 100%;
+  width: 40%;
+  background: white;
+}
