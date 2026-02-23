@@ -8,31 +8,67 @@
   <body>
     <!-- Header -->
     <div class="page-header">
-      <div class="logo-wrap">
-        <img src="images/logo1.png" class="logo" />
+      <div class="header-left">
+        <div class="logo-wrap">
+          <img src="images/logo 5.1.png" class="logo" />
+        </div>
+        <div class="header-brand">
+          <div class="brand">MicroLearn</div>
+          <div class="tagline">Replace Ads With Learning</div>
+        </div>
       </div>
-      <div>
-        <div class="brand">MicroLearn</div>
-        <div class="tagline">Customize Your Learning</div>
+
+      <div class="header-divider"></div>
+
+      <div class="header-right">
+        <div class="page-title">Customize<br />Your Learning</div>
+      </div>
+
+      <button class="settings-icon-btn" id="settingsBtn" title="API Settings">
+        ⚙️
+      </button>
+    </div>
+
+    <!-- Content Mode Toggle — segmented control -->
+    <div class="card mode-card">
+      <input type="checkbox" id="modeToggle" />
+      <div class="mode-toggle-row">
+        <div class="mode-option" id="modeOptionLeft">
+          <div class="mode-label">Learning Facts</div>
+          <div class="mode-description">
+            Educational content on your chosen topics
+          </div>
+        </div>
+        <div class="mode-divider"></div>
+        <div class="mode-option" id="modeOptionRight">
+          <div class="mode-label">Mental Health</div>
+          <div class="mode-description">
+            Supportive tips and coping strategies
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- API Key -->
-    <div class="section-label">Anthropic API Key</div>
-    <div class="card api-card">
-      <input
-        type="password"
-        id="apiKeyInput"
-        class="text-input"
-        placeholder="sk-ant-..."
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <div id="apiStatus" class="api-status"></div>
+    <!-- Learning Path Tabs (only visible in Learning Facts mode) -->
+    <div id="learningPathSection" class="learning-path-section">
+      <div class="section-label">Learning Path</div>
+      <div class="card learning-path-card">
+        <div class="learning-path-tabs">
+          <button class="path-tab active" id="ccnaTab" data-path="ccna">
+            CCNA
+          </button>
+          <button class="path-tab" id="securityPlusTab" data-path="security+">
+            Security+
+          </button>
+          <button class="path-tab" id="customTab" data-path="custom">
+            Custom
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Two column layout -->
-    <div class="columns">
+    <div class="columns" id="topicSelection">
       <!-- Learner Groups (LEFT) -->
       <div class="column">
         <div class="col-header">
@@ -40,20 +76,11 @@
         </div>
         <div class="card list-card">
           <ul class="group-list" id="groupList"></ul>
-          <!-- Spacing added for card alignment with Learning Subjects Library -->
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <button class="add-btn" id="createGroupBtn">
-            + Create New Group
-          </button>
+          <div style="padding: 6px 8px 8px">
+            <button class="add-btn" id="createGroupBtn">
+              + Create New Group
+            </button>
+          </div>
         </div>
       </div>
 
@@ -77,6 +104,13 @@
       </div>
     </div>
 
+    <!-- Theme Customization -->
+    <div class="section-label">Theme Customization</div>
+    <div class="theme-customization-card card">
+      <button class="theme-btn" id="extensionThemeBtn">Extension Theme</button>
+      <button class="theme-btn" id="adContainersBtn">Ad Containers</button>
+    </div>
+
     <!-- Save bar -->
     <div class="save-bar">
       <button class="save-btn" id="saveBtn">Save &amp; Regenerate</button>
@@ -90,6 +124,61 @@
         <div class="modal-title" id="modalTitle">New Group</div>
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-actions" id="modalActions"></div>
+      </div>
+    </div>
+
+    <!-- Ad Containers Modal -->
+    <div class="modal-overlay" id="adContainersOverlay">
+      <div class="modal ad-containers-modal" id="adContainersModal">
+        <button class="modal-close" id="adContainersClose">✕</button>
+        <div class="modal-title">Customize Learning Container</div>
+
+        <!-- Pattern Picker -->
+        <div class="pattern-section-label">Choose Background Pattern</div>
+        <div class="pattern-slideshow">
+          <button class="slide-arrow left" id="slideLeft">&#8249;</button>
+          <div class="pattern-track-wrap">
+            <div class="pattern-track" id="patternTrack"></div>
+          </div>
+          <button class="slide-arrow right" id="slideRight">&#8250;</button>
+        </div>
+
+        <!-- Preview -->
+        <div class="pattern-section-label">Preview</div>
+        <div class="pattern-preview" id="patternPreview">
+          <div class="preview-placeholder-msg" id="previewPlaceholderMsg">
+            Choose a background pattern
+          </div>
+          <div class="preview-card" id="previewCard" style="display: none">
+            <div class="preview-topic">Path: Subject</div>
+            <div class="preview-body">
+              IPv4 uses 32-bit addresses divided into network and host portions;
+              subnet masks define the boundary between them.
+            </div>
+            <img src="images/logo 5.1.png" class="preview-logo" />
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px">
+          <button class="modal-btn secondary" id="adContainersCancel">
+            Cancel
+          </button>
+          <button class="modal-btn primary" id="adContainersSave">
+            Save Pattern
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extension Theme Modal -->
+    <div class="modal-overlay" id="extensionThemeOverlay">
+      <div class="modal extension-theme-modal" id="extensionThemeModal">
+        <button class="modal-close" id="extensionThemeClose">✕</button>
+        <div class="modal-title">Customize Extension Theme</div>
+        <div class="theme-mode-list">
+          <button class="theme-mode-btn" id="themeLightBtn">Light Mode</button>
+          <button class="theme-mode-btn" id="themeDarkBtn">Dark Mode</button>
+        </div>
       </div>
     </div>
 

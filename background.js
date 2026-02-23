@@ -1,73 +1,55 @@
 // background.js - service worker
 
-// ══════════════════════════════════════════════════════════════════════════════
-// CONSTANTS
-// ══════════════════════════════════════════════════════════════════════════════
+const POOL_SIZE      = 30;
+const POOL_KEY       = "lessonPool";
+const USED_KEY       = "usedLessonIds";
+const HISTORICAL_KEY = "historicalFacts";
+const PARALLEL       = 5;
 
-const POOL_SIZE = 30;
-const POOL_KEY = "lessonPool";
-const USED_KEY = "usedLessonIds";
-const HISTORICAL_FACTS_KEY = "historicalFacts";
-const MAX_HISTORICAL_FACTS = 30;
-const PARALLEL_REQUESTS = 5;
+// ── Lesson Generation ─────────────────────────────────
 
-// ══════════════════════════════════════════════════════════════════════════════
-// API HELPERS
-// ══════════════════════════════════════════════════════════════════════════════
-
-function getSizeGuidance(width, height) {
-  const area = width * height;
-  if (area < 30000) {
-    return { maxWords: 10 };
-  } else if (area < 80000) {
-    return { maxWords: 20 };
-  } else {
-    return { maxWords: 35 };
-  }
-}
-
-async function fetchSingleLesson(apiKey, topic, width, height, lessonIndex, historicalFacts = []) {
-  const { maxWords } = getSizeGuidance(width, height);
-
-  const avoidClause = historicalFacts.length > 0
-    ? " CRITICAL: You must pick a completely different subtopic/angle than these already-used facts: " +
-      historicalFacts.map((f, i) => (i + 1) + ". " + f).join(" ") +
-      " Do NOT write about the same concept or example mentioned above."
+async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHealth = false) {
+  const recentFacts  = historical.slice(-10);
+  const avoidClause  = recentFacts.length
+    ? " CRITICAL: Pick a completely different angle than these: " +
+      recentFacts.map((f, i) => `${i + 1}. ${f.slice(0, 50)}...`).join(" ")
     : "";
 
-  const diversityHints = [
-    "Write a key term or concept with its definition.",
-    "Write a specific number, measurement, or quantifiable fact.",
-    "Write a direct comparison between two related things.",
-    "Write a quick-recall fact about a standard, version, or timeline.",
-    "Write a list of 3-4 related items, components, or steps.",
-    "Write a common problem or challenge with its key characteristic.",
-    "Write a best practice, principle, or rule of thumb.",
-    "Write a tool, method, or technique with its primary purpose.",
-    "Write a foundational concept or framework overview.",
-    "Write a practical example or real-world application."
+  const mentalHints = [
+    "Cognitive reframe: State a negative thought, then reframe it positively.",
+    "Share a normalizing mental health statistic.",
+    "Describe a breathing exercise in exact steps.",
+    "Give one sleep hygiene tip.",
+    "Offer a self-compassion reminder.",
+    "Teach a quick mindfulness technique.",
+    "Share a stress management tip.",
+    "Give an anxiety-reduction technique.",
+    "Encourage social connection.",
+    "Describe a grounding exercise."
   ];
-  
-  const diversityHint = diversityHints[lessonIndex % diversityHints.length];
 
-  const prompt = `Write a single micro-learning fact about: ${topic}
+  const learningHints = [
+    "Key term with definition.",
+    "Specific number or measurement.",
+    "Direct comparison between two things.",
+    "Quick-recall fact about a standard.",
+    "List 3-4 related items.",
+    "Common problem with key trait.",
+    "Best practice or principle.",
+    "Tool or technique with purpose.",
+    "Foundational concept overview.",
+    "Practical example or application."
+  ];
 
-Style: ${diversityHint}
+  const hint = mentalHealth
+    ? mentalHints[lessonIndex % mentalHints.length]
+    : learningHints[lessonIndex % learningHints.length];
 
-Rules:
-- Maximum ${maxWords} words total
-- Focus on the technical content and core concepts, NOT information about the certification exam itself
-- Write study material someone would need to know for practical understanding
-- Use concrete facts: definitions, numbers, comparisons, lists, technical specifications
-- Format like a flashcard: clear, direct, memorizable
-- Lead with the most important information
-- No labels, headers, or meta-text (like "HOOK:" or "KEY TERM:")
-- Just write the fact itself as a single statement or sentence
-- No introductory phrases or explanations
+  const prompt = mentalHealth
+    ? `${hint}\n\nRules:\n- EXACTLY 15 words or fewer\n- One sentence only\n- Direct and actionable\n- No fluff\n- Example: "Box breathing: Inhale 4s, hold 4s, exhale 4s, hold 4s."\n${avoidClause}`
+    : `Micro-learning fact about: ${topic}\n\nStyle: ${hint}\n\nRules:\n- Max 35 words\n- Technical content, NOT exam info\n- Concrete facts: definitions, numbers, comparisons\n- Flashcard format: clear, direct\n- No labels or headers\n- Single statement\n${avoidClause}`;
 
-${avoidClause}`;
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -82,261 +64,160 @@ ${avoidClause}`;
     })
   });
 
-  const data = await response.json();
-
-  if (data.content && data.content[0] && data.content[0].text) {
-    const raw = data.content[0].text.trim();
-    const clean = raw
+  const data = await res.json();
+  if (data?.content?.[0]?.text) {
+    return data.content[0].text.trim()
       .replace(/\*\*(.+?)\*\*/g, "$1")
-      .replace(/\*(.+?)\*/g, "$1")
-      .replace(/^#{1,6}\s+/gm, "")
-      .replace(/`(.+?)`/g, "$1")
-      .replace(/\s*\n\s*/g, " ")
+      .replace(/\*(.+?)\*/g,    "$1")
+      .replace(/^#{1,6}\s+/gm,  "")
+      .replace(/`(.+?)`/g,      "$1")
+      .replace(/\s*\n\s*/g,     " ")
       .trim();
-    return clean;
-  } else if (data.error) {
-    throw new Error(data.error.message || "API error");
-  } else {
-    throw new Error("Unexpected response format");
   }
+  if (data?.error) throw new Error(data.error.message || "API error");
+  throw new Error("Unexpected response format");
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// POOL GENERATION
-// ══════════════════════════════════════════════════════════════════════════════
+// ── Pool Management ───────────────────────────────────
 
-async function generatePool(apiKey, topics) {
-  console.log("MicroLearn: generating pool of", POOL_SIZE, "lessons...");
+async function generatePool(apiKey, topics, mentalHealth = false) {
+  console.log("MicroLearn: generating pool of", POOL_SIZE, mentalHealth ? "mental health tips..." : "lessons...");
 
-  const storage = await chrome.storage.local.get([HISTORICAL_FACTS_KEY]);
-  const historicalFacts = storage[HISTORICAL_FACTS_KEY] || [];
-  
-  console.log("MicroLearn: loaded", historicalFacts.length, "historical facts to avoid");
+  const { [HISTORICAL_KEY]: historical = [] } = await chrome.storage.local.get(HISTORICAL_KEY);
+  const allFacts = [...historical];
+  const lessons  = [];
 
-  const lessons = [];
-  const allFactsToAvoid = [...historicalFacts];
-  
-  for (let batchStart = 0; batchStart < POOL_SIZE; batchStart += PARALLEL_REQUESTS) {
-    const batchSize = Math.min(PARALLEL_REQUESTS, POOL_SIZE - batchStart);
-    const batchPromises = [];
-    
-    for (let i = 0; i < batchSize; i++) {
-      const lessonIndex = batchStart + i;
-      const topic = topics[lessonIndex % topics.length];
-      
-      const promise = fetchSingleLesson(apiKey, topic, 970, 250, lessonIndex, allFactsToAvoid)
-        .then(text => {
-          console.log("MicroLearn: lesson", lessonIndex + 1, "of", POOL_SIZE, "generated");
-          return { id: lessonIndex, topic: topic, text: text };
-        })
-        .catch(err => {
-          console.error("MicroLearn: failed lesson", lessonIndex, "-", err.message);
-          return null;
-        });
-      
-      batchPromises.push(promise);
-    }
-    
-    const batchResults = await Promise.all(batchPromises);
-    const successfulLessons = batchResults.filter(lesson => lesson !== null);
-    lessons.push(...successfulLessons);
-    
-    successfulLessons.forEach(lesson => {
-      if (lesson && lesson.text) {
-        allFactsToAvoid.push(lesson.text);
-      }
-    });
-    
-    console.log("MicroLearn: batch complete -", lessons.length, "successful lessons so far,", allFactsToAvoid.length, "facts to avoid for next batch");
+  for (let start = 0; start < POOL_SIZE; start += PARALLEL) {
+    const batchSize = Math.min(PARALLEL, POOL_SIZE - start);
+    const batch = await Promise.all(
+      Array.from({ length: batchSize }, (_, i) => {
+        const idx   = start + i;
+        const topic = mentalHealth ? "Mental Health" : topics[idx % topics.length];
+        return fetchLesson(apiKey, topic, idx, allFacts, mentalHealth)
+          .then(text => {
+            console.log("MicroLearn: lesson", idx + 1, "of", POOL_SIZE, "generated");
+            return { id: idx, topic, text };
+          })
+          .catch(err => { console.error("MicroLearn: lesson", idx, "failed —", err.message); return null; });
+      })
+    );
+
+    const ok = batch.filter(Boolean);
+    lessons.push(...ok);
+    ok.forEach(l => allFacts.push(l.text));
   }
 
   if (lessons.length > 0) {
-    await chrome.storage.local.set({ [POOL_KEY]: lessons, [USED_KEY]: [] });
-    
-    const newFacts = lessons.map(l => l.text);
-    await chrome.storage.local.set({ [HISTORICAL_FACTS_KEY]: newFacts });
-    
-    console.log("MicroLearn: pool saved -", lessons.length, "lessons ready");
-    console.log("MicroLearn: historical facts updated - storing", newFacts.length, "facts for next generation");
+    await chrome.storage.local.set({
+      [POOL_KEY]:       lessons,
+      [USED_KEY]:       [],
+      [HISTORICAL_KEY]: lessons.map(l => l.text)
+    });
+    console.log("MicroLearn: pool saved —", lessons.length, "lessons ready");
   } else {
-    console.error("MicroLearn: no lessons generated successfully");
+    console.error("MicroLearn: no lessons generated");
   }
-  
+
   return lessons;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// POOL RETRIEVAL
-// ══════════════════════════════════════════════════════════════════════════════
-
 async function getLessons(count) {
-  const data = await chrome.storage.local.get([POOL_KEY, USED_KEY]);
-  const pool = data[POOL_KEY] || [];
-  let used = data[USED_KEY] || [];
-
-  console.log("MicroLearn: getLessons requested", count, "| pool:", pool.length, "| used:", used.length);
+  const { [POOL_KEY]: pool = [], [USED_KEY]: used = [] } = await chrome.storage.local.get([POOL_KEY, USED_KEY]);
 
   if (pool.length === 0) {
-    console.warn("MicroLearn: pool is empty, triggering regeneration");
+    console.warn("MicroLearn: pool empty, triggering regeneration");
     triggerAutoRegeneration();
     return [];
   }
 
-  let available = pool.filter((l) => !used.includes(l.id));
-  console.log("MicroLearn: available lessons:", available.length);
+  let available  = pool.filter(l => !used.includes(l.id));
+  let currentUsed = used;
 
   if (available.length < count) {
-    console.log("MicroLearn: pool exhausted! Triggering auto-regeneration...");
+    console.log("MicroLearn: pool exhausted, triggering regeneration");
     triggerAutoRegeneration();
-    used = [];
-    available = [...pool];
+    currentUsed = [];
+    available   = [...pool];
   }
 
-  // Shuffle
+  // Fisher-Yates shuffle
   for (let i = available.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [available[i], available[j]] = [available[j], available[i]];
   }
 
   const picked = available.slice(0, count);
-  const newUsed = [...used, ...picked.map((l) => l.id)];
-
-  console.log("MicroLearn: picked", picked.length, "lessons, new used total:", newUsed.length);
-
-  await chrome.storage.local.set({ [USED_KEY]: newUsed });
-
-  return picked.map((l) => ({ text: l.text, topic: l.topic }));
+  await chrome.storage.local.set({ [USED_KEY]: [...currentUsed, ...picked.map(l => l.id)] });
+  return picked.map(l => ({ text: l.text, topic: l.topic }));
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// AUTO-REGENERATION
-// ══════════════════════════════════════════════════════════════════════════════
-
-async function triggerAutoRegeneration() {
-  console.log("MicroLearn: auto-regeneration triggered");
-  
-  const result = await chrome.storage.sync.get(["apiKey", "topics", "subjects", "selectedSubjects", "groups", "activeGroupId"]);
-  
-  if (!result.apiKey) {
-    console.warn("MicroLearn: cannot auto-regenerate - no API key set");
-    return;
-  }
-  
-  let topicsToUse = [];
-  
-  if (result.selectedSubjects && result.selectedSubjects.length > 0) {
-    topicsToUse = result.selectedSubjects;
-  } else if (result.activeGroupId && result.groups) {
-    const activeGroup = result.groups.find(g => g.id === result.activeGroupId);
-    if (activeGroup) {
-      topicsToUse = activeGroup.subjects;
-    }
-  } else if (result.topics && result.topics.length > 0) {
-    topicsToUse = result.topics;
-  }
-  
-  if (topicsToUse.length === 0) {
-    console.warn("MicroLearn: cannot auto-regenerate - no topics selected");
-    return;
-  }
-  
-  console.log("MicroLearn: auto-regenerating with topics:", topicsToUse);
-  
-  try {
-    await generatePool(result.apiKey, topicsToUse);
-    console.log("MicroLearn: auto-regeneration complete!");
-  } catch (err) {
-    console.error("MicroLearn: auto-regeneration failed:", err.message);
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// POOL MANAGEMENT
-// ══════════════════════════════════════════════════════════════════════════════
 
 async function ensurePool(apiKey, topics) {
-  if (!apiKey || !topics || topics.length === 0) {
-    console.warn("MicroLearn: cannot generate pool - missing key or topics");
-    return;
-  }
+  if (!apiKey || !topics?.length) return;
+  const { [POOL_KEY]: pool = [], lastTopics, lastApiKey } = await chrome.storage.local.get([POOL_KEY, "lastTopics", "lastApiKey"]);
 
-  const data = await chrome.storage.local.get([POOL_KEY, "lastTopics", "lastApiKey"]);
-  const pool = data[POOL_KEY] || [];
-  const topicsChanged = JSON.stringify(data.lastTopics || []) !== JSON.stringify(topics);
-  const keyChanged = (data.lastApiKey || "") !== apiKey;
-
-  if (pool.length === 0 || topicsChanged || keyChanged) {
-    console.log("MicroLearn: pool needs regeneration");
+  if (pool.length === 0 || JSON.stringify(lastTopics) !== JSON.stringify(topics) || lastApiKey !== apiKey) {
     await generatePool(apiKey, topics);
     await chrome.storage.local.set({ lastTopics: topics, lastApiKey: apiKey });
-  } else {
-    console.log("MicroLearn: pool is up to date");
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// INITIALIZATION & EVENT LISTENERS
-// ══════════════════════════════════════════════════════════════════════════════
+// ── Auto-Regeneration ─────────────────────────────────
 
-chrome.storage.sync.get(["apiKey", "topics"], (result) => {
-  if (result.apiKey && result.topics) {
-    ensurePool(result.apiKey, result.topics);
+async function triggerAutoRegeneration() {
+  const result = await chrome.storage.sync.get(["apiKey", "selectedSubjects", "groups", "activeGroupId", "isMentalHealthMode"]);
+  if (!result.apiKey) { console.warn("MicroLearn: no API key for auto-regen"); return; }
+
+  if (result.isMentalHealthMode === true) {
+    await generatePool(result.apiKey, ["Mental Health"], true).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
+    return;
   }
+
+  let topics = result.selectedSubjects?.length ? result.selectedSubjects : [];
+  if (!topics.length && result.activeGroupId && result.groups) {
+    const g = result.groups.find(g => g.id === result.activeGroupId);
+    if (g) topics = g.subjects;
+  }
+
+  if (!topics.length) { console.warn("MicroLearn: no topics for auto-regen"); return; }
+  await generatePool(result.apiKey, topics, false).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
+}
+
+// ── Init ──────────────────────────────────────────────
+
+chrome.storage.sync.get(["apiKey", "topics"], ({ apiKey, topics }) => {
+  if (apiKey && topics) ensurePool(apiKey, topics);
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && (changes.apiKey || changes.topics)) {
-    chrome.storage.sync.get(["apiKey", "topics"], (result) => {
-      if (result.apiKey && result.topics) {
-        ensurePool(result.apiKey, result.topics);
-      }
+    chrome.storage.sync.get(["apiKey", "topics"], ({ apiKey, topics }) => {
+      if (apiKey && topics) ensurePool(apiKey, topics);
     });
   }
 });
 
 // Keep service worker alive
-setInterval(() => {
-  chrome.storage.local.get("keepAlive", () => {});
-}, 20000);
+setInterval(() => chrome.storage.local.get("keepAlive", () => {}), 20000);
 
-// ══════════════════════════════════════════════════════════════════════════════
-// MESSAGE HANDLER
-// ══════════════════════════════════════════════════════════════════════════════
+// ── Message Handler ───────────────────────────────────
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  console.log("MicroLearn: message received -", msg.type);
-
   if (msg.type === "FETCH_LESSONS") {
-    const count = msg.count || 1;
-    getLessons(count)
-      .then((lessons) => {
-        console.log("MicroLearn: sending", lessons.length, "lessons");
-        sendResponse({ lessons: lessons });
-      })
-      .catch((err) => {
-        console.error("MicroLearn: getLessons error -", err.message);
-        sendResponse({ error: err.message });
-      });
+    getLessons(msg.count || 1)
+      .then(lessons => sendResponse({ lessons }))
+      .catch(err    => sendResponse({ error: err.message }));
     return true;
   }
 
   if (msg.type === "REGENERATE_POOL") {
-    const { apiKey, topics } = msg;
-    if (!apiKey || !topics) {
-      sendResponse({ error: "Missing apiKey or topics" });
-      return true;
-    }
-    generatePool(apiKey, topics)
+    const { apiKey, topics, isMentalHealthMode } = msg;
+    if (!apiKey || !topics) { sendResponse({ error: "Missing apiKey or topics" }); return true; }
+    generatePool(apiKey, topics, isMentalHealthMode || false)
       .then(() => {
         chrome.storage.local.set({ lastTopics: topics, lastApiKey: apiKey });
         sendResponse({ success: true });
       })
-      .catch((err) => {
-        console.error("MicroLearn: regeneration failed -", err.message);
-        sendResponse({ error: err.message });
-      });
+      .catch(err => sendResponse({ error: err.message }));
     return true;
   }
-
-  return false;
 });
