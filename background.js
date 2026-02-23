@@ -2,8 +2,8 @@
 // Relays Claude API requests from content scripts, which may be
 // blocked by a host page Content-Security-Policy.
 
-// Diversity hints for varied content styles
-const diversityHints = [
+// Diversity hints for educational content
+const educationalHints = [
   "Define a key term.",
   "State a number or measurement.",
   "Compare two related things.",
@@ -16,12 +16,28 @@ const diversityHints = [
   "Give a real-world example."
 ];
 
-let diversityIndex = 0;
+// Diversity hints for behavioral content
+const behavioralHints = [
+  "Reframe a negative thought.",
+  "State a grounding or breathing technique.",
+  "Normalize a common struggle.",
+  "Challenge an identity belief.",
+  "Give a one-step action.",
+  "State a boundary or permission.",
+  "Offer a perspective shift.",
+  "Use a contrast to reveal a pattern.",
+  "Affirm a positive identity.",
+  "Name a trigger and a redirect."
+];
+
+// Track hint indices separately per type
+let educationalIndex = 0;
+let behavioralIndex = 0;
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type !== "FETCH_LESSON") return false;
 
-  const { apiKey, topic } = msg;
+  const { apiKey, topic, contentType } = msg;
 
   // Basic guard
   if (!apiKey || !topic) {
@@ -30,11 +46,36 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  // Get current diversity hint and cycle to next
-  const diversityHint = diversityHints[diversityIndex];
-  diversityIndex = (diversityIndex + 1) % 10;
+  // Get diversity hint based on content type
+  let diversityHint;
+  let prompt;
 
-  const prompt = `You write micro-learning ads. Your output replaces a banner ad on a webpage.
+  if (contentType === "behavioral") {
+    diversityHint = behavioralHints[behavioralIndex];
+    behavioralIndex = (behavioralIndex + 1) % 10;
+
+    prompt = `You write micro-influence ads. Your output replaces a banner ad on a webpage. Your job is to shift how someone thinks, feels, or sees themselves — not teach them a fact.
+
+Format — return EXACTLY two lines, nothing else:
+HEADLINE: [the statement — 5 to 8 words]
+TAGLINE: [reinforcement — 8 to 15 words]
+
+Topic: ${topic}
+Style: ${diversityHint}
+
+Rules:
+- Headline is direct, second-person, identity-level.
+- Tagline reinforces the headline emotionally or practically.
+- Total must be under 25 words.
+- Repetition is a feature. These should feel true every time someone sees them.
+- No intros, no labels beyond HEADLINE/TAGLINE, no explanations.
+- Write like a mantra on a billboard, not advice in a textbook.`;
+  } else {
+    // Default to educational
+    diversityHint = educationalHints[educationalIndex];
+    educationalIndex = (educationalIndex + 1) % 10;
+
+    prompt = `You write micro-learning ads. Your output replaces a banner ad on a webpage.
 
 Format — return EXACTLY two lines, nothing else:
 HEADLINE: [the fact — 5 to 8 words]
@@ -49,8 +90,9 @@ Rules:
 - Total must be under 25 words.
 - No intros, no labels beyond HEADLINE/TAGLINE, no explanations.
 - Write like a billboard, not a textbook.`;
+  }
 
-  console.log("Fetching lesson for topic:", topic);
+  console.log("Fetching lesson for topic:", topic, "type:", contentType);
 
   fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

@@ -12,43 +12,64 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // ── Topic list ────────────────────────────────────────
+  // ── Topic list with types ───────────────────────────────
   const ALL_TOPICS = [
-    "History",
-    "Science",
-    "Math",
-    "Geography",
-    "Psychology",
-    "Philosophy",
-    "Biology",
-    "Physics",
-    "Economics",
-    "Technology",
-    "Literature",
-    "Art"
+    { topic: "Security+ (SY0-701)", type: "educational" },
+    { topic: "CCNA (200-301)", type: "educational" },
+    { topic: "Stress & Resilience", type: "behavioral" },
+    { topic: "Financial Habits", type: "behavioral" }
   ];
 
-  // Active topics stored as a Set for fast lookup
-  let activeTopics = new Set();
+  // Active topics stored as a Set of topic names for fast lookup
+  // Full objects are retrieved from ALL_TOPICS when saving
+  let activeTopicNames = new Set();
 
-  // ── Render topic chips ────────────────────────────────
+  // ── Render topic chips grouped by type ──────────────────
   function renderTopics() {
     topicGrid.innerHTML = "";
-    ALL_TOPICS.forEach((topic) => {
-      const chip = document.createElement("div");
-      chip.className = "topic-chip" + (activeTopics.has(topic) ? " active" : "");
-      chip.textContent = topic;
-      chip.addEventListener("click", () => {
-        if (activeTopics.has(topic)) {
-          if (activeTopics.size === 1) return; // keep at least one
-          activeTopics.delete(topic);
-        } else {
-          activeTopics.add(topic);
-        }
-        renderTopics();
+
+    const educational = ALL_TOPICS.filter(t => t.type === "educational");
+    const behavioral = ALL_TOPICS.filter(t => t.type === "behavioral");
+
+    // Render educational group
+    if (educational.length > 0) {
+      const label = document.createElement("div");
+      label.className = "topic-group-label";
+      label.textContent = "Learn";
+      topicGrid.appendChild(label);
+
+      educational.forEach(({ topic }) => {
+        topicGrid.appendChild(createChip(topic));
       });
-      topicGrid.appendChild(chip);
+    }
+
+    // Render behavioral group
+    if (behavioral.length > 0) {
+      const label = document.createElement("div");
+      label.className = "topic-group-label";
+      label.textContent = "Influence";
+      topicGrid.appendChild(label);
+
+      behavioral.forEach(({ topic }) => {
+        topicGrid.appendChild(createChip(topic));
+      });
+    }
+  }
+
+  function createChip(topic) {
+    const chip = document.createElement("div");
+    chip.className = "topic-chip" + (activeTopicNames.has(topic) ? " active" : "");
+    chip.textContent = topic;
+    chip.addEventListener("click", () => {
+      if (activeTopicNames.has(topic)) {
+        if (activeTopicNames.size === 1) return; // keep at least one
+        activeTopicNames.delete(topic);
+      } else {
+        activeTopicNames.add(topic);
+      }
+      renderTopics();
     });
+    return chip;
   }
 
   // ── Toggle logic ──────────────────────────────────────
@@ -72,11 +93,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const topics = [...activeTopics];
-    if (topics.length === 0) {
+    if (activeTopicNames.size === 0) {
       showStatus("Select at least one topic.", "error");
       return;
     }
+
+    // Build full topic objects from active names
+    const topics = ALL_TOPICS.filter(t => activeTopicNames.has(t.topic));
 
     chrome.storage.sync.set({ apiKey: key, topics: topics }, () => {
       showStatus(key ? "Saved ✓" : "Key cleared ✓", "success");
@@ -103,11 +126,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // API key
     if (result.apiKey) apiKeyInput.value = result.apiKey;
 
-    // Topics — default to Science + History if nothing saved yet
+    // Topics — handle both old string format and new object format
     if (Array.isArray(result.topics) && result.topics.length > 0) {
-      activeTopics = new Set(result.topics);
+      // Check if it's the old string format
+      if (typeof result.topics[0] === "string") {
+        // Old format: default to new topics
+        activeTopicNames = new Set([ALL_TOPICS[0].topic]);
+      } else {
+        // New format: extract topic names
+        activeTopicNames = new Set(result.topics.map(t => t.topic));
+      }
     } else {
-      activeTopics = new Set(["Science", "History"]);
+      // Default to first topic
+      activeTopicNames = new Set([ALL_TOPICS[0].topic]);
     }
     renderTopics();
   });

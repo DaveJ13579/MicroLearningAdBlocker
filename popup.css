@@ -176,6 +176,21 @@ input:checked + .slider:before {
   gap: 6px;
 }
 
+.topic-group-label {
+  width: 100%;
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.topic-group-label:first-child {
+  margin-top: 0;
+}
+
 .topic-chip {
   padding: 5px 10px;
   border-radius: 20px;

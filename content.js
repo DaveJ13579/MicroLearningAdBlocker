@@ -4,8 +4,14 @@
   const PROCESSED_ATTR = "data-microlearn-replaced";
 
   // ── Pick a random topic from the saved list ──────────
+  // Returns { topic, type } object
   function pickTopic(topics) {
-    return topics[Math.floor(Math.random() * topics.length)];
+    const item = topics[Math.floor(Math.random() * topics.length)];
+    // Handle both old string format and new object format
+    if (typeof item === "string") {
+      return { topic: item, type: "educational" };
+    }
+    return item;
   }
 
   // ── Creates the learning placeholder box ──────────────
@@ -58,10 +64,10 @@
     ad.replaceWith(placeholder);
 
     // Pick a topic and ask the background worker for a lesson
-    const topic = pickTopic(topics);
+    const { topic, type: contentType } = pickTopic(topics);
 
     chrome.runtime.sendMessage(
-      { type: "FETCH_LESSON", apiKey: apiKey, topic: topic },
+      { type: "FETCH_LESSON", apiKey: apiKey, topic: topic, contentType: contentType },
       (response) => {
         const headlineEl = placeholder.querySelector(".microlearn-headline");
         const taglineEl = placeholder.querySelector(".microlearn-tagline");
@@ -107,7 +113,7 @@
   let observer = null;
   let pollInterval = null;
   let savedApiKey = "";
-  let savedTopics = ["Science", "History"];
+  let savedTopics = [{ topic: "Security+ (SY0-701)", type: "educational" }];
 
   function enableMicroLearn() {
     scanAndReplaceAds(savedApiKey, savedTopics);
@@ -137,9 +143,19 @@
   // ── Initialise: load settings then act ────────────────
   chrome.storage.sync.get(["enabled", "apiKey", "topics"], (result) => {
     savedApiKey = result.apiKey || "";
-    savedTopics = (Array.isArray(result.topics) && result.topics.length > 0)
-      ? result.topics
-      : ["Science", "History"];
+
+    // Handle topics with backward compatibility
+    if (Array.isArray(result.topics) && result.topics.length > 0) {
+      // Check if old string format
+      if (typeof result.topics[0] === "string") {
+        // Convert old format to new default
+        savedTopics = [{ topic: "Security+ (SY0-701)", type: "educational" }];
+      } else {
+        savedTopics = result.topics;
+      }
+    } else {
+      savedTopics = [{ topic: "Security+ (SY0-701)", type: "educational" }];
+    }
 
     if (result.enabled !== false) enableMicroLearn();
   });
