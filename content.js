@@ -1,14 +1,11 @@
 (function () {
 
-  // Attribute used to mark ads already replaced
   const PROCESSED_ATTR = "data-microlearn-replaced";
 
-  // ── Pick a random topic from the saved list ──────────
   function pickTopic(topics) {
     return topics[Math.floor(Math.random() * topics.length)];
   }
 
-  // ── Creates the learning placeholder box ──────────────
   function createMicroLearnPlaceholder(width, height) {
     const wrapper = document.createElement("div");
     wrapper.className = "microlearn-placeholder";
@@ -16,18 +13,17 @@
     if (width)  wrapper.style.width  = width  + "px";
     if (height) wrapper.style.height = height + "px";
 
-    // Start with loading state
     wrapper.innerHTML =
       '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading lesson…</div>';
+      '<div class="microlearn-body microlearn-loading">Loading lesson…</div>' +
+      '<div class="microlearn-footer">Powered by Claude</div>';
 
     return wrapper;
   }
 
-
-  // ── Replaces a detected ad with learning content ─────
   function replaceAd(ad, apiKey, topics) {
     if (ad.hasAttribute(PROCESSED_ATTR)) return;
+    if (ad.closest(".microlearn-placeholder")) return;
 
     const rect = ad.getBoundingClientRect();
     if (rect.width < 50 || rect.height < 50) return;
@@ -35,31 +31,34 @@
     const placeholder = createMicroLearnPlaceholder(rect.width, rect.height);
     placeholder.setAttribute(PROCESSED_ATTR, "true");
 
-    // Swap the ad out immediately so the user sees the card
     ad.replaceWith(placeholder);
 
-    // Pick a topic and ask the background worker for a lesson
     const topic = pickTopic(topics);
 
     chrome.runtime.sendMessage(
       { type: "FETCH_LESSON", apiKey: apiKey, topic: topic },
       (response) => {
         const bodyEl = placeholder.querySelector(".microlearn-body");
-        if (!bodyEl) return; // element was removed from DOM
+        if (!bodyEl) return;
 
         if (response && response.lesson) {
           bodyEl.textContent = response.lesson;
-          bodyEl.classList.remove("microlearn-loading");
         } else {
-          // Fallback: show a static tip so the card isn't empty
-          bodyEl.textContent = "💡 Tip: Stay curious — ask questions every day.";
-          bodyEl.classList.remove("microlearn-loading");
+          const fallbackFacts = [
+            "💡 Curiosity activates reward circuits in the brain.",
+            "💡 The human brain uses about 20% of your body's energy.",
+            "💡 Learning strengthens neural pathways.",
+            "💡 The shortest war in history lasted 38 minutes."
+          ];
+          bodyEl.textContent =
+            fallbackFacts[Math.floor(Math.random() * fallbackFacts.length)];
         }
+
+        bodyEl.classList.remove("microlearn-loading");
       }
     );
   }
 
-  // ── Scans page for common ad containers ──────────────
   function scanAndReplaceAds(apiKey, topics) {
     const ads = document.querySelectorAll(
       '.ad-slot, ' +
@@ -70,10 +69,15 @@
       '#ad, ' +
       'iframe[id^="ape_"]'
     );
-    ads.forEach((ad) => replaceAd(ad, apiKey, topics));
+
+    const visibleAds = [...ads].filter(ad => {
+      const style = window.getComputedStyle(ad);
+      return style.display !== "none" && style.visibility !== "hidden";
+    });
+
+    visibleAds.forEach(ad => replaceAd(ad, apiKey, topics));
   }
 
-  // ── MutationObserver + polling for late-loading ads ──
   let observer = null;
   let pollInterval = null;
   let savedApiKey = "";
@@ -82,13 +86,11 @@
   function enableMicroLearn() {
     scanAndReplaceAds(savedApiKey, savedTopics);
 
-    // Catch ads added to the DOM
     observer = new MutationObserver(() => {
       scanAndReplaceAds(savedApiKey, savedTopics);
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Catch ads that exist but are unsized until their content loads
     pollInterval = setInterval(() => {
       scanAndReplaceAds(savedApiKey, savedTopics);
     }, 2000);
@@ -96,15 +98,10 @@
 
   function disableMicroLearn() {
     if (observer) observer.disconnect();
-    observer = null;
-
     if (pollInterval) clearInterval(pollInterval);
-    pollInterval = null;
-
     location.reload();
   }
 
-  // ── Initialise: load settings then act ────────────────
   chrome.storage.sync.get(["enabled", "apiKey", "topics"], (result) => {
     savedApiKey = result.apiKey || "";
     savedTopics = (Array.isArray(result.topics) && result.topics.length > 0)
@@ -114,7 +111,6 @@
     if (result.enabled !== false) enableMicroLearn();
   });
 
-  // ── React to toggle / setting changes at runtime ─────
   chrome.storage.onChanged.addListener((changes) => {
     if ("enabled" in changes) {
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
