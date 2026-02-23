@@ -2,54 +2,43 @@
   "manifest_version": 3,
   "name": "MicroLearn",
   "description": "Replaces ads with structured micro-insights.",
-  "version": "3.2.4",
+  "version": "3.2.5",
+
   "permissions": [
     "storage",
     "tabs"
   ],
+
   "host_permissions": [
     "https://api.anthropic.com/*"
   ],
+
   "background": {
     "service_worker": "background.js"
   },
+
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "images/logo1_16.png",
-      "48": "images/logo1_48.png",
-      "128": "images/logo1.png"
-    }
+    "default_popup": "popup.html"
   },
-  "icons": {
-    "16": "images/logo1_16.png",
-    "48": "images/logo1_48.png",
-    "128": "images/logo1.png"
-  },
+
   "options_page": "preferences.html",
+
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ],
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
       "run_at": "document_idle"
     }
   ],
+
   "web_accessible_resources": [
     {
       "resources": [
         "images/*",
         "fonts/*"
       ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "matches": ["<all_urls>"]
     }
   ]
 }
