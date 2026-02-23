@@ -1,23 +1,10 @@
-/* Main placeholder container */
-@font-face {
-  font-family: "Google Sans";
-  src: url(chrome-extension://__MSG_@@extension_id__/fonts/GoogleSans-VariableFont_GRAD,opsz,wght.ttf)
-       format("truetype");
-  font-weight: 100 900;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Google Sans";
-  src: url(chrome-extension://__MSG_@@extension_id__/fonts/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf)
-       format("truetype");
-  font-weight: 100 900;
-  font-style: italic;
-}
-
 .microlearn-placeholder {
   background: #E7FEEC;
   color: #0d0f5d;
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
 
   display: flex;
   flex-direction: column;
@@ -25,41 +12,42 @@
   align-items: center;
 
   text-align: center;
-  font-family: "Google Sans",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Google Sans", system-ui, sans-serif;
 
-  padding: 12px;
-  box-sizing: border-box;
-  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Header text */
+.microlearn-placeholder:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+}
+
 .microlearn-header {
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 6px;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
 }
 
-/* Body text */
 .microlearn-body {
   font-size: 11px;
   line-height: 1.3;
   opacity: 0.9;
-  overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
+  overflow: hidden;
 }
 
-/* Loading pulse animation */
+.microlearn-footer {
+  margin-top: 6px;
+  font-size: 9px;
+  opacity: 0.6;
+}
+
 @keyframes microlearn-pulse {
-  0%, 100% { opacity: 0.5; }
-  50%      { opacity: 1;   }
+  0%,100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 .microlearn-body.microlearn-loading {
