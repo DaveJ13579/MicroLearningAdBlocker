@@ -2,6 +2,22 @@
 // Relays Claude API requests from content scripts, which may be
 // blocked by a host page Content-Security-Policy.
 
+// Diversity hints for varied content styles
+const diversityHints = [
+  "Define a key term.",
+  "State a number or measurement.",
+  "Compare two related things.",
+  "Quick-recall: a standard or version.",
+  "List 3-4 related items.",
+  "Name a common problem and its fix.",
+  "State a rule of thumb.",
+  "Name a tool and what it does.",
+  "State a core concept in one line.",
+  "Give a real-world example."
+];
+
+let diversityIndex = 0;
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type !== "FETCH_LESSON") return false;
 
@@ -14,13 +30,25 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  const prompt =
-    "Give me one micro-learning fact about " +
-    topic +
-    ". " +
-    "Exactly one sentence. " +
-    "Make it surprising or interesting. " +
-    "No headers, no bullet points, no extra text.";
+  // Get current diversity hint and cycle to next
+  const diversityHint = diversityHints[diversityIndex];
+  diversityIndex = (diversityIndex + 1) % 10;
+
+  const prompt = `You write micro-learning ads. Your output replaces a banner ad on a webpage.
+
+Format — return EXACTLY two lines, nothing else:
+HEADLINE: [the fact — 5 to 8 words]
+TAGLINE: [why it matters — 8 to 15 words]
+
+Topic: ${topic}
+Style: ${diversityHint}
+
+Rules:
+- Headline is the knowledge. Dense, concrete, no filler.
+- Tagline is the hook. Makes the headline stick.
+- Total must be under 25 words.
+- No intros, no labels beyond HEADLINE/TAGLINE, no explanations.
+- Write like a billboard, not a textbook.`;
 
   console.log("Fetching lesson for topic:", topic);
 
@@ -34,7 +62,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 60,
+      max_tokens: 40,
       messages: [{ role: "user", content: prompt }]
     })
   })

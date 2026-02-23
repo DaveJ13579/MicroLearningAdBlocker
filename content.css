@@ -23,6 +23,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  position: relative;
 
   text-align: center;
   font-family: "Google Sans",
@@ -31,29 +32,53 @@
     BlinkMacSystemFont,
     sans-serif;
 
-  padding: 12px;
+  padding: 16px;
   box-sizing: border-box;
   overflow: hidden;
 }
 
-/* Header text */
-.microlearn-header {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 6px;
+/* Brand label - small, subtle, top-left corner */
+.microlearn-brand {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 9px;
+  font-weight: 500;
   letter-spacing: 0.5px;
-  white-space: nowrap;
+  opacity: 0.6;
+  text-transform: uppercase;
 }
 
-/* Body text */
-.microlearn-body {
-  font-size: 11px;
+/* Content wrapper */
+.microlearn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+/* Headline - the fact, bold and prominent */
+.microlearn-headline {
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1.3;
-  opacity: 0.9;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 2;
+}
+
+/* Tagline - the hook, smaller and lighter */
+.microlearn-tagline {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
+  opacity: 0.75;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* Loading pulse animation */
@@ -62,7 +87,7 @@
   50%      { opacity: 1;   }
 }
 
-.microlearn-body.microlearn-loading {
+.microlearn-headline.microlearn-loading {
   color: #6b7280;
   font-style: italic;
   animation: microlearn-pulse 1.4s ease-in-out infinite;

@@ -18,10 +18,29 @@
 
     // Start with loading state
     wrapper.innerHTML =
-      '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading lesson…</div>';
+      '<div class="microlearn-brand">MicroLearn</div>' +
+      '<div class="microlearn-content">' +
+        '<div class="microlearn-headline microlearn-loading">Loading lesson…</div>' +
+        '<div class="microlearn-tagline"></div>' +
+      '</div>';
 
     return wrapper;
+  }
+
+  // ── Parses the API response into headline and tagline ──
+  function parseLesson(text) {
+    const headlineMatch = text.match(/HEADLINE:\s*(.+)/i);
+    const taglineMatch = text.match(/TAGLINE:\s*(.+)/i);
+
+    if (headlineMatch && taglineMatch) {
+      return {
+        headline: headlineMatch[1].trim(),
+        tagline: taglineMatch[1].trim()
+      };
+    }
+
+    // Fallback: couldn't parse, return full text as headline
+    return null;
   }
 
 
@@ -44,16 +63,27 @@
     chrome.runtime.sendMessage(
       { type: "FETCH_LESSON", apiKey: apiKey, topic: topic },
       (response) => {
-        const bodyEl = placeholder.querySelector(".microlearn-body");
-        if (!bodyEl) return; // element was removed from DOM
+        const headlineEl = placeholder.querySelector(".microlearn-headline");
+        const taglineEl = placeholder.querySelector(".microlearn-tagline");
+        if (!headlineEl) return; // element was removed from DOM
 
         if (response && response.lesson) {
-          bodyEl.textContent = response.lesson;
-          bodyEl.classList.remove("microlearn-loading");
+          const parsed = parseLesson(response.lesson);
+
+          if (parsed) {
+            headlineEl.textContent = parsed.headline;
+            taglineEl.textContent = parsed.tagline;
+          } else {
+            // Fallback: parsing failed, show full response as headline
+            headlineEl.textContent = response.lesson;
+            taglineEl.textContent = "";
+          }
+          headlineEl.classList.remove("microlearn-loading");
         } else {
           // Fallback: show a static tip so the card isn't empty
-          bodyEl.textContent = "💡 Tip: Stay curious — ask questions every day.";
-          bodyEl.classList.remove("microlearn-loading");
+          headlineEl.textContent = "Stay curious — ask questions every day.";
+          taglineEl.textContent = "Learning transforms how you see the world.";
+          headlineEl.classList.remove("microlearn-loading");
         }
       }
     );
