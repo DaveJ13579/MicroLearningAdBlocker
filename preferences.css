@@ -1,0 +1,609 @@
+/* preferences.css (v3.2) — formatting + layout redesign
+   Keeps all existing HTML intact, but changes spacing/layout/visual identity.
+   Theme applied via html.dark (theme.js) and body.dark-mode (legacy).
+*/
+
+:root{
+  --bg:#ffffff;
+  --bg-2:#f3f5f8;
+  --panel:#ffffff;
+  --panel-2:#f6f7fb;
+  --text:#0f172a;
+  --muted:rgba(15,23,42,0.62);
+  --border:rgba(2,6,23,0.10);
+  --shadow:0 12px 28px rgba(2,6,23,0.10);
+  --shadow-soft:0 6px 14px rgba(2,6,23,0.08);
+  --accent:#2563eb;      /* blue */
+  --accent-2:#7c3aed;    /* violet */
+  --good:#16a34a;
+  --chip-bg:rgba(37,99,235,0.10);
+  --chip-border:rgba(37,99,235,0.25);
+  --focus:0 0 0 4px rgba(37,99,235,0.18);
+}
+
+:root.dark,
+body.dark-mode{
+  --bg:#0b1020;
+  --bg-2:#0f162b;
+  --panel:#0f162b;
+  --panel-2:#111b33;
+  --text:#e8eefc;
+  --muted:rgba(232,238,252,0.68);
+  --border:rgba(255,255,255,0.12);
+  --shadow:0 16px 34px rgba(0,0,0,0.40);
+  --shadow-soft:0 10px 22px rgba(0,0,0,0.35);
+  --accent:#6ea8ff;
+  --accent-2:#b197ff;
+  --good:#22c55e;
+  --chip-bg:rgba(110,168,255,0.14);
+  --chip-border:rgba(110,168,255,0.26);
+  --focus:0 0 0 4px rgba(110,168,255,0.20);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  margin:0;
+  padding:22px;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(37,99,235,0.10), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(124,58,237,0.10), transparent 55%),
+    linear-gradient(180deg, var(--bg), var(--bg-2));
+}
+
+/* ========= Header ========= */
+
+.page-header{
+  max-width:1100px;
+  margin:0 auto 16px;
+  padding:16px 18px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  position:sticky;
+  top:14px;
+  z-index:20;
+  backdrop-filter:saturate(140%) blur(6px);
+}
+
+.header-left{display:flex;align-items:center;gap:12px;min-width:260px}
+.logo-wrap{display:flex;align-items:center;justify-content:center}
+.logo{
+  width:42px;height:42px;border-radius:12px;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  object-fit:cover;
+}
+.header-brand .brand{font-weight:900;font-size:16px;letter-spacing:0.2px}
+.header-brand .tagline{font-size:12px;color:var(--muted);margin-top:2px}
+
+.header-divider{display:none}
+
+.header-right{flex:1;display:flex;align-items:center;justify-content:flex-start}
+.page-title{
+  font-size:20px;
+  font-weight:900;
+  line-height:1.05;
+  letter-spacing:-0.2px;
+}
+
+.settings-icon-btn{
+  width:40px;height:40px;border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--panel-2);
+  color:var(--text);
+  cursor:pointer;
+  box-shadow:var(--shadow-soft);
+}
+.settings-icon-btn:hover{transform:translateY(-1px)}
+.settings-icon-btn:focus{outline:none;box-shadow:var(--shadow-soft),var(--focus)}
+
+/* ========= Shared Cards ========= */
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:var(--shadow-soft);
+}
+
+/* Section labels */
+.section-label,
+.pattern-section-label{
+  max-width:1100px;
+  margin:16px auto 10px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:0.9px;
+  text-transform:uppercase;
+}
+
+/* ========= Mode card ========= */
+
+.mode-card{
+  max-width:1100px;
+  margin:0 auto 14px;
+  padding:12px;
+}
+
+#modeToggle{display:none}
+
+.mode-toggle-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.mode-option{
+  padding:14px 14px 12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--panel-2);
+  cursor:pointer;
+  transition:transform 120ms ease, box-shadow 120ms ease;
+}
+
+.mode-option:hover{transform:translateY(-1px)}
+.mode-label{font-weight:900;font-size:13px}
+.mode-description{margin-top:4px;color:var(--muted);font-size:12px;line-height:1.25}
+
+/* Active mode (your JS toggles classes; we support both patterns) */
+.mode-option.active,
+.mode-option.selected{
+  background:var(--panel);
+  box-shadow:var(--shadow-soft);
+  border-left:4px solid var(--accent);
+}
+
+/* ========= Learning Path ========= */
+
+.learning-path-section{
+  max-width:1100px;
+  margin:0 auto 10px;
+}
+
+.learning-path-card{
+  max-width:1100px;
+  margin:0 auto 14px;
+  padding:12px;
+}
+
+.learning-path-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+}
+
+.path-tab{
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--panel-2);
+  padding:12px 10px;
+  cursor:pointer;
+  font-weight:900;
+  color:var(--muted);
+  transition:transform 120ms ease;
+}
+
+.path-tab:hover{transform:translateY(-1px)}
+.path-tab.active,
+.path-tab.selected{
+  color:var(--text);
+  background:var(--panel);
+  border-left:4px solid var(--accent-2);
+}
+
+/* ========= Two-column main layout ========= */
+
+.columns{
+  max-width:1100px;
+  margin:0 auto 16px;
+  display:grid;
+  grid-template-columns:360px 1fr;
+  gap:14px;
+  align-items:start;
+}
+
+.column{min-width:0}
+
+.col-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px}
+
+/* Left list card */
+.list-card{
+  padding:10px;
+}
+
+.group-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  max-height:320px;
+  overflow:auto;
+}
+
+.add-btn{
+  width:100%;
+  border:none;
+  background:var(--accent);
+  color:white;
+  font-weight:900;
+  border-radius:14px;
+  padding:12px 12px;
+  cursor:pointer;
+}
+.add-btn:hover{filter:brightness(0.96)}
+
+/* Subjects card */
+.subjects-card{
+  padding:12px;
+}
+
+.subjects-library{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  gap:8px;
+  max-height:320px;
+  overflow:auto;
+  padding:2px;
+}
+
+/* Subject "chips" — works with your existing .subject-chip etc by being general */
+.subject-chip,
+.subject-tag,
+.subject-item{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:999px;
+  background:var(--chip-bg);
+  border:1px solid var(--chip-border);
+  color:var(--text);
+  font-size:12px;
+  font-weight:900;
+}
+
+.subject-chip button,
+.subject-tag button{
+  border:none;background:transparent;color:var(--muted);cursor:pointer;font-weight:900;
+}
+
+/* Add subject row */
+.add-subject-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:12px;
+}
+
+.text-input,
+.add-subject-input{
+  flex:1;
+  border-radius:14px;
+  padding:12px 12px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--text);
+  outline:none;
+}
+.text-input:focus,
+.add-subject-input:focus{box-shadow:var(--focus);border-color:transparent}
+
+.add-subject-btn{
+  width:42px;height:42px;
+  border-radius:14px;
+  border:none;
+  background:var(--accent);
+  color:white;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+}
+.add-subject-btn:hover{filter:brightness(0.96)}
+
+/* ========= Theme customization section ========= */
+
+.theme-customization-card{
+  max-width:1100px;
+  margin:0 auto 12px;
+  padding:12px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.theme-btn{
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--panel-2);
+  padding:12px 12px;
+  cursor:pointer;
+  font-weight:900;
+  color:var(--text);
+}
+.theme-btn:hover{transform:translateY(-1px)}
+
+/* ========= Save bar ========= */
+
+.save-bar{
+  max-width:1100px;
+  margin:14px auto 10px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border-radius:18px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+
+.save-btn{
+  flex:1;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg, var(--accent), var(--accent-2));
+  color:white;
+  padding:14px 16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.save-btn:hover{filter:brightness(0.97)}
+.save-status{font-size:12px;color:var(--muted);min-width:160px;text-align:right}
+
+/* ========= Modal ========= */
+
+.modal-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.48);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:50;
+}
+.modal-overlay.show{display:flex}
+
+.modal{
+  width:min(760px, 96vw);
+  max-height:min(88vh, 860px);
+  overflow:auto;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:16px;
+}
+
+.modal-close-btn{
+  border:none;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  cursor:pointer;
+  font-weight:900;
+  color:var(--text);
+}
+.modal-close-btn:hover{transform:translateY(-1px)}
+
+/* Theme modal button group */
+.theme-options{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+}
+.theme-options .theme-btn{
+  background:var(--panel-2);
+}
+.theme-options .theme-btn.active{
+  background:var(--panel);
+  box-shadow:var(--shadow-soft), var(--focus);
+}
+
+/* Responsive */
+@media (max-width: 980px){
+  .page-header{position:static;top:auto}
+  .columns{grid-template-columns:1fr}
+  .save-bar{flex-direction:column;align-items:stretch}
+  .save-status{text-align:left;min-width:0}
+  .theme-customization-card{grid-template-columns:1fr}
+}
+
+
+/* v3.2.3: modal open class support (JS toggles .open) */
+.modal-overlay.open{
+  display:flex !important;
+  pointer-events:auto !important;
+}
+
+
+/* =========================
+   v3.2.4 Modal polish
+   ========================= */
+
+/* Overlay: centered, soft dim, click-safe */
+.modal-overlay{
+  inset: 0;
+  padding: 18px;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px) saturate(140%);
+}
+
+/* Open state: your JS toggles .open */
+.modal-overlay.open{
+  display:flex !important;
+  pointer-events:auto !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+/* Modal container */
+.modal{
+  position: relative;
+  width: min(760px, 96vw);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+
+  padding: 16px 16px 14px 16px;
+}
+
+/* Title */
+.modal-title{
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: -0.2px;
+  margin: 6px 44px 12px 0; /* leave room for close button */
+}
+
+/* Body defaults */
+.modal-body{
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* Actions row */
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Buttons inside modals */
+.modal-actions button,
+.modal button.primary,
+.modal button.secondary,
+.modal button{
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 900;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Default button look */
+.modal button{
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+}
+.modal button:hover{ transform: translateY(-1px); }
+
+/* Primary action (Save, Apply, Regenerate) */
+.modal button.primary,
+.modal-actions .primary,
+.modal-actions button:last-child{
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none;
+  color: white;
+}
+.modal button.primary:hover,
+.modal-actions .primary:hover,
+.modal-actions button:last-child:hover{ filter: brightness(0.97); }
+
+/* Close button */
+.modal-close{
+  position:absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+  box-shadow: var(--shadow-soft);
+}
+.modal-close:hover{ transform: translateY(-1px); }
+.modal-close:focus{ outline: none; box-shadow: var(--shadow-soft), var(--focus); }
+
+/* Inputs in modals */
+.modal input[type="text"],
+.modal input[type="password"],
+.modal input[type="email"],
+.modal input[type="number"],
+.modal textarea{
+  width: 100%;
+  border-radius: 14px;
+  padding: 12px 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+  margin-top: 8px;
+}
+.modal textarea{ min-height: 96px; resize: vertical; }
+.modal input:focus,
+.modal textarea:focus{ box-shadow: var(--focus); border-color: transparent; }
+
+/* Small helper text */
+.modal .hint,
+.modal .subtle,
+.modal .description{
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Theme modal buttons */
+.theme-mode-list{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.theme-mode-btn{
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  padding: 12px 10px;
+  font-weight: 900;
+  cursor: pointer;
+  color: var(--text);
+}
+.theme-mode-btn.active{
+  background: var(--panel);
+  box-shadow: var(--shadow-soft), var(--focus);
+}
+
+/* Pattern slideshow controls */
+.pattern-slideshow{
+  margin-top: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+}
+.slide-arrow{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+.slide-arrow:hover{ transform: translateY(-1px); }

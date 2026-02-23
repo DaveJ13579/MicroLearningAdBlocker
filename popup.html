@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MicroLearn</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+
+  <body>
+    <div class="top">
+      <div class="brand">
+        <img src="images/logo1.png" class="logo" alt="MicroLearn" />
+        <div class="brandText">
+          <div class="title">MicroLearn</div>
+          <div class="subtitle">Structured micro-insights</div>
+        </div>
+      </div>
+
+      <div class="toggleRow">
+        <div id="statusText" class="status">On</div>
+        <label class="switch">
+          <input type="checkbox" id="toggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="metric">
+        <div class="label">Insights today</div>
+        <div class="value" id="insightsToday">—</div>
+      </div>
+      <div class="metric">
+        <div class="label">Session stream</div>
+        <div class="value" id="streamProgress">—</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="openPrefs" class="btnPrimary">Preferences</button>
+      <button id="refreshStats" class="btn">Refresh</button>
+    </div>
+
+    <div id="hint" class="hint"></div>
+
+    <script src="theme.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

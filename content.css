@@ -1,0 +1,138 @@
+/* content.css (v3)
+   Structured "Insight" card with light/dark support.
+*/
+
+:root {
+  --ml-card-bg: #f5f6f8;
+  --ml-card-border: rgba(0,0,0,0.08);
+  --ml-text: #111316;
+  --ml-muted: rgba(17, 19, 22, 0.65);
+  --ml-shadow: 0 8px 22px rgba(0,0,0,0.10);
+  --ml-accent: #2a6df4;
+  --ml-accent-2: #8b5cf6;
+  --ml-btn-bg: rgba(0,0,0,0.06);
+  --ml-btn-bg-hover: rgba(0,0,0,0.10);
+}
+
+.ml-card.dark {
+  --ml-card-bg: #161a20;
+  --ml-card-border: rgba(255,255,255,0.10);
+  --ml-text: #eef2f6;
+  --ml-muted: rgba(238, 242, 246, 0.68);
+  --ml-shadow: 0 10px 26px rgba(0,0,0,0.30);
+  --ml-accent: #6ea8ff;
+  --ml-accent-2: #a78bfa;
+  --ml-btn-bg: rgba(255,255,255,0.10);
+  --ml-btn-bg-hover: rgba(255,255,255,0.16);
+}
+
+.ml-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  background: var(--ml-card-bg);
+  color: var(--ml-text);
+
+  border: 1px solid var(--ml-card-border);
+  border-left: 4px solid var(--ml-accent);
+  border-radius: 10px;
+
+  padding: 12px 12px 10px 12px;
+  box-sizing: border-box;
+
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  box-shadow: var(--ml-shadow);
+
+  overflow: hidden;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.ml-card:hover {
+  transform: translateY(-1px);
+}
+
+.ml-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ml-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--ml-muted);
+}
+
+.ml-topic {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ml-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.ml-body {
+  font-size: 13px;
+  line-height: 1.35;
+  letter-spacing: 0.1px;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
+}
+
+.ml-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ml-meta {
+  font-size: 10px;
+  color: var(--ml-muted);
+}
+
+.ml-next {
+  border: 1px solid var(--ml-card-border);
+  background: var(--ml-btn-bg);
+  color: var(--ml-text);
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ml-next:hover {
+  background: var(--ml-btn-bg-hover);
+}
+
+@keyframes mlPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.ml-loading {
+  color: var(--ml-muted);
+  animation: mlPulse 1.2s ease-in-out infinite;
+}
+
+/* Subtle topic accents (optional). */
+.ml-card[data-topic*="mental"] { border-left-color: var(--ml-accent-2); }
+.ml-card[data-topic*="ipv4"],
+.ml-card[data-topic*="osi"],
+.ml-card[data-topic*="vlan"],
+.ml-card[data-topic*="stp"],
+.ml-card[data-topic*="ospf"],
+.ml-card[data-topic*="acl"],
+.ml-card[data-topic*="nat"],
+.ml-card[data-topic*="dhcp"],
+.ml-card[data-topic*="dns"] { border-left-color: var(--ml-accent); }
