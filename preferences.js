@@ -23,6 +23,19 @@ const customTab       = document.getElementById("customTab");
 const modeOptionLeft  = document.getElementById("modeOptionLeft");
 const modeOptionRight = document.getElementById("modeOptionRight");
 
+// Theme customization
+const adContainersBtn     = document.getElementById("adContainersBtn");
+const adContainersOverlay = document.getElementById("adContainersOverlay");
+const adContainersClose   = document.getElementById("adContainersClose");
+const adContainersCancel  = document.getElementById("adContainersCancel");
+const adContainersSave    = document.getElementById("adContainersSave");
+const patternTrack        = document.getElementById("patternTrack");
+const slideLeft           = document.getElementById("slideLeft");
+const slideRight          = document.getElementById("slideRight");
+const patternPreview      = document.getElementById("patternPreview");
+const previewPlaceholderMsg = document.getElementById("previewPlaceholderMsg");
+const previewCard         = document.getElementById("previewCard");
+
 // ── Topic Lists ───────────────────────────────────────
 const DEFAULT_SUBJECTS = [
   "History", "Science", "Math", "Geography", "Psychology",
@@ -74,6 +87,36 @@ let activeGroupId    = null;
 let isMentalHealthMode = false;
 let apiKey           = "";
 let learningPath     = "ccna";
+
+// ── Patterns ──────────────────────────────────────────
+const PATTERNS = [
+  {
+    id: "green-dots",
+    label: "Green Dots",
+    file: "images/green dots.png"
+  },
+  {
+    id: "confetti",
+    label: "Confetti",
+    file: "images/pink confetti.png"
+  },
+  {
+    id: "orange-waves",
+    label: "Orange Waves",
+    file: "images/orange waves.png"
+  },
+  {
+    id: "orange+blue floral",
+    label: "orange+blue floral",
+    file: "images/orange+blue floral.png"
+  }
+];
+
+// How many thumbnails visible at once
+const VISIBLE = 3;
+let slideOffset  = 0;       // current scroll index (leftmost visible)
+let pendingPattern = null;  // pattern id chosen in modal but not yet saved
+let savedPattern   = null;  // last saved pattern id
 
 // ── Modal Helpers ─────────────────────────────────────
 function openModal(title, bodyHTML, actionsHTML) {
@@ -375,6 +418,129 @@ createGroupBtn.addEventListener("click", () => {
   });
 });
 
+// ── Extension Theme Modal ─────────────────────────────
+
+const extensionThemeBtn     = document.getElementById("extensionThemeBtn");
+const extensionThemeOverlay = document.getElementById("extensionThemeOverlay");
+const extensionThemeClose   = document.getElementById("extensionThemeClose");
+const themeLightBtn         = document.getElementById("themeLightBtn");
+const themeDarkBtn          = document.getElementById("themeDarkBtn");
+
+let currentTheme = "light";
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.body.classList.toggle("dark-mode", theme === "dark");
+  themeLightBtn.classList.toggle("active", theme === "light");
+  themeDarkBtn.classList.toggle("active",  theme === "dark");
+  chrome.storage.sync.set({ extensionTheme: theme });
+}
+
+function openExtensionThemeModal() {
+  extensionThemeOverlay.classList.add("open");
+}
+
+function closeExtensionThemeModal() {
+  extensionThemeOverlay.classList.remove("open");
+}
+
+extensionThemeBtn.addEventListener("click", openExtensionThemeModal);
+extensionThemeClose.addEventListener("click", closeExtensionThemeModal);
+extensionThemeOverlay.addEventListener("click", e => {
+  if (e.target === extensionThemeOverlay) closeExtensionThemeModal();
+});
+
+themeLightBtn.addEventListener("click", () => applyTheme("light"));
+themeDarkBtn.addEventListener("click",  () => applyTheme("dark"));
+
+
+
+function buildPatternThumbs() {
+  patternTrack.innerHTML = "";
+  PATTERNS.forEach(p => {
+    const thumb = document.createElement("div");
+    thumb.className = "pattern-thumb" + (pendingPattern === p.id ? " selected" : "");
+    thumb.style.backgroundImage = `url("${chrome.runtime.getURL(p.file)}")`;
+    thumb.title = p.label;
+    thumb.addEventListener("click", () => selectPattern(p.id));
+    patternTrack.appendChild(thumb);
+  });
+  updateSlideArrows();
+}
+
+function updateSlidePosition() {
+  // Each thumb is 1/3 of track width + gap; use translateX by index steps
+  const thumbWidth = patternTrack.parentElement.offsetWidth / VISIBLE;
+  patternTrack.style.transform = `translateX(-${slideOffset * (thumbWidth + 10)}px)`;
+  updateSlideArrows();
+}
+
+function updateSlideArrows() {
+  slideLeft.disabled  = slideOffset <= 0;
+  slideRight.disabled = slideOffset >= PATTERNS.length - VISIBLE;
+}
+
+slideLeft.addEventListener("click", () => {
+  if (slideOffset > 0) { slideOffset--; updateSlidePosition(); }
+});
+
+slideRight.addEventListener("click", () => {
+  if (slideOffset < PATTERNS.length - VISIBLE) { slideOffset++; updateSlidePosition(); }
+});
+
+function selectPattern(id) {
+  pendingPattern = id;
+  // Update thumb selected state
+  patternTrack.querySelectorAll(".pattern-thumb").forEach((el, i) => {
+    el.classList.toggle("selected", PATTERNS[i].id === id);
+  });
+  // Update preview
+  const p = PATTERNS.find(x => x.id === id);
+  if (p) {
+    previewPlaceholderMsg.style.display  = "none";
+    previewCard.style.display            = "flex";
+    previewCard.style.backgroundImage    = `url("${chrome.runtime.getURL(p.file)}")`;
+    previewCard.style.backgroundSize     = "cover";
+    previewCard.style.backgroundPosition = "center";
+  }
+}
+
+function openAdContainersModal() {
+  pendingPattern = null; // always start with nothing selected
+  slideOffset    = 0;
+  adContainersOverlay.classList.add("open");
+
+  // Always show the "choose a pattern" message on open
+  previewPlaceholderMsg.style.display = "";
+  previewCard.style.display           = "none";
+
+  buildPatternThumbs();
+  requestAnimationFrame(updateSlidePosition);
+}
+
+function closeAdContainersModal() {
+  adContainersOverlay.classList.remove("open");
+}
+
+adContainersBtn.addEventListener("click", openAdContainersModal);
+adContainersClose.addEventListener("click", closeAdContainersModal);
+adContainersCancel.addEventListener("click", closeAdContainersModal);
+adContainersOverlay.addEventListener("click", e => {
+  if (e.target === adContainersOverlay) closeAdContainersModal();
+});
+
+adContainersSave.addEventListener("click", () => {
+  if (!pendingPattern) {
+    alert("Please select a background pattern first.");
+    return;
+  }
+  savedPattern = pendingPattern;
+  chrome.storage.sync.set({ adContainerPattern: savedPattern }, () => {
+    closeAdContainersModal();
+    showSaveStatus("Pattern saved!", "success");
+  });
+});
+
 // ── Save & Regenerate ─────────────────────────────────
 saveBtn.addEventListener("click", () => {
   if (!apiKey.startsWith("sk-ant-")) {
@@ -431,9 +597,11 @@ switchLearningPath("ccna");
 updateModeUI();
 
 chrome.storage.sync.get(
-  ["apiKey", "subjects", "selectedSubjects", "groups", "activeGroupId", "isMentalHealthMode", "learningPath"],
+  ["apiKey", "subjects", "selectedSubjects", "groups", "activeGroupId", "isMentalHealthMode", "learningPath", "adContainerPattern", "extensionTheme"],
   result => {
     if (result.apiKey)     apiKey = result.apiKey;
+    if (result.adContainerPattern) savedPattern = result.adContainerPattern;
+    if (result.extensionTheme) applyTheme(result.extensionTheme);
 
     if (result.learningPath) {
       switchLearningPath(result.learningPath);

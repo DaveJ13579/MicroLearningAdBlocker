@@ -1,6 +1,4 @@
-/* ────────────────────────────────────────────── */
-/* MicroLearn Placeholder Card */
-/* ────────────────────────────────────────────── */
+/* MicroLearn placeholder card */
 
 @font-face {
   font-family: "Google Sans";
@@ -19,8 +17,6 @@
 }
 
 .microlearn-placeholder {
-  position: relative;
-
   background: #E7FEEC;
   color: #0d0f5d;
 
@@ -36,76 +32,49 @@
   box-sizing: border-box;
   overflow: hidden;
   container-type: inline-size;
-
-  min-width: 0;
 }
 
-/* Softer overlay so text stays readable on image backgrounds */
-.microlearn-placeholder::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.55);
-  z-index: 1;
-  pointer-events: none;
-  transition: opacity 1200ms ease;
-}
-
-/* ────────────────────────────────────────────── */
-/* Brand Label */
-/* ────────────────────────────────────────────── */
-
-.microlearn-brand {
+/* Label — small and unobtrusive, sits above the fact */
+.microlearn-header {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  opacity: 0.5;
+  opacity: 0.4;
   margin-bottom: 8px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-/* ────────────────────────────────────────────── */
-/* Headline - the fact, bold and prominent */
-/* ────────────────────────────────────────────── */
+/* Topic label — slightly larger, sits between header and fact */
+.microlearn-topic {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 6px;
+  color: #0d6b2a;
+  flex-shrink: 0;
+}
 
-.microlearn-headline {
-  font-size: clamp(13px, 2.8cqw, 18px);
+/* The fact — scales down to fit any container */
+.microlearn-body {
+  font-size: clamp(11px, 2.5cqw, 16px);
   font-weight: 700;
   line-height: 1.3;
   overflow: hidden;
-
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-
-  word-break: break-word;
-  margin-bottom: 6px;
-}
-
-/* ────────────────────────────────────────────── */
-/* Tagline - the hook, smaller and lighter */
-/* ────────────────────────────────────────────── */
-
-.microlearn-tagline {
-  font-size: clamp(10px, 2cqw, 13px);
-  font-weight: 400;
-  line-height: 1.3;
-  opacity: 0.75;
-  overflow: hidden;
-
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-
   word-break: break-word;
 }
 
-/* ────────────────────────────────────────────── */
-/* Tall containers */
-/* ────────────────────────────────────────────── */
+/* Default: allow up to 10 lines for most containers */
+.microlearn-body {
+  -webkit-line-clamp: 10;
+}
 
+/* Tall narrow containers (skyscrapers) - allow even more lines */
 .microlearn-placeholder[style*="height: 600px"],
 .microlearn-placeholder[style*="height: 250px"][style*="width: 300px"],
 .microlearn-placeholder[style*="height: 500px"],
@@ -113,164 +82,54 @@
   padding: 12px;
 }
 
-.microlearn-placeholder[style*="height: 600px"] .microlearn-headline,
-.microlearn-placeholder[style*="height: 500px"] .microlearn-headline,
-.microlearn-placeholder[style*="height: 400px"] .microlearn-headline {
-  -webkit-line-clamp: 5;
+.microlearn-placeholder[style*="height: 600px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 500px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 400px"] .microlearn-body {
+  -webkit-line-clamp: 15;
 }
 
-.microlearn-placeholder[style*="height: 600px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 500px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 400px"] .microlearn-tagline {
-  -webkit-line-clamp: 4;
+/* Leaderboard / banner shapes — wide and short (e.g. 728x90, 970x90, 320x50)
+   These have very limited height so we cut font size and clamp to fewer lines */
+.microlearn-placeholder[style*="height: 90px"],
+.microlearn-placeholder[style*="height: 50px"],
+.microlearn-placeholder[style*="height: 60px"],
+.microlearn-placeholder[style*="height: 66px"] {
+  padding: 8px 16px;
+  flex-direction: row;
+  gap: 12px;
+  text-align: left;
 }
 
-/* ────────────────────────────────────────────── */
-/* Square / medium cards */
-/* ────────────────────────────────────────────── */
-
-.microlearn-placeholder[style*="height: 250px"],
-.microlearn-placeholder[style*="height: 300px"],
-.microlearn-placeholder[style*="height: 336px"] {
-  padding: 14px;
+.microlearn-placeholder[style*="height: 90px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-header {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  margin-bottom: 0;
+  margin-right: 0;
+  flex-shrink: 0;
 }
 
-.microlearn-placeholder[style*="height: 250px"] .microlearn-headline,
-.microlearn-placeholder[style*="height: 300px"] .microlearn-headline,
-.microlearn-placeholder[style*="height: 336px"] .microlearn-headline {
-  font-size: clamp(13px, 2.9cqw, 20px);
+.microlearn-placeholder[style*="height: 90px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-body,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-body {
+  font-size: clamp(10px, 1.8cqw, 13px);
   -webkit-line-clamp: 3;
   line-height: 1.25;
 }
 
-/* ────────────────────────────────────────────── */
-/* Banner / Leaderboard Layout */
-/* ────────────────────────────────────────────── */
-
-.microlearn-placeholder[style*="height: 90px"],
-.microlearn-placeholder[style*="height: 66px"],
-.microlearn-placeholder[style*="height: 60px"],
-.microlearn-placeholder[style*="height: 50px"] {
-  padding: 10px 14px;
-  text-align: center;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  gap: 2px;
-}
-
-.microlearn-placeholder[style*="height: 90px"] .ml-content,
-.microlearn-placeholder[style*="height: 66px"] .ml-content,
-.microlearn-placeholder[style*="height: 60px"] .ml-content,
-.microlearn-placeholder[style*="height: 50px"] .ml-content {
-  width: 100%;
-  max-width: 100%;
-}
-
-.microlearn-placeholder[style*="height: 90px"] .microlearn-brand,
-.microlearn-placeholder[style*="height: 66px"] .microlearn-brand,
-.microlearn-placeholder[style*="height: 60px"] .microlearn-brand,
-.microlearn-placeholder[style*="height: 50px"] .microlearn-brand {
-  margin-bottom: 2px;
-  font-size: 8px;
-}
-
-.microlearn-placeholder[style*="height: 90px"] .microlearn-headline,
-.microlearn-placeholder[style*="height: 66px"] .microlearn-headline,
-.microlearn-placeholder[style*="height: 60px"] .microlearn-headline,
-.microlearn-placeholder[style*="height: 50px"] .microlearn-headline {
-  font-size: clamp(10px, 1.5cqw, 13px);
-  -webkit-line-clamp: 2;
-  line-height: 1.2;
-  margin-bottom: 2px;
-}
-
-.microlearn-placeholder[style*="height: 90px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 66px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 60px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 50px"] .microlearn-tagline {
-  font-size: clamp(9px, 1.2cqw, 11px);
-  -webkit-line-clamp: 1;
-  line-height: 1.18;
-}
-
-/* ────────────────────────────────────────────── */
-/* Loading Pulse */
-/* ────────────────────────────────────────────── */
-
+/* Loading pulse animation */
 @keyframes microlearn-pulse {
   0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.7; }
+  50%       { opacity: 0.7; }
 }
 
 .microlearn-loading {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 400;
   letter-spacing: 0.5px;
-  color: #6b7280;
-  font-style: italic;
   animation: microlearn-pulse 1.4s ease-in-out infinite;
-}
-
-/* ────────────────────────────────────────────── */
-/* Splash Pattern Overlay */
-/* ────────────────────────────────────────────── */
-
-/* Hide WITHOUT collapsing layout */
-.ml-hidden {
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-/* Splash layer */
-.microlearn-placeholder .ml-splash {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  overflow: hidden;
-  pointer-events: none;
-
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 1200ms ease, transform 1200ms ease;
-}
-
-/* Pattern image fills container */
-.microlearn-placeholder .ml-splash-img {
-  position: absolute;
-  inset: 0;
-
-  width: 100% !important;
-  height: 100% !important;
-
-  object-fit: cover !important;
-  max-width: none !important;
-  max-height: none !important;
-
-  display: block !important;
-}
-
-/* Fade splash out */
-.microlearn-placeholder .ml-splash.ml-fadeout {
-  opacity: 0;
-  transform: scale(1.03);
-}
-
-/* Content above overlay */
-.microlearn-placeholder .ml-content {
-  position: relative;
-  z-index: 3;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  text-align: center;
-  height: 100%;
-  width: 100%;
 }
