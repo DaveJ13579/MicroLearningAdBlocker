@@ -37,10 +37,7 @@ body {
 }
 
 .logo-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #f0f0f0;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,9 +50,7 @@ body {
   border-radius: 8px;
 }
 
-.header-text {
-  flex: 1;
-}
+.header-text { flex: 1; }
 
 .header-text h1 {
   font-size: 17px;
@@ -79,11 +74,7 @@ body {
   flex-shrink: 0;
 }
 
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
+.switch input { opacity: 0; width: 0; height: 0; }
 
 .slider {
   position: absolute;
@@ -107,7 +98,7 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
-input:checked + .slider { background: #4caf50; }
+input:checked + .slider { background: #7ed857; }
 input:checked + .slider:before { transform: translateX(22px); }
 
 /* ---------- Cards ---------- */
@@ -124,16 +115,8 @@ input:checked + .slider:before { transform: translateX(22px); }
   align-items: center;
 }
 
-.status-label {
-  font-size: 15px;
-  color: #333;
-}
-
-.status-value {
-  font-size: 15px;
-  color: #333;
-  font-weight: 500;
-}
+.status-label { font-size: 15px; color: #333; }
+.status-value { font-size: 15px; color: #333; font-weight: 500; }
 
 /* ---------- Customize button ---------- */
 
@@ -145,7 +128,7 @@ input:checked + .slider:before { transform: translateX(22px); }
   font-weight: 700;
   font-family: inherit;
   color: #1a1a1a;
-  background: #4caf50;
+  background: #7ed857;
   border: none;
   border-radius: 14px;
   cursor: pointer;
@@ -153,5 +136,5 @@ input:checked + .slider:before { transform: translateX(22px); }
   letter-spacing: 0.2px;
 }
 
-.customize-btn:hover { background: #43a047; }
+.customize-btn:hover { background: #6bc946; }
 .customize-btn:active { transform: scale(0.98); }
