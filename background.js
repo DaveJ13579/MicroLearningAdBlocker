@@ -1,55 +1,108 @@
 // background.js - service worker
+// Relays Claude API requests from content scripts
 
-const POOL_SIZE      = 30;
-const POOL_KEY       = "lessonPool";
-const USED_KEY       = "usedLessonIds";
-const HISTORICAL_KEY = "historicalFacts";
-const PARALLEL       = 5;
+// ── Diversity Hints ──────────────────────────────────
 
-// ── Lesson Generation ─────────────────────────────────
+const educationalHints = [
+  "Define a key term.",
+  "State a number or measurement.",
+  "Compare two related things.",
+  "Quick-recall: a standard or version.",
+  "List 3-4 related items.",
+  "Name a common problem and its fix.",
+  "State a rule of thumb.",
+  "Name a tool and what it does.",
+  "State a core concept in one line.",
+  "Give a real-world example."
+];
 
-async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHealth = false) {
-  const recentFacts  = historical.slice(-10);
-  const avoidClause  = recentFacts.length
-    ? " CRITICAL: Pick a completely different angle than these: " +
-      recentFacts.map((f, i) => `${i + 1}. ${f.slice(0, 50)}...`).join(" ")
-    : "";
+const behavioralHints = [
+  "Reframe a negative thought.",
+  "State a grounding or breathing technique.",
+  "Normalize a common struggle.",
+  "Challenge an identity belief.",
+  "Give a one-step action.",
+  "State a boundary or permission.",
+  "Offer a perspective shift.",
+  "Use a contrast to reveal a pattern.",
+  "Affirm a positive identity.",
+  "Name a trigger and a redirect."
+];
 
-  const mentalHints = [
-    "Cognitive reframe: State a negative thought, then reframe it positively.",
-    "Share a normalizing mental health statistic.",
-    "Describe a breathing exercise in exact steps.",
-    "Give one sleep hygiene tip.",
-    "Offer a self-compassion reminder.",
-    "Teach a quick mindfulness technique.",
-    "Share a stress management tip.",
-    "Give an anxiety-reduction technique.",
-    "Encourage social connection.",
-    "Describe a grounding exercise."
-  ];
+let educationalIndex = 0;
+let behavioralIndex = 0;
 
-  const learningHints = [
-    "Key term with definition.",
-    "Specific number or measurement.",
-    "Direct comparison between two things.",
-    "Quick-recall fact about a standard.",
-    "List 3-4 related items.",
-    "Common problem with key trait.",
-    "Best practice or principle.",
-    "Tool or technique with purpose.",
-    "Foundational concept overview.",
-    "Practical example or application."
-  ];
+// ── Strip markdown formatting ────────────────────────
 
-  const hint = mentalHealth
-    ? mentalHints[lessonIndex % mentalHints.length]
-    : learningHints[lessonIndex % learningHints.length];
+function cleanText(raw) {
+  return raw
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/`(.+?)`/g, "$1")
+    .trim();
+}
 
-  const prompt = mentalHealth
-    ? `${hint}\n\nRules:\n- EXACTLY 15 words or fewer\n- One sentence only\n- Direct and actionable\n- No fluff\n- Example: "Box breathing: Inhale 4s, hold 4s, exhale 4s, hold 4s."\n${avoidClause}`
-    : `Micro-learning fact about: ${topic}\n\nStyle: ${hint}\n\nRules:\n- Max 35 words\n- Technical content, NOT exam info\n- Concrete facts: definitions, numbers, comparisons\n- Flashcard format: clear, direct\n- No labels or headers\n- Single statement\n${avoidClause}`;
+// ── Message Handler ──────────────────────────────────
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type !== "FETCH_LESSON") return false;
+
+  const { apiKey, topic, contentType } = msg;
+
+  if (!apiKey || !topic) {
+    sendResponse({ error: "Missing apiKey or topic." });
+    return true;
+  }
+
+  // Pick diversity hint based on content type
+  let diversityHint;
+  let prompt;
+
+  if (contentType === "behavioral") {
+    diversityHint = behavioralHints[behavioralIndex];
+    behavioralIndex = (behavioralIndex + 1) % 10;
+
+    prompt = `You write micro-influence ads. Your output replaces a banner ad on a webpage. Your job is to shift how someone thinks, feels, or sees themselves — not teach them a fact.
+
+Format — return EXACTLY two lines, nothing else:
+HEADLINE: [the statement — 5 to 8 words]
+TAGLINE: [reinforcement — 8 to 15 words]
+
+Topic: ${topic}
+Style: ${diversityHint}
+
+Rules:
+- Headline is direct, second-person, identity-level.
+- Tagline reinforces the headline emotionally or practically.
+- Total must be under 25 words.
+- Repetition is a feature. These should feel true every time someone sees them.
+- No intros, no labels beyond HEADLINE/TAGLINE, no explanations.
+- Write like a mantra on a billboard, not advice in a textbook.`;
+  } else {
+    diversityHint = educationalHints[educationalIndex];
+    educationalIndex = (educationalIndex + 1) % 10;
+
+    prompt = `You write micro-learning ads. Your output replaces a banner ad on a webpage.
+
+Format — return EXACTLY two lines, nothing else:
+HEADLINE: [the fact — 5 to 8 words]
+TAGLINE: [why it matters — 8 to 15 words]
+
+Topic: ${topic}
+Style: ${diversityHint}
+
+Rules:
+- Headline is the knowledge. Dense, concrete, no filler.
+- Tagline is the hook. Makes the headline stick.
+- Total must be under 25 words.
+- No intros, no labels beyond HEADLINE/TAGLINE, no explanations.
+- Write like a billboard, not a textbook.`;
+  }
+
+  console.log("MicroLearn: fetching lesson —", topic, "(", contentType, ")");
+
+  fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -59,165 +112,24 @@ async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHe
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 80,
+      max_tokens: 40,
       messages: [{ role: "user", content: prompt }]
     })
-  });
-
-  const data = await res.json();
-  if (data?.content?.[0]?.text) {
-    return data.content[0].text.trim()
-      .replace(/\*\*(.+?)\*\*/g, "$1")
-      .replace(/\*(.+?)\*/g,    "$1")
-      .replace(/^#{1,6}\s+/gm,  "")
-      .replace(/`(.+?)`/g,      "$1")
-      .replace(/\s*\n\s*/g,     " ")
-      .trim();
-  }
-  if (data?.error) throw new Error(data.error.message || "API error");
-  throw new Error("Unexpected response format");
-}
-
-// ── Pool Management ───────────────────────────────────
-
-async function generatePool(apiKey, topics, mentalHealth = false) {
-  console.log("MicroLearn: generating pool of", POOL_SIZE, mentalHealth ? "mental health tips..." : "lessons...");
-
-  const { [HISTORICAL_KEY]: historical = [] } = await chrome.storage.local.get(HISTORICAL_KEY);
-  const allFacts = [...historical];
-  const lessons  = [];
-
-  for (let start = 0; start < POOL_SIZE; start += PARALLEL) {
-    const batchSize = Math.min(PARALLEL, POOL_SIZE - start);
-    const batch = await Promise.all(
-      Array.from({ length: batchSize }, (_, i) => {
-        const idx   = start + i;
-        const topic = mentalHealth ? "Mental Health" : topics[idx % topics.length];
-        return fetchLesson(apiKey, topic, idx, allFacts, mentalHealth)
-          .then(text => {
-            console.log("MicroLearn: lesson", idx + 1, "of", POOL_SIZE, "generated");
-            return { id: idx, topic, text };
-          })
-          .catch(err => { console.error("MicroLearn: lesson", idx, "failed —", err.message); return null; });
-      })
-    );
-
-    const ok = batch.filter(Boolean);
-    lessons.push(...ok);
-    ok.forEach(l => allFacts.push(l.text));
-  }
-
-  if (lessons.length > 0) {
-    await chrome.storage.local.set({
-      [POOL_KEY]:       lessons,
-      [USED_KEY]:       [],
-      [HISTORICAL_KEY]: lessons.map(l => l.text)
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data?.content?.[0]?.text) {
+        sendResponse({ lesson: cleanText(data.content[0].text) });
+      } else if (data?.error) {
+        sendResponse({ error: data.error.message || "API error" });
+      } else {
+        sendResponse({ error: "Unexpected response format." });
+      }
+    })
+    .catch(err => {
+      console.error("MicroLearn: fetch error —", err.message);
+      sendResponse({ error: err.message || "Network error" });
     });
-    console.log("MicroLearn: pool saved —", lessons.length, "lessons ready");
-  } else {
-    console.error("MicroLearn: no lessons generated");
-  }
 
-  return lessons;
-}
-
-async function getLessons(count) {
-  const { [POOL_KEY]: pool = [], [USED_KEY]: used = [] } = await chrome.storage.local.get([POOL_KEY, USED_KEY]);
-
-  if (pool.length === 0) {
-    console.warn("MicroLearn: pool empty, triggering regeneration");
-    triggerAutoRegeneration();
-    return [];
-  }
-
-  let available  = pool.filter(l => !used.includes(l.id));
-  let currentUsed = used;
-
-  if (available.length < count) {
-    console.log("MicroLearn: pool exhausted, triggering regeneration");
-    triggerAutoRegeneration();
-    currentUsed = [];
-    available   = [...pool];
-  }
-
-  // Fisher-Yates shuffle
-  for (let i = available.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [available[i], available[j]] = [available[j], available[i]];
-  }
-
-  const picked = available.slice(0, count);
-  await chrome.storage.local.set({ [USED_KEY]: [...currentUsed, ...picked.map(l => l.id)] });
-  return picked.map(l => ({ text: l.text, topic: l.topic }));
-}
-
-async function ensurePool(apiKey, topics) {
-  if (!apiKey || !topics?.length) return;
-  const { [POOL_KEY]: pool = [], lastTopics, lastApiKey } = await chrome.storage.local.get([POOL_KEY, "lastTopics", "lastApiKey"]);
-
-  if (pool.length === 0 || JSON.stringify(lastTopics) !== JSON.stringify(topics) || lastApiKey !== apiKey) {
-    await generatePool(apiKey, topics);
-    await chrome.storage.local.set({ lastTopics: topics, lastApiKey: apiKey });
-  }
-}
-
-// ── Auto-Regeneration ─────────────────────────────────
-
-async function triggerAutoRegeneration() {
-  const result = await chrome.storage.sync.get(["apiKey", "selectedSubjects", "groups", "activeGroupId", "isMentalHealthMode"]);
-  if (!result.apiKey) { console.warn("MicroLearn: no API key for auto-regen"); return; }
-
-  if (result.isMentalHealthMode === true) {
-    await generatePool(result.apiKey, ["Mental Health"], true).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
-    return;
-  }
-
-  let topics = result.selectedSubjects?.length ? result.selectedSubjects : [];
-  if (!topics.length && result.activeGroupId && result.groups) {
-    const g = result.groups.find(g => g.id === result.activeGroupId);
-    if (g) topics = g.subjects;
-  }
-
-  if (!topics.length) { console.warn("MicroLearn: no topics for auto-regen"); return; }
-  await generatePool(result.apiKey, topics, false).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
-}
-
-// ── Init ──────────────────────────────────────────────
-
-chrome.storage.sync.get(["apiKey", "topics"], ({ apiKey, topics }) => {
-  if (apiKey && topics) ensurePool(apiKey, topics);
-});
-
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "sync" && (changes.apiKey || changes.topics)) {
-    chrome.storage.sync.get(["apiKey", "topics"], ({ apiKey, topics }) => {
-      if (apiKey && topics) ensurePool(apiKey, topics);
-    });
-  }
-});
-
-// Keep service worker alive
-setInterval(() => chrome.storage.local.get("keepAlive", () => {}), 20000);
-
-// ── Message Handler ───────────────────────────────────
-
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg.type === "FETCH_LESSONS") {
-    getLessons(msg.count || 1)
-      .then(lessons => sendResponse({ lessons }))
-      .catch(err    => sendResponse({ error: err.message }));
-    return true;
-  }
-
-  if (msg.type === "REGENERATE_POOL") {
-    const { apiKey, topics, isMentalHealthMode } = msg;
-    if (!apiKey || !topics) { sendResponse({ error: "Missing apiKey or topics" }); return true; }
-    generatePool(apiKey, topics, isMentalHealthMode || false)
-      .then(() => {
-        chrome.storage.local.set({ lastTopics: topics, lastApiKey: apiKey });
-        sendResponse({ success: true });
-      })
-      .catch(err => sendResponse({ error: err.message }));
-    return true;
-  }
+  return true;
 });
