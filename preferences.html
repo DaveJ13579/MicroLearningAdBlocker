@@ -34,14 +34,14 @@
       <input type="checkbox" id="modeToggle" />
       <div class="mode-toggle-row">
         <div class="mode-option" id="modeOptionLeft">
-          <div class="mode-label">Learning Facts</div>
+          <div class="mode-label">Educational</div>
           <div class="mode-description">
             Educational content on your chosen topics
           </div>
         </div>
         <div class="mode-divider"></div>
         <div class="mode-option" id="modeOptionRight">
-          <div class="mode-label">Mental Health</div>
+          <div class="mode-label">Behavioral</div>
           <div class="mode-description">
             Supportive tips and coping strategies
           </div>
@@ -107,8 +107,11 @@
     <!-- Theme Customization -->
     <div class="section-label">Theme Customization</div>
     <div class="theme-customization-card card">
-      <button class="theme-btn" id="extensionThemeBtn">Extension Theme</button>
-      <button class="theme-btn" id="adContainersBtn">Ad Containers</button>
+      <button class="theme-btn active" id="themeLightBtn">Light Mode</button>
+      <button class="theme-btn" id="themeDarkBtn">Dark Mode</button>
+      <button class="theme-btn" id="adContainersBtn">
+        Learning Containers
+      </button>
     </div>
 
     <!-- Save bar -->
@@ -166,18 +169,6 @@
           <button class="modal-btn primary" id="adContainersSave">
             Save Pattern
           </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Extension Theme Modal -->
-    <div class="modal-overlay" id="extensionThemeOverlay">
-      <div class="modal extension-theme-modal" id="extensionThemeModal">
-        <button class="modal-close" id="extensionThemeClose">✕</button>
-        <div class="modal-title">Customize Extension Theme</div>
-        <div class="theme-mode-list">
-          <button class="theme-mode-btn" id="themeLightBtn">Light Mode</button>
-          <button class="theme-mode-btn" id="themeDarkBtn">Dark Mode</button>
         </div>
       </div>
     </div>
