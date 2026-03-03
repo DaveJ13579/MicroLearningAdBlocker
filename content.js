@@ -1,7 +1,7 @@
 (function () {
 
   const PROCESSED_ATTR = "data-microlearn-replaced";
-  const FALLBACK       = "💡 Stay curious — ask questions every day.";
+  const FALLBACK       = "Stay curious - ask questions every day.";
 
   let pending       = [];
   let isFlushing    = false;
@@ -195,7 +195,7 @@
       });
     } catch (err) {
       isFlushing = false;
-      console.warn("MicroLearn: context invalidated —", err.message);
+      console.warn("MicroLearn: context invalidated -", err.message);
       toFill.forEach(p => setLesson(p, FALLBACK));
     }
   }

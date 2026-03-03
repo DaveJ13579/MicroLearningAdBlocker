@@ -146,7 +146,7 @@ async function generatePool(apiKey, topics, mentalHealth = false) {
             console.log("MicroLearn: lesson", idx + 1, "of", POOL_SIZE, "generated");
             return { id: idx, topic, text };
           })
-          .catch(err => { console.error("MicroLearn: lesson", idx, "failed —", err.message); return null; });
+          .catch(err => { console.error("MicroLearn: lesson", idx, "failed -", err.message); return null; });
       })
     );
 
@@ -161,7 +161,7 @@ async function generatePool(apiKey, topics, mentalHealth = false) {
       [USED_KEY]:       [],
       [HISTORICAL_KEY]: lessons.map(l => l.text)
     });
-    console.log("MicroLearn: pool saved —", lessons.length, "lessons ready");
+    console.log("MicroLearn: pool saved -", lessons.length, "lessons ready");
   } else {
     console.error("MicroLearn: no lessons generated");
   }
@@ -219,7 +219,7 @@ async function triggerAutoRegeneration() {
     const behavioralTopics = result.selectedBehavioralTopics?.length
       ? result.selectedBehavioralTopics
       : STRESS_RESILIENCE_TOPICS;
-    await generatePool(result.apiKey, behavioralTopics, true).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
+    await generatePool(result.apiKey, behavioralTopics, true).catch(err => console.error("MicroLearn: auto-regen failed -", err.message));
     return;
   }
 
@@ -230,7 +230,7 @@ async function triggerAutoRegeneration() {
   }
 
   if (!topics.length) { console.warn("MicroLearn: no topics for auto-regen"); return; }
-  await generatePool(result.apiKey, topics, false).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
+  await generatePool(result.apiKey, topics, false).catch(err => console.error("MicroLearn: auto-regen failed -", err.message));
 }
 
 // ── Init ──────────────────────────────────────────────
