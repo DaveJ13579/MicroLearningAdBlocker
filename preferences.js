@@ -1,27 +1,42 @@
 // preferences.js
 
 // ── DOM References ────────────────────────────────────
-const settingsBtn     = document.getElementById("settingsBtn");
-const modeToggle      = document.getElementById("modeToggle");
-const topicSelection  = document.getElementById("topicSelection");
-const groupList       = document.getElementById("groupList");
-const subjectsList    = document.getElementById("subjectsList");
-const addSubjectInput = document.getElementById("addSubjectInput");
-const addSubjectBtn   = document.getElementById("addSubjectBtn");
-const createGroupBtn  = document.getElementById("createGroupBtn");
-const saveBtn         = document.getElementById("saveBtn");
-const saveStatus      = document.getElementById("saveStatus");
-const modalOverlay    = document.getElementById("modalOverlay");
-const modalClose      = document.getElementById("modalClose");
-const modalTitle      = document.getElementById("modalTitle");
-const modalBody       = document.getElementById("modalBody");
-const modalActions    = document.getElementById("modalActions");
+const settingsBtn         = document.getElementById("settingsBtn");
+const modeToggle          = document.getElementById("modeToggle");
+const topicSelection      = document.getElementById("topicSelection");
+const groupList           = document.getElementById("groupList");
+const subjectsList        = document.getElementById("subjectsList");
+const addSubjectInput     = document.getElementById("addSubjectInput");
+const addSubjectBtn       = document.getElementById("addSubjectBtn");
+const createGroupBtn      = document.getElementById("createGroupBtn");
+const saveBtn             = document.getElementById("saveBtn");
+const saveStatus          = document.getElementById("saveStatus");
+const modalOverlay        = document.getElementById("modalOverlay");
+const modalClose          = document.getElementById("modalClose");
+const modalTitle          = document.getElementById("modalTitle");
+const modalBody           = document.getElementById("modalBody");
+const modalActions        = document.getElementById("modalActions");
 const learningPathSection = document.getElementById("learningPathSection");
-const ccnaTab         = document.getElementById("ccnaTab");
-const securityPlusTab = document.getElementById("securityPlusTab");
-const customTab       = document.getElementById("customTab");
-const modeOptionLeft  = document.getElementById("modeOptionLeft");
-const modeOptionRight = document.getElementById("modeOptionRight");
+const ccnaTab             = document.getElementById("ccnaTab");
+const securityPlusTab     = document.getElementById("securityPlusTab");
+const customTab           = document.getElementById("customTab");
+const modeOptionLeft      = document.getElementById("modeOptionLeft");
+const modeOptionRight     = document.getElementById("modeOptionRight");
+
+// Theme customization
+const themeLightBtn         = document.getElementById("themeLightBtn");
+const themeDarkBtn          = document.getElementById("themeDarkBtn");
+const adContainersBtn       = document.getElementById("adContainersBtn");
+const adContainersOverlay   = document.getElementById("adContainersOverlay");
+const adContainersClose     = document.getElementById("adContainersClose");
+const adContainersCancel    = document.getElementById("adContainersCancel");
+const adContainersSave      = document.getElementById("adContainersSave");
+const patternTrack          = document.getElementById("patternTrack");
+const slideLeft             = document.getElementById("slideLeft");
+const slideRight            = document.getElementById("slideRight");
+const patternPreview        = document.getElementById("patternPreview");
+const previewPlaceholderMsg = document.getElementById("previewPlaceholderMsg");
+const previewCard           = document.getElementById("previewCard");
 
 // ── Topic Lists ───────────────────────────────────────
 const DEFAULT_SUBJECTS = [
@@ -67,13 +82,36 @@ const SECURITY_PLUS_TOPICS = [
 ];
 
 // ── State ─────────────────────────────────────────────
-let subjects         = [...DEFAULT_SUBJECTS];
-let selectedSubjects = [];
-let groups           = [];
-let activeGroupId    = null;
+let subjects           = [...DEFAULT_SUBJECTS];
+let selectedSubjects   = [];
+let activeGroupId      = null;
 let isMentalHealthMode = false;
-let apiKey           = "";
-let learningPath     = "ccna";
+let apiKey             = "";
+let learningPath       = "ccna";
+
+// Groups are stored per learning path so switching tabs doesn't wipe them.
+// Shape: { ccna: [], "security+": [], custom: [] }
+let groupsByPath = { ccna: [], "security+": [], custom: [] };
+
+// Convenience getter / setter for the currently active path's groups
+function getGroups()       { return groupsByPath[learningPath] || []; }
+function setGroups(arr)    { groupsByPath[learningPath] = arr; }
+
+// ── Patterns ──────────────────────────────────────────
+
+const PATTERNS = [
+  { id: "green-dots",         label: "Green Dots",         file: "images/green dots.png" },
+  { id: "confetti",           label: "Confetti",           file: "images/pink confetti.png" },
+  { id: "orange-waves",       label: "Orange Waves",       file: "images/orange waves.png" },
+  { id: "orange+blue floral", label: "Orange+Blue Floral", file: "images/orange+blue floral.png" },
+  { id: "testpic1",           label: "Test Pattern",       file: "images/testpic1.png" },
+  { id: "PinkBlueSwirl",           label: "Test Pattern",       file: "images/PinkBlueSwirl.jpg" }
+];
+
+const VISIBLE = 3;
+let slideOffset    = 0;
+let pendingPattern = null;
+let savedPattern   = null;
 
 // ── Modal Helpers ─────────────────────────────────────
 function openModal(title, bodyHTML, actionsHTML) {
@@ -129,6 +167,20 @@ function showAPISettingsModal() {
 
 settingsBtn.addEventListener("click", showAPISettingsModal);
 
+// ── Extension Theme (inline buttons) ─────────────────
+let currentTheme = "light";
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.body.classList.toggle("dark-mode", theme === "dark");
+  themeLightBtn.classList.toggle("active", theme === "light");
+  themeDarkBtn.classList.toggle("active",  theme === "dark");
+  chrome.storage.sync.set({ extensionTheme: theme });
+}
+
+themeLightBtn.addEventListener("click", () => applyTheme("light"));
+themeDarkBtn.addEventListener("click",  () => applyTheme("dark"));
+
 // ── Learning Path Tabs ────────────────────────────────
 function switchLearningPath(path) {
   learningPath = path;
@@ -136,18 +188,22 @@ function switchLearningPath(path) {
 
   if (path === "ccna") {
     ccnaTab.classList.add("active");
-    subjects = selectedSubjects = [...CCNA_TOPICS];
+    subjects         = [...CCNA_TOPICS];
+    selectedSubjects = [...CCNA_TOPICS];
   } else if (path === "security+") {
     securityPlusTab.classList.add("active");
-    subjects = selectedSubjects = [...SECURITY_PLUS_TOPICS];
+    subjects         = [...SECURITY_PLUS_TOPICS];
+    selectedSubjects = [...SECURITY_PLUS_TOPICS];
   } else {
     customTab.classList.add("active");
     subjects         = [...DEFAULT_SUBJECTS];
     selectedSubjects = [];
   }
 
-  groups        = [];
+  // Reset active group selection when switching paths,
+  // but keep the groups themselves intact in groupsByPath.
   activeGroupId = null;
+
   renderSubjects();
   renderGroups();
 }
@@ -158,11 +214,11 @@ customTab.addEventListener("click",       () => switchLearningPath("custom"));
 
 // ── Mode Toggle ───────────────────────────────────────
 function updateModeUI() {
-  modeOptionLeft.classList.toggle("active",    !isMentalHealthMode);
-  modeOptionLeft.classList.toggle("inactive",   isMentalHealthMode);
-  modeOptionRight.classList.toggle("active",    isMentalHealthMode);
-  modeOptionRight.classList.toggle("inactive", !isMentalHealthMode);
-  topicSelection.classList.toggle("disabled",   isMentalHealthMode);
+  modeOptionLeft.classList.toggle("active",     !isMentalHealthMode);
+  modeOptionLeft.classList.toggle("inactive",    isMentalHealthMode);
+  modeOptionRight.classList.toggle("active",     isMentalHealthMode);
+  modeOptionRight.classList.toggle("inactive",  !isMentalHealthMode);
+  topicSelection.classList.toggle("disabled",    isMentalHealthMode);
   learningPathSection.classList.toggle("disabled", isMentalHealthMode);
   modeToggle.checked = isMentalHealthMode;
 }
@@ -197,7 +253,7 @@ function renderSubjects() {
     removeBtn.title       = "Remove subject";
     removeBtn.addEventListener("click", e => {
       e.stopPropagation();
-      if (groups.some(g => g.subjects.includes(subject))) {
+      if (getGroups().some(g => g.subjects.includes(subject))) {
         alert(`Cannot remove "${subject}" — it's being used in a group.`);
         return;
       }
@@ -238,6 +294,7 @@ addSubjectInput.addEventListener("keydown", e => { if (e.key === "Enter") addSub
 // ── Render Groups ─────────────────────────────────────
 function renderGroups() {
   groupList.innerHTML = "";
+  const groups = getGroups();
 
   if (!groups.length) {
     groupList.innerHTML = '<li style="padding:10px 12px;font-size:12px;color:#bbb;">No groups yet</li>';
@@ -339,9 +396,10 @@ function showDeleteGroup(group) {
   );
   document.getElementById("cancelDelete").addEventListener("click", closeModal);
   document.getElementById("confirmDelete").addEventListener("click", () => {
-    groups = groups.filter(g => g.id !== group.id);
+    const updated = getGroups().filter(g => g.id !== group.id);
+    setGroups(updated);
     if (activeGroupId === group.id)
-      activeGroupId = groups.length ? groups[0].id : null;
+      activeGroupId = updated.length ? updated[0].id : null;
     closeModal();
     renderGroups();
   });
@@ -366,12 +424,94 @@ createGroupBtn.addEventListener("click", () => {
     const name = document.getElementById("newGroupName").value.trim();
     if (!name) { alert("Please enter a group name."); return; }
     const newGroup = { id: Date.now(), name, subjects: [...selectedSet] };
-    groups.push(newGroup);
+    const updated  = [...getGroups(), newGroup];
+    setGroups(updated);
     selectedSubjects = [];
     activeGroupId    = newGroup.id;
     closeModal();
     renderGroups();
     renderSubjects();
+  });
+});
+
+// ── Ad Containers Modal ───────────────────────────────
+function buildPatternThumbs() {
+  patternTrack.innerHTML = "";
+  PATTERNS.forEach(p => {
+    const thumb = document.createElement("div");
+    thumb.className = "pattern-thumb" + (pendingPattern === p.id ? " selected" : "");
+    thumb.style.backgroundImage = `url("${chrome.runtime.getURL(p.file)}")`;
+    thumb.title = p.label;
+    thumb.addEventListener("click", () => selectPattern(p.id));
+    patternTrack.appendChild(thumb);
+  });
+  updateSlideArrows();
+}
+
+function updateSlidePosition() {
+  const thumbWidth = patternTrack.parentElement.offsetWidth / VISIBLE;
+  patternTrack.style.transform = `translateX(-${slideOffset * (thumbWidth + 10)}px)`;
+  updateSlideArrows();
+}
+
+function updateSlideArrows() {
+  slideLeft.disabled  = slideOffset <= 0;
+  slideRight.disabled = slideOffset >= PATTERNS.length - VISIBLE;
+}
+
+slideLeft.addEventListener("click", () => {
+  if (slideOffset > 0) { slideOffset--; updateSlidePosition(); }
+});
+
+slideRight.addEventListener("click", () => {
+  if (slideOffset < PATTERNS.length - VISIBLE) { slideOffset++; updateSlidePosition(); }
+});
+
+function selectPattern(id) {
+  pendingPattern = id;
+  patternTrack.querySelectorAll(".pattern-thumb").forEach((el, i) => {
+    el.classList.toggle("selected", PATTERNS[i].id === id);
+  });
+  const p = PATTERNS.find(x => x.id === id);
+  if (p) {
+    previewPlaceholderMsg.style.display  = "none";
+    previewCard.style.display            = "flex";
+    previewCard.style.backgroundImage    = `url("${chrome.runtime.getURL(p.file)}")`;
+    previewCard.style.backgroundSize     = "cover";
+    previewCard.style.backgroundPosition = "center";
+  }
+}
+
+function openAdContainersModal() {
+  pendingPattern = null;
+  slideOffset    = 0;
+  adContainersOverlay.classList.add("open");
+  previewPlaceholderMsg.style.display = "";
+  previewCard.style.display           = "none";
+  buildPatternThumbs();
+  requestAnimationFrame(updateSlidePosition);
+}
+
+function closeAdContainersModal() {
+  adContainersOverlay.classList.remove("open");
+}
+
+adContainersBtn.addEventListener("click", openAdContainersModal);
+adContainersClose.addEventListener("click", closeAdContainersModal);
+adContainersCancel.addEventListener("click", closeAdContainersModal);
+adContainersOverlay.addEventListener("click", e => {
+  if (e.target === adContainersOverlay) closeAdContainersModal();
+});
+
+adContainersSave.addEventListener("click", () => {
+  if (!pendingPattern) {
+    alert("Please select a background pattern first.");
+    return;
+  }
+  savedPattern = pendingPattern;
+  chrome.storage.sync.set({ adContainerPattern: savedPattern }, () => {
+    closeAdContainersModal();
+    showSaveStatus("Pattern saved!", "success");
   });
 });
 
@@ -381,6 +521,8 @@ saveBtn.addEventListener("click", () => {
     showSaveStatus("Please set your API key first (click the ⚙️ icon)", "error");
     return;
   }
+
+  const groups = getGroups();
 
   const topics = isMentalHealthMode ? ["Mental Health"] : (() => {
     if (selectedSubjects.length) return selectedSubjects;
@@ -396,8 +538,9 @@ saveBtn.addEventListener("click", () => {
   saveBtn.disabled    = true;
   saveBtn.textContent = "Saving...";
 
+  // Persist everything including all groups across all paths
   chrome.storage.sync.set(
-    { subjects, selectedSubjects, groups, activeGroupId, isMentalHealthMode, learningPath },
+    { subjects, selectedSubjects, groupsByPath, activeGroupId, isMentalHealthMode, learningPath },
     () => {
       chrome.runtime.sendMessage(
         { type: "REGENERATE_POOL", apiKey, topics, isMentalHealthMode },
@@ -431,9 +574,21 @@ switchLearningPath("ccna");
 updateModeUI();
 
 chrome.storage.sync.get(
-  ["apiKey", "subjects", "selectedSubjects", "groups", "activeGroupId", "isMentalHealthMode", "learningPath"],
+  ["apiKey", "subjects", "selectedSubjects", "groupsByPath", "activeGroupId", "isMentalHealthMode", "learningPath", "adContainerPattern", "extensionTheme"],
   result => {
-    if (result.apiKey)     apiKey = result.apiKey;
+    if (result.apiKey)             apiKey = result.apiKey;
+    if (result.adContainerPattern) savedPattern = result.adContainerPattern;
+    if (result.extensionTheme)     applyTheme(result.extensionTheme);
+    else                           applyTheme("light");
+
+    // Restore all groups across all paths
+    if (result.groupsByPath) {
+      groupsByPath = result.groupsByPath;
+      // Ensure all keys exist in case new paths were added
+      groupsByPath.ccna          = groupsByPath.ccna          || [];
+      groupsByPath["security+"]  = groupsByPath["security+"]  || [];
+      groupsByPath.custom        = groupsByPath.custom        || [];
+    }
 
     if (result.learningPath) {
       switchLearningPath(result.learningPath);
@@ -441,12 +596,10 @@ chrome.storage.sync.get(
       if (result.learningPath === "custom") {
         if (result.subjects?.length)  subjects         = result.subjects;
         if (result.selectedSubjects)  selectedSubjects = result.selectedSubjects;
-        if (result.groups?.length) {
-          groups = result.groups;
-          if (result.activeGroupId) activeGroupId = result.activeGroupId;
-        }
       }
     }
+
+    if (result.activeGroupId) activeGroupId = result.activeGroupId;
 
     if (result.isMentalHealthMode === true) {
       isMentalHealthMode = true;
