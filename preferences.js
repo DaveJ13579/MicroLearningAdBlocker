@@ -81,11 +81,23 @@ const SECURITY_PLUS_TOPICS = [
   "Physical Security & Social Engineering"
 ];
 
+const BEHAVIORAL_TOPICS = [
+  "Reframing Negative Thoughts",
+  "Managing Stress",
+  "Breathing & Grounding",
+  "Sleep & Daily Routines",
+  "Self-Compassion",
+  "Reducing Anxiety",
+  "Mindfulness",
+  "Building Connection"
+];
+
 // ── State ─────────────────────────────────────────────
 let subjects           = [...DEFAULT_SUBJECTS];
 let selectedSubjects   = [];
 let activeGroupId      = null;
 let isMentalHealthMode = false;
+let selectedBehavioralTopics = [...BEHAVIORAL_TOPICS.slice(0, 5)];
 let apiKey             = "";
 let learningPath       = "ccna";
 
@@ -98,11 +110,14 @@ function getGroups()       { return groupsByPath[learningPath] || []; }
 function setGroups(arr)    { groupsByPath[learningPath] = arr; }
 
 // ── Patterns ──────────────────────────────────────────
+
 const PATTERNS = [
   { id: "green-dots",         label: "Green Dots",         file: "images/green dots.png" },
   { id: "confetti",           label: "Confetti",           file: "images/pink confetti.png" },
   { id: "orange-waves",       label: "Orange Waves",       file: "images/orange waves.png" },
-  { id: "orange+blue floral", label: "Orange+Blue Floral", file: "images/orange+blue floral.png" }
+  { id: "orange+blue floral", label: "Orange+Blue Floral", file: "images/orange+blue floral.png" },
+  { id: "testpic1",           label: "Test Pattern",       file: "images/testpic1.png" },
+  { id: "PinkBlueSwirl",           label: "Test Pattern",       file: "images/PinkBlueSwirl.jpg" }
 ];
 
 const VISIBLE = 3;
@@ -211,13 +226,25 @@ customTab.addEventListener("click",       () => switchLearningPath("custom"));
 
 // ── Mode Toggle ───────────────────────────────────────
 function updateModeUI() {
-  modeOptionLeft.classList.toggle("active",     !isMentalHealthMode);
-  modeOptionLeft.classList.toggle("inactive",    isMentalHealthMode);
-  modeOptionRight.classList.toggle("active",     isMentalHealthMode);
-  modeOptionRight.classList.toggle("inactive",  !isMentalHealthMode);
-  topicSelection.classList.toggle("disabled",    isMentalHealthMode);
+  modeOptionLeft.classList.toggle("active",    !isMentalHealthMode);
+  modeOptionLeft.classList.toggle("inactive",   isMentalHealthMode);
+  modeOptionRight.classList.toggle("active",    isMentalHealthMode);
+  modeOptionRight.classList.toggle("inactive", !isMentalHealthMode);
   learningPathSection.classList.toggle("disabled", isMentalHealthMode);
   modeToggle.checked = isMentalHealthMode;
+
+  // Instead of disabling topic selection, switch to behavioral topics
+  topicSelection.classList.remove("disabled");
+
+  if (isMentalHealthMode) {
+    renderBehavioralSubjects();
+  } else {
+    renderSubjects();
+  }
+  renderGroups();
+
+  document.querySelector(".add-subject-row").style.display = isMentalHealthMode ? "none" : "flex";
+  document.getElementById("createGroupBtn").style.display  = isMentalHealthMode ? "none" : "block";
 }
 
 modeOptionLeft.addEventListener("click",  () => { isMentalHealthMode = false; updateModeUI(); });
@@ -261,6 +288,33 @@ function renderSubjects() {
 
     item.appendChild(name);
     item.appendChild(removeBtn);
+    subjectsList.appendChild(item);
+  });
+}
+
+// ── Render Behavioral Subjects ────────────────────────
+function renderBehavioralSubjects() {
+  subjectsList.innerHTML = "";
+
+  BEHAVIORAL_TOPICS.forEach(topic => {
+    const item = document.createElement("div");
+    item.className = "subject-item" + (selectedBehavioralTopics.includes(topic) ? " selected" : "");
+
+    const name = document.createElement("span");
+    name.className   = "subject-item-name";
+    name.textContent = topic;
+    name.addEventListener("click", () => {
+      if (selectedBehavioralTopics.includes(topic)) {
+        if (selectedBehavioralTopics.length > 1) {
+          selectedBehavioralTopics = selectedBehavioralTopics.filter(t => t !== topic);
+        }
+      } else {
+        selectedBehavioralTopics = [...selectedBehavioralTopics, topic];
+      }
+      renderBehavioralSubjects();
+    });
+
+    item.appendChild(name);
     subjectsList.appendChild(item);
   });
 }
@@ -521,11 +575,13 @@ saveBtn.addEventListener("click", () => {
 
   const groups = getGroups();
 
-  const topics = isMentalHealthMode ? ["Mental Health"] : (() => {
-    if (selectedSubjects.length) return selectedSubjects;
-    const g = groups.find(g => g.id === activeGroupId);
-    return g ? g.subjects : [];
-  })();
+  const topics = isMentalHealthMode
+    ? (selectedBehavioralTopics.length ? selectedBehavioralTopics : BEHAVIORAL_TOPICS.slice(0, 5))
+    : (() => {
+      if (selectedSubjects.length) return selectedSubjects;
+      const g = groups.find(g => g.id === activeGroupId);
+      return g ? g.subjects : [];
+    })();
 
   if (!isMentalHealthMode && !topics.length) {
     showSaveStatus("Please select subjects or choose a group with subjects.", "error");
@@ -537,7 +593,7 @@ saveBtn.addEventListener("click", () => {
 
   // Persist everything including all groups across all paths
   chrome.storage.sync.set(
-    { subjects, selectedSubjects, groupsByPath, activeGroupId, isMentalHealthMode, learningPath },
+    { subjects, selectedSubjects, groupsByPath, activeGroupId, isMentalHealthMode, learningPath, selectedBehavioralTopics },
     () => {
       chrome.runtime.sendMessage(
         { type: "REGENERATE_POOL", apiKey, topics, isMentalHealthMode },
@@ -546,7 +602,7 @@ saveBtn.addEventListener("click", () => {
           saveBtn.textContent = "Save & Regenerate";
           if (response?.success) {
             showSaveStatus(isMentalHealthMode
-              ? "Saved! 30 mental health tips generated."
+              ? "Saved! 30 behavioral prompts generated."
               : "Saved! 30 new lessons generated.", "success");
           } else {
             showSaveStatus(
@@ -571,7 +627,7 @@ switchLearningPath("ccna");
 updateModeUI();
 
 chrome.storage.sync.get(
-  ["apiKey", "subjects", "selectedSubjects", "groupsByPath", "activeGroupId", "isMentalHealthMode", "learningPath", "adContainerPattern", "extensionTheme"],
+  ["apiKey", "subjects", "selectedSubjects", "groupsByPath", "activeGroupId", "isMentalHealthMode", "learningPath", "adContainerPattern", "extensionTheme", "selectedBehavioralTopics"],
   result => {
     if (result.apiKey)             apiKey = result.apiKey;
     if (result.adContainerPattern) savedPattern = result.adContainerPattern;
@@ -597,6 +653,8 @@ chrome.storage.sync.get(
     }
 
     if (result.activeGroupId) activeGroupId = result.activeGroupId;
+
+    if (result.selectedBehavioralTopics) selectedBehavioralTopics = result.selectedBehavioralTopics;
 
     if (result.isMentalHealthMode === true) {
       isMentalHealthMode = true;
