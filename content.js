@@ -30,7 +30,7 @@
 
   function loadPattern(callback) {
     chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
-      activePattern = adContainerPattern || null;
+      activePattern = adContainerPattern || "testpic1";
       if (callback) callback();
     });
   }

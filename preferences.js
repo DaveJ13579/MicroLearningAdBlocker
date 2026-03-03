@@ -22,6 +22,7 @@ const securityPlusTab     = document.getElementById("securityPlusTab");
 const customTab           = document.getElementById("customTab");
 const modeOptionLeft          = document.getElementById("modeOptionLeft");
 const modeOptionRight         = document.getElementById("modeOptionRight");
+const subjectCounter          = document.getElementById("subjectCounter");
 const behavioralPathSection   = document.getElementById("behavioralPathSection");
 const stressTab               = document.getElementById("stressTab");
 const financialTab            = document.getElementById("financialTab");
@@ -118,6 +119,9 @@ const BEHAVIORAL_DEFAULT_SUBJECTS = [
   "Stress Management", "Mindfulness", "Healthy Habits",
   "Self-Care", "Motivation", "Emotional Awareness"
 ];
+
+// ── Selection Limit ──────────────────────────────────
+const MAX_SUBJECTS = 5;
 
 // ── State ─────────────────────────────────────────────
 let subjects           = [...DEFAULT_SUBJECTS];
@@ -320,6 +324,15 @@ function updateModeUI() {
 modeOptionLeft.addEventListener("click",  () => { isMentalHealthMode = false; updateModeUI(); });
 modeOptionRight.addEventListener("click", () => { isMentalHealthMode = true;  updateModeUI(); });
 
+// ── Subject Counter ──────────────────────────────────
+function updateSubjectCounter() {
+  const count = isMentalHealthMode ? selectedBehavioralTopics.length : selectedSubjects.length;
+  if (subjectCounter) {
+    subjectCounter.textContent = `${count} / ${MAX_SUBJECTS}`;
+    subjectCounter.classList.toggle("full", count >= MAX_SUBJECTS);
+  }
+}
+
 // ── Render Subjects ───────────────────────────────────
 function renderSubjects() {
   subjectsList.innerHTML = "";
@@ -332,9 +345,14 @@ function renderSubjects() {
     return;
   }
 
+  const atLimit = selectedSubjects.length >= MAX_SUBJECTS;
+
   subjects.forEach(subject => {
+    const isSelected = selectedSubjects.includes(subject);
     const item = document.createElement("div");
-    item.className = "subject-item" + (selectedSubjects.includes(subject) ? " selected" : "");
+    item.className = "subject-item"
+      + (isSelected ? " selected" : "")
+      + (!isSelected && atLimit ? " at-limit" : "");
 
     const name = document.createElement("span");
     name.className   = "subject-item-name";
@@ -360,6 +378,8 @@ function renderSubjects() {
     item.appendChild(removeBtn);
     subjectsList.appendChild(item);
   });
+
+  updateSubjectCounter();
 }
 
 // ── Render Behavioral Subjects ────────────────────────
@@ -385,9 +405,14 @@ function renderBehavioralSubjects() {
     return;
   }
 
+  const atLimit = selectedBehavioralTopics.length >= MAX_SUBJECTS;
+
   subjectList.forEach(topic => {
+    const isSelected = selectedBehavioralTopics.includes(topic);
     const item = document.createElement("div");
-    item.className = "subject-item" + (selectedBehavioralTopics.includes(topic) ? " selected" : "");
+    item.className = "subject-item"
+      + (isSelected ? " selected" : "")
+      + (!isSelected && atLimit ? " at-limit" : "");
 
     const name = document.createElement("span");
     name.className   = "subject-item-name";
@@ -397,7 +422,7 @@ function renderBehavioralSubjects() {
         if (selectedBehavioralTopics.length > 1) {
           selectedBehavioralTopics = selectedBehavioralTopics.filter(t => t !== topic);
         }
-      } else {
+      } else if (selectedBehavioralTopics.length < MAX_SUBJECTS) {
         selectedBehavioralTopics = [...selectedBehavioralTopics, topic];
       }
       renderBehavioralSubjects();
@@ -423,14 +448,18 @@ function renderBehavioralSubjects() {
 
     subjectsList.appendChild(item);
   });
+
+  updateSubjectCounter();
 }
 
 // ── Toggle Subject Selection ──────────────────────────
 function toggleSubjectSelection(subject) {
-  activeGroupId    = null;
-  selectedSubjects = selectedSubjects.includes(subject)
-    ? selectedSubjects.filter(s => s !== subject)
-    : [...selectedSubjects, subject];
+  activeGroupId = null;
+  if (selectedSubjects.includes(subject)) {
+    selectedSubjects = selectedSubjects.filter(s => s !== subject);
+  } else if (selectedSubjects.length < MAX_SUBJECTS) {
+    selectedSubjects = [...selectedSubjects, subject];
+  }
   renderSubjects();
   renderGroups();
 }
