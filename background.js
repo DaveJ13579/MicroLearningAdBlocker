@@ -250,6 +250,17 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // Keep service worker alive
 setInterval(() => chrome.storage.local.get("keepAlive", () => {}), 20000);
 
+// ── Lesson Stats Helpers ─────────────────────────────
+
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+  const monday = new Date(d);
+  monday.setDate(diff);
+  return monday.toISOString().slice(0, 10);
+}
+
 // ── Message Handler ───────────────────────────────────
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -270,5 +281,31 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       })
       .catch(err => sendResponse({ error: err.message }));
     return true;
+  }
+
+  if (msg.type === "LESSON_VIEWED") {
+    const { topic } = msg;
+    chrome.storage.local.get(["lessonStats", "topicCounts"], (result) => {
+      const stats  = result.lessonStats  || { today: 0, weekly: 0, monthly: 0, total: 0 };
+      const counts = result.topicCounts  || {};
+
+      const now      = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const weekStart = getWeekStart(now);
+      const monthStr = now.toISOString().slice(0, 7);
+
+      if (stats.lastDailyReset !== todayStr)   { stats.today = 0;   stats.lastDailyReset = todayStr; }
+      if (stats.lastWeeklyReset !== weekStart)  { stats.weekly = 0;  stats.lastWeeklyReset = weekStart; }
+      if (stats.lastMonthlyReset !== monthStr)  { stats.monthly = 0; stats.lastMonthlyReset = monthStr; }
+
+      stats.today++;
+      stats.weekly++;
+      stats.monthly++;
+      stats.total++;
+      if (topic) counts[topic] = (counts[topic] || 0) + 1;
+
+      chrome.storage.local.set({ lessonStats: stats, topicCounts: counts });
+    });
+    return; // fire-and-forget
   }
 });

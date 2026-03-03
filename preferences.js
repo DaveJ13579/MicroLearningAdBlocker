@@ -35,6 +35,11 @@ const behavioralPathSection   = document.getElementById("behavioralPathSection")
 const stressTab               = document.getElementById("stressTab");
 const financialTab            = document.getElementById("financialTab");
 const behavioralCustomTab     = document.getElementById("behavioralCustomTab");
+const dashBigNumber           = document.getElementById("dashBigNumber");
+const dashToday               = document.getElementById("dashToday");
+const dashWeekly              = document.getElementById("dashWeekly");
+const dashMonthly             = document.getElementById("dashMonthly");
+const dashTopicsList          = document.getElementById("dashTopicsList");
 
 // Inject SVG icons into header buttons
 settingsBtn.innerHTML    = ICON_GEAR;
@@ -221,11 +226,11 @@ function switchLearningPath(path) {
   if (path === "ccna") {
     ccnaTab.classList.add("active");
     subjects         = [...CCNA_TOPICS];
-    selectedSubjects = [...CCNA_TOPICS];
+    selectedSubjects = CCNA_TOPICS.slice(0, MAX_SUBJECTS);
   } else if (path === "security+") {
     securityPlusTab.classList.add("active");
     subjects         = [...SECURITY_PLUS_TOPICS];
-    selectedSubjects = [...SECURITY_PLUS_TOPICS];
+    selectedSubjects = SECURITY_PLUS_TOPICS.slice(0, MAX_SUBJECTS);
   } else {
     customTab.classList.add("active");
     subjects         = [...DEFAULT_SUBJECTS];
@@ -340,23 +345,25 @@ function renderSubjects() {
     name.textContent = subject;
     name.addEventListener("click", () => toggleSubjectSelection(subject));
 
-    const removeBtn = document.createElement("button");
-    removeBtn.className   = "subject-remove-btn";
-    removeBtn.textContent = "\u2715";
-    removeBtn.title       = "Remove subject";
-    removeBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      if (getGroups().some(g => g.subjects.includes(subject))) {
-        alert(`Cannot remove "${subject}" — it's being used in a group.`);
-        return;
-      }
-      subjects         = subjects.filter(s => s !== subject);
-      selectedSubjects = selectedSubjects.filter(s => s !== subject);
-      renderSubjects();
-    });
-
     item.appendChild(name);
-    item.appendChild(removeBtn);
+
+    if (learningPath === "custom") {
+      const removeBtn = document.createElement("button");
+      removeBtn.className   = "subject-remove-btn";
+      removeBtn.textContent = "\u2715";
+      removeBtn.title       = "Remove subject";
+      removeBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        if (getGroups().some(g => g.subjects.includes(subject))) {
+          alert(`Cannot remove "${subject}" — it's being used in a group.`);
+          return;
+        }
+        subjects         = subjects.filter(s => s !== subject);
+        selectedSubjects = selectedSubjects.filter(s => s !== subject);
+        renderSubjects();
+      });
+      item.appendChild(removeBtn);
+    }
     subjectsList.appendChild(item);
   });
 
@@ -613,6 +620,75 @@ createGroupBtn.addEventListener("click", () => {
   });
 });
 
+// ── Learning Activity Dashboard ──────────────────────
+
+let statPeriod = "daily";
+let dashStats  = { today: 0, weekly: 0, monthly: 0, total: 0 };
+let dashTopics = {};
+
+function loadDashboard() {
+  chrome.storage.local.get(["lessonStats", "topicCounts"], result => {
+    dashStats  = result.lessonStats  || { today: 0, weekly: 0, monthly: 0, total: 0 };
+    dashTopics = result.topicCounts  || {};
+    renderDashboard();
+  });
+}
+
+function renderDashboard() {
+  // Big number reflects selected period
+  const bigNum = statPeriod === "daily" ? dashStats.today
+    : statPeriod === "weekly" ? dashStats.weekly
+    : dashStats.monthly;
+  dashBigNumber.textContent = bigNum;
+
+  // Averages row always shows all three
+  dashToday.textContent   = dashStats.today;
+  dashWeekly.textContent  = dashStats.weekly;
+  dashMonthly.textContent = dashStats.monthly;
+
+  // Period tab active state
+  document.querySelectorAll(".dash-tab").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.period === statPeriod);
+  });
+
+  // Topic breakdown — top 6 by count
+  dashTopicsList.innerHTML = "";
+  const entries = Object.entries(dashTopics).sort((a, b) => b[1] - a[1]).slice(0, 6);
+
+  if (!entries.length) {
+    dashTopicsList.innerHTML = '<div class="dash-empty">No lessons viewed yet</div>';
+    return;
+  }
+
+  const maxCount = entries[0][1];
+  const totalViews = Object.values(dashTopics).reduce((s, c) => s + c, 0);
+
+  entries.forEach(([name, count]) => {
+    const pct = totalViews > 0 ? Math.round((count / totalViews) * 100) : 0;
+    const barWidth = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+
+    const row = document.createElement("div");
+    row.className = "dash-topic-row";
+    row.innerHTML = `
+      <div class="dash-topic-meta">
+        <span class="dash-topic-name">${name}</span>
+        <span class="dash-topic-count">${count} · ${pct}%</span>
+      </div>
+      <div class="dash-topic-bar">
+        <div class="dash-topic-fill" style="width: ${barWidth}%"></div>
+      </div>`;
+    dashTopicsList.appendChild(row);
+  });
+}
+
+// Period tab click handlers
+document.querySelectorAll(".dash-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    statPeriod = tab.dataset.period;
+    renderDashboard();
+  });
+});
+
 // ── Save & Regenerate ─────────────────────────────────
 saveBtn.addEventListener("click", () => {
   if (!apiKey.startsWith("sk-ant-")) {
@@ -737,5 +813,6 @@ chrome.storage.sync.get(
     updateModeUI();
     renderSubjects();
     renderGroups();
+    loadDashboard();
   }
 );

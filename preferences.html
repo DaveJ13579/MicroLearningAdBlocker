@@ -106,6 +106,45 @@
       <div id="saveStatus" class="save-status"></div>
     </div>
 
+    <!-- Learning Activity Dashboard -->
+    <div class="section-label m-step" style="animation-delay: 0.30s">Learning activity</div>
+    <div class="card dashboard-card m-step" style="animation-delay: 0.30s">
+      <!-- Zone 1: Summary row -->
+      <div class="dash-summary">
+        <div class="dash-summary-left">
+          <div class="dash-big-number" id="dashBigNumber">0</div>
+          <div class="dash-big-label">lessons viewed</div>
+        </div>
+        <div class="dash-period-tabs">
+          <button class="dash-tab active" data-period="daily">Daily</button>
+          <button class="dash-tab" data-period="weekly">Weekly</button>
+          <button class="dash-tab" data-period="monthly">Monthly</button>
+        </div>
+      </div>
+
+      <!-- Zone 2: Averages row -->
+      <div class="dash-averages">
+        <div class="dash-avg-col">
+          <div class="dash-avg-number" id="dashToday">0</div>
+          <div class="dash-avg-label">Today</div>
+        </div>
+        <div class="dash-avg-col">
+          <div class="dash-avg-number" id="dashWeekly">0</div>
+          <div class="dash-avg-label">This week</div>
+        </div>
+        <div class="dash-avg-col">
+          <div class="dash-avg-number" id="dashMonthly">0</div>
+          <div class="dash-avg-label">This month</div>
+        </div>
+      </div>
+
+      <!-- Zone 3: Topic breakdown -->
+      <div class="dash-topics">
+        <div class="dash-topics-header">By topic</div>
+        <div class="dash-topics-list" id="dashTopicsList"></div>
+      </div>
+    </div>
+
     <!-- Modal overlay -->
     <div class="modal-overlay" id="modalOverlay">
       <div class="modal" id="modal">

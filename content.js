@@ -56,8 +56,11 @@
     if (!url || !isExtensionAlive()) {
       el.innerHTML = `
         <div class="ml-content">
-          <div class="microlearn-brand">MicroLearn</div>
-          <div class="microlearn-topic microlearn-loading">Loading...</div>
+          <div class="ml-header-row">
+            <span class="microlearn-brand">MicroLearn</span>
+            <span class="ml-header-sep">|</span>
+            <span class="microlearn-topic microlearn-loading">Loading...</span>
+          </div>
           <div class="microlearn-headline microlearn-loading">Loading…</div>
           <div class="microlearn-tagline"></div>
         </div>`;
@@ -70,11 +73,15 @@
         <img class="ml-splash-img" src="${url}" alt="" />
       </div>
       <div class="ml-content ml-hidden">
-        <div class="microlearn-brand">MicroLearn</div>
-        <div class="microlearn-topic microlearn-loading">Loading...</div>
+        <div class="ml-header-row">
+          <span class="microlearn-brand">MicroLearn</span>
+          <span class="ml-header-sep">|</span>
+          <span class="microlearn-topic microlearn-loading">Loading...</span>
+        </div>
         <div class="microlearn-headline microlearn-loading">Loading…</div>
         <div class="microlearn-tagline"></div>
-      </div>`;
+      </div>
+      <button class="microlearn-next" title="Next lesson">&#8250;</button>`;
 
     const splash  = el.querySelector(".ml-splash");
     const content = el.querySelector(".ml-content");
@@ -131,6 +138,33 @@
         headlineEl.style.cursor = "help";
       }
     }, 10);
+
+    // Track lesson view
+    if (topic && isExtensionAlive()) {
+      try {
+        chrome.runtime.sendMessage({ type: "LESSON_VIEWED", topic });
+      } catch (e) { /* extension context may be gone */ }
+    }
+
+    // Attach Next button handler
+    const nextBtn = placeholder.querySelector(".microlearn-next");
+    if (nextBtn && !nextBtn._mlBound) {
+      nextBtn._mlBound = true;
+      nextBtn.addEventListener("click", () => {
+        if (!isExtensionAlive()) return;
+        try {
+          chrome.runtime.sendMessage({ type: "FETCH_LESSONS", count: 1 }, response => {
+            if (chrome.runtime.lastError) return;
+            const lesson = response?.lessons?.[0];
+            if (lesson) {
+              // Reset tagline visibility in case it was hidden by fallback
+              if (taglineEl) taglineEl.style.display = "";
+              setLesson(placeholder, lesson);
+            }
+          });
+        } catch (e) { /* extension context may be gone */ }
+      });
+    }
   }
 
   // ── Batching ──────────────────────────────────────────
