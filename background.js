@@ -6,6 +6,24 @@ const USED_KEY       = "usedLessonIds";
 const HISTORICAL_KEY = "historicalFacts";
 const PARALLEL       = 5;
 
+const STRESS_RESILIENCE_TOPICS = [
+  "Cognitive Reframing",
+  "Box Breathing",
+  "Progressive Muscle Relaxation",
+  "Grounding Techniques",
+  "Boundary Setting",
+  "Self-Compassion"
+];
+
+const FINANCIAL_HABITS_TOPICS = [
+  "Budgeting Basics",
+  "Impulse Spending",
+  "Savings Habits",
+  "Student Loan Awareness",
+  "Needs vs. Wants",
+  "Subscription Tracking"
+];
+
 // ── Lesson Generation ─────────────────────────────────
 
 async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHealth = false) {
@@ -200,7 +218,7 @@ async function triggerAutoRegeneration() {
   if (result.isMentalHealthMode === true) {
     const behavioralTopics = result.selectedBehavioralTopics?.length
       ? result.selectedBehavioralTopics
-      : ["Reframing Negative Thoughts", "Managing Stress", "Breathing & Grounding", "Sleep & Daily Routines", "Self-Compassion"];
+      : STRESS_RESILIENCE_TOPICS;
     await generatePool(result.apiKey, behavioralTopics, true).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
     return;
   }
