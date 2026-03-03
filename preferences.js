@@ -1,8 +1,14 @@
 // preferences.js
 
+// ── SVG Icons ────────────────────────────────────────
+const ICON_SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+const ICON_MOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
+const ICON_GEAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>';
+const ICON_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
 // ── DOM References ────────────────────────────────────
 const settingsBtn         = document.getElementById("settingsBtn");
-const modeToggle          = document.getElementById("modeToggle");
+const themeToggleBtn      = document.getElementById("themeToggleBtn");
 const topicSelection      = document.getElementById("topicSelection");
 const groupList           = document.getElementById("groupList");
 const subjectsList        = document.getElementById("subjectsList");
@@ -22,15 +28,19 @@ const securityPlusTab     = document.getElementById("securityPlusTab");
 const customTab           = document.getElementById("customTab");
 const modeOptionLeft          = document.getElementById("modeOptionLeft");
 const modeOptionRight         = document.getElementById("modeOptionRight");
+const modeCheckLeft           = document.getElementById("modeCheckLeft");
+const modeCheckRight          = document.getElementById("modeCheckRight");
 const subjectCounter          = document.getElementById("subjectCounter");
 const behavioralPathSection   = document.getElementById("behavioralPathSection");
 const stressTab               = document.getElementById("stressTab");
 const financialTab            = document.getElementById("financialTab");
 const behavioralCustomTab     = document.getElementById("behavioralCustomTab");
 
-// Theme customization
-const themeLightBtn         = document.getElementById("themeLightBtn");
-const themeDarkBtn          = document.getElementById("themeDarkBtn");
+// Inject SVG icons into header buttons
+settingsBtn.innerHTML    = ICON_GEAR;
+themeToggleBtn.innerHTML = ICON_MOON;
+modeCheckLeft.innerHTML  = ICON_CHECK;
+modeCheckRight.innerHTML = ICON_CHECK;
 
 // ── Topic Lists ───────────────────────────────────────
 const DEFAULT_SUBJECTS = [
@@ -75,39 +85,33 @@ const SECURITY_PLUS_TOPICS = [
   "Physical Security & Social Engineering"
 ];
 
-const BEHAVIORAL_TOPICS = [
-  "Reframing Negative Thoughts",
-  "Managing Stress",
-  "Breathing & Grounding",
-  "Sleep & Daily Routines",
-  "Self-Compassion",
-  "Reducing Anxiety",
-  "Mindfulness",
-  "Building Connection"
-];
-
-const STRESS_RESILIENCE_TOPICS = [
-  "Cognitive Reframing",
-  "Box Breathing",
-  "Progressive Muscle Relaxation",
-  "Grounding Techniques",
-  "Boundary Setting",
-  "Self-Compassion"
-];
-
-const FINANCIAL_HABITS_TOPICS = [
-  "Budgeting Basics",
-  "Impulse Spending",
-  "Savings Habits",
-  "Student Loan Awareness",
-  "Needs vs. Wants",
-  "Subscription Tracking"
-];
-
-const BEHAVIORAL_DEFAULT_SUBJECTS = [
-  "Stress Management", "Mindfulness", "Healthy Habits",
-  "Self-Care", "Motivation", "Emotional Awareness"
-];
+const BEHAVIORAL_PATHS = {
+  stress: {
+    label: "Stress & Resilience",
+    topics: [
+      "Box Breathing", "Cognitive Reframing", "Progressive Muscle Relaxation",
+      "Grounding Techniques", "Boundary Setting", "Sleep Hygiene",
+      "Mindful Awareness", "Gratitude Practice", "Self-Compassion"
+    ]
+  },
+  finance: {
+    label: "Financial Habits",
+    topics: [
+      "Budgeting Basics", "Saving Strategies", "Debt Management",
+      "Impulse Spending Awareness", "Emergency Fund Building",
+      "Credit Score Fundamentals", "Needs vs. Wants",
+      "Compound Interest", "Subscription Auditing"
+    ]
+  },
+  "custom-beh": {
+    label: "Custom",
+    topics: [
+      "Physical Activity", "Healthy Eating", "Hydration Habits",
+      "Screen Time Balance", "Social Connection", "Journaling",
+      "Time Management", "Positive Self-Talk", "Goal Setting"
+    ]
+  }
+};
 
 // ── Selection Limit ──────────────────────────────────
 const MAX_SUBJECTS = 5;
@@ -117,23 +121,21 @@ let subjects           = [...DEFAULT_SUBJECTS];
 let selectedSubjects   = [];
 let activeGroupId      = null;
 let isMentalHealthMode = false;
-let selectedBehavioralTopics = [...BEHAVIORAL_TOPICS.slice(0, 5)];
+let selectedBehavioralTopics = [...BEHAVIORAL_PATHS.stress.topics.slice(0, MAX_SUBJECTS)];
 let apiKey             = "";
 let learningPath       = "ccna";
 
 // Groups are stored per learning path so switching tabs doesn't wipe them.
-// Shape: { ccna: [], "security+": [], custom: [] }
 let groupsByPath = { ccna: [], "security+": [], custom: [] };
 
-// Convenience getter / setter for the currently active path's groups
-function getGroups()       { return groupsByPath[learningPath] || []; }
-function setGroups(arr)    { groupsByPath[learningPath] = arr; }
+function getGroups()    { return groupsByPath[learningPath] || []; }
+function setGroups(arr) { groupsByPath[learningPath] = arr; }
 
 // Behavioral path state
 let behavioralPath = "stress";
-let behavioralCustomSubjects = [...BEHAVIORAL_DEFAULT_SUBJECTS];
+let behavioralCustomSubjects = [...BEHAVIORAL_PATHS["custom-beh"].topics];
 
-let behavioralGroupsByPath = { stress: [], financial: [], "behavioral-custom": [] };
+let behavioralGroupsByPath = { stress: [], finance: [], "custom-beh": [] };
 
 function getBehavioralGroups()    { return behavioralGroupsByPath[behavioralPath] || []; }
 function setBehavioralGroups(arr) { behavioralGroupsByPath[behavioralPath] = arr; }
@@ -192,19 +194,24 @@ function showAPISettingsModal() {
 
 settingsBtn.addEventListener("click", showAPISettingsModal);
 
-// ── Extension Theme (inline buttons) ─────────────────
+// ── Theme Toggle ─────────────────────────────────────
 let currentTheme = "light";
 
 function applyTheme(theme) {
   currentTheme = theme;
-  document.body.classList.toggle("dark-mode", theme === "dark");
-  themeLightBtn.classList.toggle("active", theme === "light");
-  themeDarkBtn.classList.toggle("active",  theme === "dark");
+  if (theme === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+    themeToggleBtn.innerHTML = ICON_SUN;
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    themeToggleBtn.innerHTML = ICON_MOON;
+  }
   chrome.storage.sync.set({ extensionTheme: theme });
 }
 
-themeLightBtn.addEventListener("click", () => applyTheme("light"));
-themeDarkBtn.addEventListener("click",  () => applyTheme("dark"));
+themeToggleBtn.addEventListener("click", () => {
+  applyTheme(currentTheme === "dark" ? "light" : "dark");
+});
 
 // ── Learning Path Tabs ────────────────────────────────
 function switchLearningPath(path) {
@@ -225,10 +232,7 @@ function switchLearningPath(path) {
     selectedSubjects = [];
   }
 
-  // Reset active group selection when switching paths,
-  // but keep the groups themselves intact in groupsByPath.
   activeGroupId = null;
-
   renderSubjects();
   renderGroups();
 }
@@ -244,10 +248,10 @@ function switchBehavioralPath(path) {
 
   if (path === "stress") {
     stressTab.classList.add("active");
-    selectedBehavioralTopics = [...STRESS_RESILIENCE_TOPICS];
-  } else if (path === "financial") {
+    selectedBehavioralTopics = [...BEHAVIORAL_PATHS.stress.topics.slice(0, MAX_SUBJECTS)];
+  } else if (path === "finance") {
     financialTab.classList.add("active");
-    selectedBehavioralTopics = [...FINANCIAL_HABITS_TOPICS];
+    selectedBehavioralTopics = [...BEHAVIORAL_PATHS.finance.topics.slice(0, MAX_SUBJECTS)];
   } else {
     behavioralCustomTab.classList.add("active");
     selectedBehavioralTopics = [];
@@ -259,16 +263,13 @@ function switchBehavioralPath(path) {
 }
 
 stressTab.addEventListener("click",          () => switchBehavioralPath("stress"));
-financialTab.addEventListener("click",       () => switchBehavioralPath("financial"));
-behavioralCustomTab.addEventListener("click", () => switchBehavioralPath("behavioral-custom"));
+financialTab.addEventListener("click",       () => switchBehavioralPath("finance"));
+behavioralCustomTab.addEventListener("click", () => switchBehavioralPath("custom-beh"));
 
 // ── Mode Toggle ───────────────────────────────────────
 function updateModeUI() {
-  modeOptionLeft.classList.toggle("active",    !isMentalHealthMode);
-  modeOptionLeft.classList.toggle("inactive",   isMentalHealthMode);
-  modeOptionRight.classList.toggle("active",    isMentalHealthMode);
-  modeOptionRight.classList.toggle("inactive", !isMentalHealthMode);
-  modeToggle.checked = isMentalHealthMode;
+  modeOptionLeft.classList.toggle("active",  !isMentalHealthMode);
+  modeOptionRight.classList.toggle("active",  isMentalHealthMode);
 
   // Show/hide the correct path tabs
   learningPathSection.style.display    = isMentalHealthMode ? "none" : "";
@@ -279,11 +280,11 @@ function updateModeUI() {
 
   // Show/hide add-subject input based on whether the active path allows custom subjects
   const isCustomPath = isMentalHealthMode
-    ? (behavioralPath === "behavioral-custom")
+    ? (behavioralPath === "custom-beh")
     : (learningPath === "custom");
   document.querySelector(".add-subject-row").style.display = isCustomPath ? "flex" : "none";
 
-  // Show/hide create group button (available in all paths for organizing)
+  // Show/hide create group button (available in all paths)
   document.getElementById("createGroupBtn").style.display = "block";
 
   if (isMentalHealthMode) {
@@ -327,6 +328,13 @@ function renderSubjects() {
       + (isSelected ? " selected" : "")
       + (!isSelected && atLimit ? " at-limit" : "");
 
+    if (isSelected) {
+      const check = document.createElement("span");
+      check.className = "check-icon";
+      check.innerHTML = ICON_CHECK;
+      item.appendChild(check);
+    }
+
     const name = document.createElement("span");
     name.className   = "subject-item-name";
     name.textContent = subject;
@@ -334,7 +342,7 @@ function renderSubjects() {
 
     const removeBtn = document.createElement("button");
     removeBtn.className   = "subject-remove-btn";
-    removeBtn.textContent = "✕";
+    removeBtn.textContent = "\u2715";
     removeBtn.title       = "Remove subject";
     removeBtn.addEventListener("click", e => {
       e.stopPropagation();
@@ -361,13 +369,10 @@ function renderBehavioralSubjects() {
 
   // Determine which subject list to show
   let subjectList;
-  if (behavioralPath === "stress") {
-    subjectList = STRESS_RESILIENCE_TOPICS;
-  } else if (behavioralPath === "financial") {
-    subjectList = FINANCIAL_HABITS_TOPICS;
-  } else {
-    // Custom behavioral path — user-editable list
+  if (behavioralPath === "custom-beh") {
     subjectList = behavioralCustomSubjects;
+  } else {
+    subjectList = BEHAVIORAL_PATHS[behavioralPath]?.topics || [];
   }
 
   if (!subjectList.length) {
@@ -387,6 +392,13 @@ function renderBehavioralSubjects() {
       + (isSelected ? " selected" : "")
       + (!isSelected && atLimit ? " at-limit" : "");
 
+    if (isSelected) {
+      const check = document.createElement("span");
+      check.className = "check-icon";
+      check.innerHTML = ICON_CHECK;
+      item.appendChild(check);
+    }
+
     const name = document.createElement("span");
     name.className   = "subject-item-name";
     name.textContent = topic;
@@ -402,10 +414,10 @@ function renderBehavioralSubjects() {
     });
 
     // Only show remove button on Custom path
-    if (behavioralPath === "behavioral-custom") {
+    if (behavioralPath === "custom-beh") {
       const removeBtn = document.createElement("button");
       removeBtn.className   = "subject-remove-btn";
-      removeBtn.textContent = "✕";
+      removeBtn.textContent = "\u2715";
       removeBtn.title       = "Remove subject";
       removeBtn.addEventListener("click", e => {
         e.stopPropagation();
@@ -442,7 +454,7 @@ function addSubject() {
   const val = addSubjectInput.value.trim();
   if (!val) return;
 
-  if (isMentalHealthMode && behavioralPath === "behavioral-custom") {
+  if (isMentalHealthMode && behavioralPath === "custom-beh") {
     if (behavioralCustomSubjects.includes(val)) { alert(`"${val}" is already in your library.`); return; }
     behavioralCustomSubjects.push(val);
     addSubjectInput.value = "";
@@ -464,7 +476,7 @@ function renderGroups() {
   const groups = getGroups();
 
   if (!groups.length) {
-    groupList.innerHTML = '<li style="padding:10px 12px;font-size:12px;color:#bbb;">No groups yet</li>';
+    groupList.innerHTML = '<li class="group-empty">No groups yet</li>';
     return;
   }
 
@@ -494,7 +506,7 @@ function renderGroups() {
 
     const ellipsis = document.createElement("button");
     ellipsis.className   = "group-ellipsis";
-    ellipsis.textContent = "•••";
+    ellipsis.textContent = "\u00B7\u00B7\u00B7";
     ellipsis.addEventListener("click", e => { e.stopPropagation(); showGroupActions(group); });
 
     li.appendChild(content);
@@ -604,14 +616,14 @@ createGroupBtn.addEventListener("click", () => {
 // ── Save & Regenerate ─────────────────────────────────
 saveBtn.addEventListener("click", () => {
   if (!apiKey.startsWith("sk-ant-")) {
-    showSaveStatus("Please set your API key first (click the ⚙️ icon)", "error");
+    showSaveStatus("Please set your API key first (click the gear icon)", "error");
     return;
   }
 
   const groups = getGroups();
 
   const topics = isMentalHealthMode
-    ? (selectedBehavioralTopics.length ? selectedBehavioralTopics : STRESS_RESILIENCE_TOPICS)
+    ? (selectedBehavioralTopics.length ? selectedBehavioralTopics : BEHAVIORAL_PATHS.stress.topics)
     : (() => {
         if (selectedSubjects.length) return selectedSubjects;
         const g = groups.find(g => g.id === activeGroupId);
@@ -626,7 +638,6 @@ saveBtn.addEventListener("click", () => {
   saveBtn.disabled    = true;
   saveBtn.textContent = "Saving...";
 
-  // Persist everything including all groups across all paths
   chrome.storage.sync.set(
     {
       subjects, selectedSubjects, groupsByPath, activeGroupId,
@@ -669,14 +680,13 @@ updateModeUI();
 chrome.storage.sync.get(
   ["apiKey", "subjects", "selectedSubjects", "groupsByPath", "activeGroupId", "isMentalHealthMode", "learningPath", "extensionTheme", "selectedBehavioralTopics", "behavioralPath", "behavioralCustomSubjects", "behavioralGroupsByPath"],
   result => {
-    if (result.apiKey)             apiKey = result.apiKey;
-    if (result.extensionTheme)     applyTheme(result.extensionTheme);
-    else                           applyTheme("light");
+    if (result.apiKey) apiKey = result.apiKey;
+    if (result.extensionTheme) applyTheme(result.extensionTheme);
+    else applyTheme("light");
 
     // Restore all groups across all paths
     if (result.groupsByPath) {
       groupsByPath = result.groupsByPath;
-      // Ensure all keys exist in case new paths were added
       groupsByPath.ccna          = groupsByPath.ccna          || [];
       groupsByPath["security+"]  = groupsByPath["security+"]  || [];
       groupsByPath.custom        = groupsByPath.custom        || [];
@@ -695,19 +705,32 @@ chrome.storage.sync.get(
 
     if (result.selectedBehavioralTopics?.length) selectedBehavioralTopics = result.selectedBehavioralTopics;
 
-    // Restore behavioral state
-    if (result.behavioralPath) behavioralPath = result.behavioralPath;
+    // Restore behavioral state (with migration from old keys)
+    if (result.behavioralPath) {
+      let bp = result.behavioralPath;
+      if (bp === "financial") bp = "finance";
+      if (bp === "behavioral-custom") bp = "custom-beh";
+      behavioralPath = bp;
+    }
     if (result.behavioralCustomSubjects?.length) behavioralCustomSubjects = result.behavioralCustomSubjects;
     if (result.behavioralGroupsByPath) {
       behavioralGroupsByPath = result.behavioralGroupsByPath;
-      behavioralGroupsByPath.stress              = behavioralGroupsByPath.stress              || [];
-      behavioralGroupsByPath.financial           = behavioralGroupsByPath.financial           || [];
-      behavioralGroupsByPath["behavioral-custom"] = behavioralGroupsByPath["behavioral-custom"] || [];
+      // Migrate old keys if present
+      if (behavioralGroupsByPath.financial && !behavioralGroupsByPath.finance) {
+        behavioralGroupsByPath.finance = behavioralGroupsByPath.financial;
+        delete behavioralGroupsByPath.financial;
+      }
+      if (behavioralGroupsByPath["behavioral-custom"] && !behavioralGroupsByPath["custom-beh"]) {
+        behavioralGroupsByPath["custom-beh"] = behavioralGroupsByPath["behavioral-custom"];
+        delete behavioralGroupsByPath["behavioral-custom"];
+      }
+      behavioralGroupsByPath.stress       = behavioralGroupsByPath.stress       || [];
+      behavioralGroupsByPath.finance      = behavioralGroupsByPath.finance      || [];
+      behavioralGroupsByPath["custom-beh"] = behavioralGroupsByPath["custom-beh"] || [];
     }
 
     if (result.isMentalHealthMode === true) {
       isMentalHealthMode = true;
-      modeToggle.checked = true;
       switchBehavioralPath(behavioralPath);
     }
 
