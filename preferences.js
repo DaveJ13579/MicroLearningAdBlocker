@@ -31,17 +31,6 @@ const behavioralCustomTab     = document.getElementById("behavioralCustomTab");
 // Theme customization
 const themeLightBtn         = document.getElementById("themeLightBtn");
 const themeDarkBtn          = document.getElementById("themeDarkBtn");
-const adContainersBtn       = document.getElementById("adContainersBtn");
-const adContainersOverlay   = document.getElementById("adContainersOverlay");
-const adContainersClose     = document.getElementById("adContainersClose");
-const adContainersCancel    = document.getElementById("adContainersCancel");
-const adContainersSave      = document.getElementById("adContainersSave");
-const patternTrack          = document.getElementById("patternTrack");
-const slideLeft             = document.getElementById("slideLeft");
-const slideRight            = document.getElementById("slideRight");
-const patternPreview        = document.getElementById("patternPreview");
-const previewPlaceholderMsg = document.getElementById("previewPlaceholderMsg");
-const previewCard           = document.getElementById("previewCard");
 
 // ── Topic Lists ───────────────────────────────────────
 const DEFAULT_SUBJECTS = [
@@ -148,22 +137,6 @@ let behavioralGroupsByPath = { stress: [], financial: [], "behavioral-custom": [
 
 function getBehavioralGroups()    { return behavioralGroupsByPath[behavioralPath] || []; }
 function setBehavioralGroups(arr) { behavioralGroupsByPath[behavioralPath] = arr; }
-
-// ── Patterns ──────────────────────────────────────────
-
-const PATTERNS = [
-  { id: "green-dots",         label: "Green Dots",         file: "images/green dots.png" },
-  { id: "confetti",           label: "Confetti",           file: "images/pink confetti.png" },
-  { id: "orange-waves",       label: "Orange Waves",       file: "images/orange waves.png" },
-  { id: "orange+blue floral", label: "Orange+Blue Floral", file: "images/orange+blue floral.png" },
-  { id: "testpic1",           label: "Test Pattern",       file: "images/testpic1.png" },
-  { id: "PinkBlueSwirl",           label: "Test Pattern",       file: "images/PinkBlueSwirl.jpg" }
-];
-
-const VISIBLE = 3;
-let slideOffset    = 0;
-let pendingPattern = null;
-let savedPattern   = null;
 
 // ── Modal Helpers ─────────────────────────────────────
 function openModal(title, bodyHTML, actionsHTML) {
@@ -628,87 +601,6 @@ createGroupBtn.addEventListener("click", () => {
   });
 });
 
-// ── Ad Containers Modal ───────────────────────────────
-function buildPatternThumbs() {
-  patternTrack.innerHTML = "";
-  PATTERNS.forEach(p => {
-    const thumb = document.createElement("div");
-    thumb.className = "pattern-thumb" + (pendingPattern === p.id ? " selected" : "");
-    thumb.style.backgroundImage = `url("${chrome.runtime.getURL(p.file)}")`;
-    thumb.title = p.label;
-    thumb.addEventListener("click", () => selectPattern(p.id));
-    patternTrack.appendChild(thumb);
-  });
-  updateSlideArrows();
-}
-
-function updateSlidePosition() {
-  const thumbWidth = patternTrack.parentElement.offsetWidth / VISIBLE;
-  patternTrack.style.transform = `translateX(-${slideOffset * (thumbWidth + 10)}px)`;
-  updateSlideArrows();
-}
-
-function updateSlideArrows() {
-  slideLeft.disabled  = slideOffset <= 0;
-  slideRight.disabled = slideOffset >= PATTERNS.length - VISIBLE;
-}
-
-slideLeft.addEventListener("click", () => {
-  if (slideOffset > 0) { slideOffset--; updateSlidePosition(); }
-});
-
-slideRight.addEventListener("click", () => {
-  if (slideOffset < PATTERNS.length - VISIBLE) { slideOffset++; updateSlidePosition(); }
-});
-
-function selectPattern(id) {
-  pendingPattern = id;
-  patternTrack.querySelectorAll(".pattern-thumb").forEach((el, i) => {
-    el.classList.toggle("selected", PATTERNS[i].id === id);
-  });
-  const p = PATTERNS.find(x => x.id === id);
-  if (p) {
-    previewPlaceholderMsg.style.display  = "none";
-    previewCard.style.display            = "flex";
-    previewCard.style.backgroundImage    = `url("${chrome.runtime.getURL(p.file)}")`;
-    previewCard.style.backgroundSize     = "cover";
-    previewCard.style.backgroundPosition = "center";
-  }
-}
-
-function openAdContainersModal() {
-  pendingPattern = null;
-  slideOffset    = 0;
-  adContainersOverlay.classList.add("open");
-  previewPlaceholderMsg.style.display = "";
-  previewCard.style.display           = "none";
-  buildPatternThumbs();
-  requestAnimationFrame(updateSlidePosition);
-}
-
-function closeAdContainersModal() {
-  adContainersOverlay.classList.remove("open");
-}
-
-adContainersBtn.addEventListener("click", openAdContainersModal);
-adContainersClose.addEventListener("click", closeAdContainersModal);
-adContainersCancel.addEventListener("click", closeAdContainersModal);
-adContainersOverlay.addEventListener("click", e => {
-  if (e.target === adContainersOverlay) closeAdContainersModal();
-});
-
-adContainersSave.addEventListener("click", () => {
-  if (!pendingPattern) {
-    alert("Please select a background pattern first.");
-    return;
-  }
-  savedPattern = pendingPattern;
-  chrome.storage.sync.set({ adContainerPattern: savedPattern }, () => {
-    closeAdContainersModal();
-    showSaveStatus("Pattern saved!", "success");
-  });
-});
-
 // ── Save & Regenerate ─────────────────────────────────
 saveBtn.addEventListener("click", () => {
   if (!apiKey.startsWith("sk-ant-")) {
@@ -775,10 +667,9 @@ switchLearningPath("ccna");
 updateModeUI();
 
 chrome.storage.sync.get(
-  ["apiKey", "subjects", "selectedSubjects", "groupsByPath", "activeGroupId", "isMentalHealthMode", "learningPath", "adContainerPattern", "extensionTheme", "selectedBehavioralTopics", "behavioralPath", "behavioralCustomSubjects", "behavioralGroupsByPath"],
+  ["apiKey", "subjects", "selectedSubjects", "groupsByPath", "activeGroupId", "isMentalHealthMode", "learningPath", "extensionTheme", "selectedBehavioralTopics", "behavioralPath", "behavioralCustomSubjects", "behavioralGroupsByPath"],
   result => {
     if (result.apiKey)             apiKey = result.apiKey;
-    if (result.adContainerPattern) savedPattern = result.adContainerPattern;
     if (result.extensionTheme)     applyTheme(result.extensionTheme);
     else                           applyTheme("light");
 

@@ -8,7 +8,7 @@
   let flushTimer    = null;
   let observer      = null;
   let pollInterval  = null;
-  let activePattern = null;
+  const PATTERN_FILE = "images/testpic1.png";
 
   function isExtensionAlive() {
     try {
@@ -18,51 +18,22 @@
     }
   }
 
-  // ── Pattern System ────────────────────────────────────
-  const PATTERN_FILES = {
-    "green-dots":         "images/green dots.png",
-    "confetti":           "images/pink confetti.png",
-    "orange-waves":       "images/orange waves.png",
-    "orange+blue floral": "images/orange+blue floral.png",
-    "testpic1":           "images/testpic1.png",
-    "PinkBlueSwirl":      "images/PinkBlueSwirl.jpg"
-  };
-
-  function loadPattern(callback) {
-    chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
-      activePattern = adContainerPattern || "testpic1";
-      if (callback) callback();
-    });
-  }
-
-  function patternURL(patternId) {
-    const file = PATTERN_FILES[patternId];
-    if (!file) return null;
+  function patternURL() {
     try {
-      return chrome.runtime.getURL(file);
+      return chrome.runtime.getURL(PATTERN_FILE);
     } catch (e) {
       return null;
     }
   }
 
-  function applyPattern(el, patternId) {
-    if (patternId && PATTERN_FILES[patternId]) {
-      el.style.backgroundImage    = `url("${patternURL(patternId)}")`;
+  function applyPattern(el) {
+    const url = patternURL();
+    if (url) {
+      el.style.backgroundImage    = `url("${url}")`;
       el.style.backgroundSize     = "cover";
       el.style.backgroundPosition = "center";
       el.style.backgroundRepeat   = "no-repeat";
-    } else {
-      el.style.backgroundImage    = "";
-      el.style.backgroundSize     = "";
-      el.style.backgroundPosition = "";
-      el.style.backgroundRepeat   = "";
     }
-  }
-
-  function refreshAllPatterns() {
-    document.querySelectorAll(".microlearn-placeholder").forEach(el => {
-      applyPattern(el, activePattern);
-    });
   }
 
   // ── Splash Animation ──────────────────────────────────
@@ -76,12 +47,12 @@
     if (width)  el.style.width  = width  + "px";
     if (height) el.style.height = height + "px";
 
-    // Apply the user's chosen pattern as the background immediately
-    applyPattern(el, activePattern);
+    // Apply testpic1 as the background immediately
+    applyPattern(el);
 
-    const url = activePattern ? patternURL(activePattern) : null;
+    const url = patternURL();
 
-    // If no pattern is set or extension is dead, show a simple card with no animation
+    // If extension is dead, show a simple card with no animation
     if (!url || !isExtensionAlive()) {
       el.innerHTML = `
         <div class="ml-content">
@@ -245,12 +216,10 @@
 
   // ── Enable / Disable ──────────────────────────────────
   function enableMicroLearn() {
-    loadPattern(() => {
-      scanAndReplaceAds();
-      observer = new MutationObserver(scanAndReplaceAds);
-      observer.observe(document.body, { childList: true, subtree: true });
-      pollInterval = setInterval(scanAndReplaceAds, 2000);
-    });
+    scanAndReplaceAds();
+    observer = new MutationObserver(scanAndReplaceAds);
+    observer.observe(document.body, { childList: true, subtree: true });
+    pollInterval = setInterval(scanAndReplaceAds, 2000);
   }
 
   function disableMicroLearn() {
@@ -271,11 +240,6 @@
   chrome.storage.onChanged.addListener(changes => {
     if ("enabled" in changes)
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
-
-    if ("adContainerPattern" in changes) {
-      activePattern = changes.adContainerPattern.newValue || null;
-      refreshAllPatterns();
-    }
   });
 
 })();
