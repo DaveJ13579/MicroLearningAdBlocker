@@ -140,7 +140,7 @@
     }
 
     // Parse HEADLINE/TAGLINE format
-    const headlineMatch = text.match(/HEADLINE:\s*(.+)/i);
+    const headlineMatch = text.match(/HEADLINE:\s*(.+?)(?:\s*TAGLINE:|\s*$)/i);
     const taglineMatch  = text.match(/TAGLINE:\s*(.+)/i);
 
     if (headlineMatch && taglineMatch) {
