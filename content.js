@@ -79,27 +79,27 @@
     if (width)  el.style.width  = width  + "px";
     if (height) el.style.height = height + "px";
     el.innerHTML =
-      '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading…</div>' +
-      '<div class="microlearn-tagline"></div>';
+      '<div class="microlearn-brand">MicroLearn</div>' +
+      '<div class="microlearn-header microlearn-loading">Loading…</div>' +
+      '<div class="microlearn-body"></div>';
     applyPattern(el, activePattern);
     return el;
   }
 
   function setLesson(placeholder, headline, tagline) {
-    const bodyEl    = placeholder.querySelector(".microlearn-body");
-    const taglineEl = placeholder.querySelector(".microlearn-tagline");
-    if (!bodyEl) return;
+    const headerEl = placeholder.querySelector(".microlearn-header");
+    const bodyEl   = placeholder.querySelector(".microlearn-body");
+    if (!headerEl) return;
 
-    bodyEl.textContent = headline;
-    bodyEl.classList.remove("microlearn-loading");
+    headerEl.textContent = headline;
+    headerEl.classList.remove("microlearn-loading");
 
-    if (taglineEl) taglineEl.textContent = tagline || "";
+    if (bodyEl) bodyEl.textContent = tagline || "";
 
     setTimeout(() => {
-      if (bodyEl.scrollHeight > bodyEl.clientHeight) {
-        bodyEl.title = headline;
-        bodyEl.style.cursor = "help";
+      if (headerEl.scrollHeight > headerEl.clientHeight) {
+        headerEl.title = headline;
+        headerEl.style.cursor = "help";
       }
     }, 10);
   }

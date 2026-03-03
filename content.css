@@ -17,6 +17,7 @@
 }
 
 .microlearn-placeholder {
+  position: relative;
   background: #E7FEEC;
   color: #0d0f5d;
 
@@ -34,53 +35,38 @@
   container-type: inline-size;
 }
 
-/* Label — small and unobtrusive, sits above the fact */
-.microlearn-header {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  opacity: 0.4;
-  margin-bottom: 8px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Topic label — slightly larger, sits between header and fact */
-.microlearn-topic {
-  font-size: 10px;
+/* Brand — small, subtle, top-left corner label */
+.microlearn-brand {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 8px;
   font-weight: 600;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  opacity: 0.6;
-  margin-bottom: 6px;
-  color: #0d6b2a;
-  flex-shrink: 0;
+  opacity: 0.35;
+  white-space: nowrap;
 }
 
-/* The fact — scales down to fit any container */
-.microlearn-body {
-  font-size: clamp(11px, 2.5cqw, 16px);
+/* Headline — the fact, bold and prominent */
+.microlearn-header {
+  font-size: clamp(13px, 2.8cqw, 18px);
   font-weight: 700;
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   word-break: break-word;
+  margin-bottom: 4px;
 }
 
-/* Default: allow up to 10 lines for most containers */
+/* Tagline — the hook, smaller and lighter */
 .microlearn-body {
-  -webkit-line-clamp: 10;
-}
-
-/* Tagline — the hook, smaller and lighter below the headline */
-.microlearn-tagline {
-  font-size: clamp(9px, 2cqw, 12px);
+  font-size: clamp(10px, 2cqw, 13px);
   font-weight: 400;
   line-height: 1.3;
   opacity: 0.7;
-  margin-top: 4px;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -96,10 +82,16 @@
   padding: 12px;
 }
 
+.microlearn-placeholder[style*="height: 600px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 500px"] .microlearn-header,
+.microlearn-placeholder[style*="height: 400px"] .microlearn-header {
+  -webkit-line-clamp: 5;
+}
+
 .microlearn-placeholder[style*="height: 600px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 500px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 400px"] .microlearn-body {
-  -webkit-line-clamp: 15;
+  -webkit-line-clamp: 4;
 }
 
 /* Leaderboard / banner shapes — wide and short (e.g. 728x90, 970x90, 320x50)
@@ -114,34 +106,35 @@
   text-align: left;
 }
 
+.microlearn-placeholder[style*="height: 90px"] .microlearn-brand,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-brand,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-brand,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-brand {
+  position: static;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  flex-shrink: 0;
+  opacity: 0.4;
+}
+
 .microlearn-placeholder[style*="height: 90px"] .microlearn-header,
 .microlearn-placeholder[style*="height: 50px"] .microlearn-header,
 .microlearn-placeholder[style*="height: 60px"] .microlearn-header,
 .microlearn-placeholder[style*="height: 66px"] .microlearn-header {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  margin-bottom: 0;
-  margin-right: 0;
-  flex-shrink: 0;
+  font-size: clamp(10px, 1.8cqw, 13px);
+  -webkit-line-clamp: 2;
+  line-height: 1.2;
+  margin-bottom: 2px;
 }
 
 .microlearn-placeholder[style*="height: 90px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 50px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 60px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 66px"] .microlearn-body {
-  font-size: clamp(10px, 1.8cqw, 13px);
-  -webkit-line-clamp: 2;
-  line-height: 1.25;
-}
-
-.microlearn-placeholder[style*="height: 90px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 50px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 60px"] .microlearn-tagline,
-.microlearn-placeholder[style*="height: 66px"] .microlearn-tagline {
   font-size: clamp(8px, 1.4cqw, 10px);
   -webkit-line-clamp: 1;
-  margin-top: 2px;
+  line-height: 1.2;
 }
 
 /* Loading pulse animation */
