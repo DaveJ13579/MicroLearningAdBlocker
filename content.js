@@ -8,7 +8,14 @@
   let flushTimer    = null;
   let observer      = null;
   let pollInterval  = null;
-  const PATTERN_FILE = "images/testpic1.png";
+  const BG_IMAGES = [
+    "images/northern-lights.png",
+    "images/warm-gradient.jpg",
+    "images/moonlight-snow.jpg",
+    "images/sunset-cliffs.jpg",
+    "images/alpine-reflection.jpg"
+  ];
+  let bgIndex = Math.floor(Math.random() * BG_IMAGES.length);
 
   function isExtensionAlive() {
     try {
@@ -18,16 +25,17 @@
     }
   }
 
-  function patternURL() {
+  function nextBgURL() {
     try {
-      return chrome.runtime.getURL(PATTERN_FILE);
+      const url = chrome.runtime.getURL(BG_IMAGES[bgIndex % BG_IMAGES.length]);
+      bgIndex++;
+      return url;
     } catch (e) {
       return null;
     }
   }
 
-  function applyPattern(el) {
-    const url = patternURL();
+  function applyPattern(el, url) {
     if (url) {
       el.style.backgroundImage    = `url("${url}")`;
       el.style.backgroundSize     = "cover";
@@ -47,10 +55,9 @@
     if (width)  el.style.width  = width  + "px";
     if (height) el.style.height = height + "px";
 
-    // Apply testpic1 as the background immediately
-    applyPattern(el);
-
-    const url = patternURL();
+    // Pick the next background image in rotation
+    const url = nextBgURL();
+    applyPattern(el, url);
 
     // If extension is dead, show a simple card with no animation
     if (!url || !isExtensionAlive()) {

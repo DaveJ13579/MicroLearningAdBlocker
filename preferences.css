@@ -117,7 +117,7 @@ body {
   gap: 10px;
 }
 
-.logo { width: 32px; height: 32px; border-radius: 6px; }
+.logo { width: 32px; height: 32px; }
 
 .brand {
   font-size: 18px;
