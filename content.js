@@ -25,9 +25,11 @@
     "orange-waves":       "images/orange waves.png",
     "orange+blue floral": "images/orange+blue floral.png",
     "testpic1":           "images/testpic1.png",
-    "PinkBlueSwirl":      "images/PinkBlueSwirl.jpg"
+    "PinkBlueSwirl":      "images/PinkBlueSwirl.jpg",
+    "flowers":            "images/flowers.png"
   };
 
+  // ── Load pattern from storage ─────────────────────────
   function loadPattern(callback) {
     chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
       activePattern = adContainerPattern || null;
@@ -35,8 +37,7 @@
     });
   }
 
-
-function refreshAllPatterns() {
+  function refreshAllPatterns() {
     const splashFile = activePattern ? PATTERN_FILES[activePattern] : DEFAULT_SPLASH;
     const url = (splashFile && isExtensionAlive()) ? chrome.runtime.getURL(splashFile) : null;
     document.querySelectorAll(".microlearn-placeholder").forEach(el => {
@@ -405,9 +406,10 @@ function refreshAllPatterns() {
   });
 
   chrome.storage.onChanged.addListener(changes => {
-    if ("enabled" in changes)
+    if ("enabled" in changes) {
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
-
+    }
+    // Live-update pattern if it changes while page is open
     if ("adContainerPattern" in changes) {
       activePattern = changes.adContainerPattern.newValue || null;
       refreshAllPatterns();

@@ -74,7 +74,7 @@
   text-transform: uppercase;
   opacity: 0.6;
   margin-bottom: 6px;
-  color: #000000;
+  color: #0d6b2a;
   flex-shrink: 0;
 }
 
@@ -134,26 +134,20 @@
 
 /* ────────────────────────────────────────────── */
 /* Banner / Leaderboard Layout */
-/* Fix clipping: smaller font + more usable width */
+/* Wide and short (e.g. 728x90, 970x90, 320x50)  */
 /* ────────────────────────────────────────────── */
 
 .microlearn-placeholder[style*="height: 90px"],
 .microlearn-placeholder[style*="height: 66px"],
 .microlearn-placeholder[style*="height: 60px"],
 .microlearn-placeholder[style*="height: 50px"] {
-  padding: 10px 14px;
-  text-align: center;
-
-  /* Keep layout simple and predictable */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  gap: 4px;
+  padding: 8px 16px;
+  flex-direction: row;
+  gap: 12px;
+  text-align: left;
 }
 
-/* Let banner text use the full width so it can wrap normally */
+/* Let banner content area use the full width */
 .microlearn-placeholder[style*="height: 90px"] .ml-content,
 .microlearn-placeholder[style*="height: 66px"] .ml-content,
 .microlearn-placeholder[style*="height: 60px"] .ml-content,
@@ -162,22 +156,19 @@
   max-width: 100%;
 }
 
-/* Make header/topic tighter on banners */
+/* Header stands vertically on the left side of banner */
 .microlearn-placeholder[style*="height: 90px"] .microlearn-header,
 .microlearn-placeholder[style*="height: 66px"] .microlearn-header,
 .microlearn-placeholder[style*="height: 60px"] .microlearn-header,
 .microlearn-placeholder[style*="height: 50px"] .microlearn-header {
-  margin-bottom: 2px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  margin-bottom: 0;
+  margin-right: 0;
+  flex-shrink: 0;
 }
 
-.microlearn-placeholder[style*="height: 90px"] .microlearn-topic,
-.microlearn-placeholder[style*="height: 66px"] .microlearn-topic,
-.microlearn-placeholder[style*="height: 60px"] .microlearn-topic,
-.microlearn-placeholder[style*="height: 50px"] .microlearn-topic {
-  margin-bottom: 2px;
-}
-
-/* The key fix: shrink banner body font + clamp */
 .microlearn-placeholder[style*="height: 90px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 66px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 60px"] .microlearn-body,

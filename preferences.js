@@ -105,7 +105,8 @@ const PATTERNS = [
   { id: "orange-waves",       label: "Orange Waves",       file: "images/orange waves.png" },
   { id: "orange+blue floral", label: "Orange+Blue Floral", file: "images/orange+blue floral.png" },
   { id: "testpic1",           label: "Test Pattern",       file: "images/testpic1.png" },
-  { id: "PinkBlueSwirl",           label: "Test Pattern",       file: "images/PinkBlueSwirl.jpg" }
+  { id: "PinkBlueSwirl",      label: "Pink Blue Swirl",    file: "images/PinkBlueSwirl.jpg" },
+  { id: "flowers",            label: "Flowers",            file: "images/flowers.png" }
 ];
 
 const VISIBLE = 3;
