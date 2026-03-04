@@ -530,12 +530,25 @@ function renderGroups() {
     content.appendChild(nameSpan);
     content.appendChild(topicsSpan);
     content.addEventListener("click", () => {
-      activeGroupId = group.id;
-      // Populate selections from the group so the panel + save use them
-      if (isMentalHealthMode) {
-        selectedBehavioralTopics = [...group.subjects];
+      if (activeGroupId === group.id) {
+        // Deselect the group — revert to path defaults
+        activeGroupId = null;
+        if (isMentalHealthMode) {
+          const pathTopics = behavioralPath === "custom-beh"
+            ? behavioralCustomSubjects
+            : (BEHAVIORAL_PATHS[behavioralPath]?.topics || []);
+          selectedBehavioralTopics = pathTopics.slice(0, MAX_SUBJECTS);
+        } else {
+          selectedSubjects = subjects.slice(0, MAX_SUBJECTS);
+        }
       } else {
-        selectedSubjects = [...group.subjects];
+        // Select the group
+        activeGroupId = group.id;
+        if (isMentalHealthMode) {
+          selectedBehavioralTopics = [...group.subjects];
+        } else {
+          selectedSubjects = [...group.subjects];
+        }
       }
       renderGroups();
       renderCurrentSubjects();
