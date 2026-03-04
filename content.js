@@ -238,20 +238,7 @@
       const { w, h } = measureAd(ad);
       if (w < 50 || h < 50) return;
 
-      // Walk up ancestors to find the real ad slot container — sites like CNN
-      // wrap a small ad element (e.g. 90px iframe) in several nested divs that
-      // together form the full-height reserved slot (e.g. 360px black wrapper).
-      // We take the tallest qualifying ancestor: taller than the measured ad but
-      // not so large that it's a page section (capped at 900px).
-      let finalH = h;
-      let ancestor = ad.parentElement;
-      for (let depth = 0; depth < 5 && ancestor && ancestor !== document.body; depth++) {
-        const ph = ancestor.offsetHeight;
-        if (ph > h * 1.2 && ph <= 600 && ph > finalH) finalH = ph;
-        ancestor = ancestor.parentElement;
-      }
-
-      newAds.push({ el: ad, w, h: finalH });
+      newAds.push({ el: ad, w, h });
     });
 
     if (!newAds.length) return;
