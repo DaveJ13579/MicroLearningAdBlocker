@@ -212,8 +212,18 @@ async function ensurePool(apiKey, topics) {
 // ── Auto-Regeneration ─────────────────────────────────
 
 async function triggerAutoRegeneration() {
-  const result = await chrome.storage.sync.get(["apiKey", "selectedSubjects", "groups", "activeGroupId", "isMentalHealthMode", "selectedBehavioralTopics"]);
+  const result = await chrome.storage.sync.get(["apiKey", "selectedSubjects", "educationalGroups", "behavioralGroups", "activeGroupId", "isMentalHealthMode", "selectedBehavioralTopics"]);
   if (!result.apiKey) { console.warn("MicroLearn: no API key for auto-regen"); return; }
+
+  // If a group is active, use its subjects (works for both modes)
+  if (result.activeGroupId) {
+    const groups = result.isMentalHealthMode ? (result.behavioralGroups || []) : (result.educationalGroups || []);
+    const g = groups.find(g => g.id === result.activeGroupId);
+    if (g?.subjects?.length) {
+      await generatePool(result.apiKey, g.subjects, result.isMentalHealthMode === true).catch(err => console.error("MicroLearn: auto-regen failed -", err.message));
+      return;
+    }
+  }
 
   if (result.isMentalHealthMode === true) {
     const behavioralTopics = result.selectedBehavioralTopics?.length
@@ -224,10 +234,6 @@ async function triggerAutoRegeneration() {
   }
 
   let topics = result.selectedSubjects?.length ? result.selectedSubjects : [];
-  if (!topics.length && result.activeGroupId && result.groups) {
-    const g = result.groups.find(g => g.id === result.activeGroupId);
-    if (g) topics = g.subjects;
-  }
 
   if (!topics.length) { console.warn("MicroLearn: no topics for auto-regen"); return; }
   await generatePool(result.apiKey, topics, false).catch(err => console.error("MicroLearn: auto-regen failed -", err.message));
