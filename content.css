@@ -96,7 +96,10 @@
   color: #000000;
 }
 
+/* ────────────────────────────────────────────── */
 /* Tall containers */
+/* ────────────────────────────────────────────── */
+
 .microlearn-placeholder[style*="height: 600px"],
 .microlearn-placeholder[style*="height: 250px"][style*="width: 300px"],
 .microlearn-placeholder[style*="height: 500px"],

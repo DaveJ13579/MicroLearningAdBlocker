@@ -3,11 +3,12 @@
   const PROCESSED_ATTR = "data-microlearn-replaced";
   const FALLBACK       = "💡 Stay curious — ask questions every day.";
 
-  let pending      = [];
-  let isFlushing   = false;
-  let flushTimer   = null;
-  let observer     = null;
-  let pollInterval = null;
+  let pending       = [];
+  let isFlushing    = false;
+  let flushTimer    = null;
+  let observer      = null;
+  let pollInterval  = null;
+  let activePattern = null;
 
   function isExtensionAlive() {
     try {
@@ -17,28 +18,56 @@
     }
   }
 
-  // ── Placeholder ───────────────────────────────────────
-  const SPLASH_MS = 3000;
-  const SPLASH_FADE_MS = 700;
+  // ── Pattern System ────────────────────────────────────
+  const PATTERN_FILES = {
+    "green-dots":         "images/green dots.png",
+    "confetti":           "images/pink confetti.png",
+    "orange-waves":       "images/orange waves.png",
+    "orange+blue floral": "images/orange+blue floral.png",
+    "testpic1":           "images/testpic1.png",
+    "PinkBlueSwirl":      "images/PinkBlueSwirl.jpg"
+  };
 
-  const SPLASH_IMAGES = [
-    "images/testpic1.png",
-    // add more later
-  ];
+  function loadPattern(callback) {
+    chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
+      activePattern = adContainerPattern || null;
+      if (callback) callback();
+    });
+  }
 
-  let splashIndex = 0;
-
-  function getNextSplashUrl() {
-    const path = SPLASH_IMAGES[splashIndex % SPLASH_IMAGES.length];
-    splashIndex += 1;
-
+  function patternURL(patternId) {
+    const file = PATTERN_FILES[patternId];
+    if (!file) return null;
     try {
-      if (!isExtensionAlive()) return null;
-      return chrome.runtime.getURL(path);
+      return chrome.runtime.getURL(file);
     } catch (e) {
       return null;
     }
   }
+
+  function applyPattern(el, patternId) {
+    if (patternId && PATTERN_FILES[patternId]) {
+      el.style.backgroundImage    = `url("${patternURL(patternId)}")`;
+      el.style.backgroundSize     = "cover";
+      el.style.backgroundPosition = "center";
+      el.style.backgroundRepeat   = "no-repeat";
+    } else {
+      el.style.backgroundImage    = "";
+      el.style.backgroundSize     = "";
+      el.style.backgroundPosition = "";
+      el.style.backgroundRepeat   = "";
+    }
+  }
+
+  function refreshAllPatterns() {
+    document.querySelectorAll(".microlearn-placeholder").forEach(el => {
+      applyPattern(el, activePattern);
+    });
+  }
+
+  // ── Splash Animation ──────────────────────────────────
+  const SPLASH_MS      = 3000;
+  const SPLASH_FADE_MS = 700;
 
   function createPlaceholder(width, height) {
     const el = document.createElement("div");
@@ -48,10 +77,12 @@
     if (width  > 0) el.style.width  = width  + "px";
     if (height > 0) el.style.height = height + "px";
 
-    const splashUrl = getNextSplashUrl();
+    // Apply the user's chosen pattern as the card background (persists after splash fades).
+    applyPattern(el, activePattern);
+    const url = activePattern ? patternURL(activePattern) : null;
 
-    // Fallback: no splash, no logo
-    if (!splashUrl) {
+    // Fallback: no pattern set or extension is dead → simple card with no animation.
+    if (!url || !isExtensionAlive()) {
       el.innerHTML = `
         <div class="ml-content">
           <div class="microlearn-header">MicroLearn</div>
@@ -62,20 +93,15 @@
       return el;
     }
 
-    // Get logo URL (same try/catch pattern as splashUrl)
+    // Get logo URL
     let logoUrl = null;
     try {
       if (isExtensionAlive()) logoUrl = chrome.runtime.getURL("images/logo 5.1.png");
     } catch (e) { /* ignore */ }
 
-    el.style.backgroundImage    = `url("${splashUrl}")`;
-    el.style.backgroundSize     = "cover";
-    el.style.backgroundPosition = "center";
-    el.style.backgroundRepeat   = "no-repeat";
-
     el.innerHTML = `
       <div class="ml-splash" aria-hidden="true">
-        <img class="ml-splash-img" src="${splashUrl}" alt="" />
+        <img class="ml-splash-img" src="${url}" alt="" />
         ${logoUrl ? `<img class="ml-splash-logo" src="${logoUrl}" alt="MicroLearn" />` : ""}
       </div>
 
@@ -91,6 +117,8 @@
 
     if (content) content.classList.add("ml-hidden");
 
+    // After SPLASH_MS, fade out the splash overlay and reveal the lesson.
+    // The pattern background image stays on the card itself the whole time.
     setTimeout(() => {
       if (!el.isConnected) return;
       if (splash)  splash.classList.add("ml-fadeout");
@@ -124,7 +152,7 @@
 
     setTimeout(() => {
       if (bodyEl.scrollHeight > bodyEl.clientHeight) {
-        bodyEl.title  = text;
+        bodyEl.title        = text;
         bodyEl.style.cursor = "help";
       }
     }, 10);
@@ -133,7 +161,7 @@
   // ── Batching ──────────────────────────────────────────
   function flush() {
     flushTimer = null;
-    if (isFlushing)          { flushTimer = setTimeout(flush, 200); return; }
+    if (isFlushing)      { flushTimer = setTimeout(flush, 200); return; }
     if (!pending.length) return;
 
     const toFill = pending.splice(0);
@@ -320,10 +348,12 @@
 
   // ── Enable / Disable ──────────────────────────────────
   function enableMicroLearn() {
-    scanAndReplaceAds();
-    observer = new MutationObserver(scanAndReplaceAds);
-    observer.observe(document.body, { childList: true, subtree: true });
-    pollInterval = setInterval(scanAndReplaceAds, 2000);
+    loadPattern(() => {
+      scanAndReplaceAds();
+      observer = new MutationObserver(scanAndReplaceAds);
+      observer.observe(document.body, { childList: true, subtree: true });
+      pollInterval = setInterval(scanAndReplaceAds, 2000);
+    });
   }
 
   function disableMicroLearn() {
@@ -344,6 +374,11 @@
   chrome.storage.onChanged.addListener(changes => {
     if ("enabled" in changes)
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
+
+    if ("adContainerPattern" in changes) {
+      activePattern = changes.adContainerPattern.newValue || null;
+      refreshAllPatterns();
+    }
   });
 
 })();
