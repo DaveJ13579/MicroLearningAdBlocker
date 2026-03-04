@@ -259,3 +259,24 @@
   height: 100%;
   width: 100%;
 }
+
+/* Logo centered over the splash image */
+.microlearn-placeholder .ml-splash-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  /* Scale relative to the smaller dimension so it fits tall, wide, and square containers */
+  width:  min(35%, 35cqh);
+  height: min(35%, 35cqh);
+
+  object-fit: contain;
+  pointer-events: none;
+
+  /* mix-blend-mode: multiply makes white PNG pixels transparent against the splash image */
+  mix-blend-mode: multiply;
+
+  /* Slight drop-shadow so the green logo pops on any background */
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+}

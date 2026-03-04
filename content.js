@@ -43,12 +43,14 @@
   function createPlaceholder(width, height) {
     const el = document.createElement("div");
     el.className = "microlearn-placeholder ml-has-splash";
-    if (width) el.style.width = width + "px";
-    if (height) el.style.height = height + "px";
+    // Pin both dimensions to the ad's measured size so the placeholder occupies
+    // exactly the same space and nothing around it shifts or leaves black gaps.
+    if (width  > 0) el.style.width  = width  + "px";
+    if (height > 0) el.style.height = height + "px";
 
     const splashUrl = getNextSplashUrl();
 
-    // If extension context is invalidated, fall back to normal card (no splash)
+    // Fallback: no splash, no logo
     if (!splashUrl) {
       el.innerHTML = `
         <div class="ml-content">
@@ -60,15 +62,21 @@
       return el;
     }
 
-    // Normal splash path
-    el.style.backgroundImage = `url("${splashUrl}")`;
-    el.style.backgroundSize = "cover";
+    // Get logo URL (same try/catch pattern as splashUrl)
+    let logoUrl = null;
+    try {
+      if (isExtensionAlive()) logoUrl = chrome.runtime.getURL("images/logo 5.1.png");
+    } catch (e) { /* ignore */ }
+
+    el.style.backgroundImage    = `url("${splashUrl}")`;
+    el.style.backgroundSize     = "cover";
     el.style.backgroundPosition = "center";
-    el.style.backgroundRepeat = "no-repeat";
+    el.style.backgroundRepeat   = "no-repeat";
 
     el.innerHTML = `
       <div class="ml-splash" aria-hidden="true">
         <img class="ml-splash-img" src="${splashUrl}" alt="" />
+        ${logoUrl ? `<img class="ml-splash-logo" src="${logoUrl}" alt="MicroLearn" />` : ""}
       </div>
 
       <div class="ml-content ml-hidden">
@@ -78,20 +86,17 @@
       </div>
     `;
 
-    const splash = el.querySelector(".ml-splash");
+    const splash  = el.querySelector(".ml-splash");
     const content = el.querySelector(".ml-content");
 
     if (content) content.classList.add("ml-hidden");
 
     setTimeout(() => {
       if (!el.isConnected) return;
-
-      if (splash) splash.classList.add("ml-fadeout");
-
+      if (splash)  splash.classList.add("ml-fadeout");
       setTimeout(() => {
         if (!el.isConnected) return;
-
-        if (splash) splash.remove();
+        if (splash)  splash.remove();
         if (content) content.classList.remove("ml-hidden");
       }, SPLASH_FADE_MS);
     }, SPLASH_MS);
@@ -178,29 +183,135 @@
     'div[data-testid="text-ads-container"]'
   ].join(", ");
 
-  function scanAndReplaceAds() {
+  // Returns the best available pixel dimensions for an element.
+  // offsetWidth/offsetHeight are preferred: they reflect actual layout space,
+  // are unaffected by transforms, and don't shift with scroll position.
+  function measureAd(el) {
+    let w = el.offsetWidth;
+    let h = el.offsetHeight;
 
-      if (!isExtensionAlive()) return;
+    // offsetWidth can be 0 for elements not yet in flow; fall back to computed style.
+    if (!w || !h) {
+      const cs = window.getComputedStyle(el);
+      w = w || parseInt(cs.width,  10) || 0;
+      h = h || parseInt(cs.height, 10) || 0;
+    }
+
+    return { w, h };
+  }
+
+  function scanAndReplaceAds() {
+    if (!isExtensionAlive()) return;
 
     const candidates = document.querySelectorAll(AD_SELECTORS);
     const newAds = [];
 
     candidates.forEach(ad => {
       if (ad.hasAttribute(PROCESSED_ATTR)) return;
-      const rect = ad.getBoundingClientRect();
-      if (rect.width < 50 || rect.height < 50) return;
-      newAds.push({ el: ad, rect });
+      const { w, h } = measureAd(ad);
+      if (w < 50 || h < 50) return;
+      newAds.push({ el: ad, w, h });
     });
 
     if (!newAds.length) return;
 
     observer?.disconnect();
 
-    newAds.forEach(({ el, rect }) => {
-      const placeholder = createPlaceholder(rect.width, rect.height);
+    newAds.forEach(({ el, w, h }) => {
+      const parent = el.parentElement;
+
+      // Snapshot parent's current children BEFORE replacement so we can detect
+      // siblings injected by ad scripts after the placeholder is in place.
+      const priorSiblings = parent ? new Set(parent.children) : null;
+
+      const placeholder = createPlaceholder(w, h);
       placeholder.setAttribute(PROCESSED_ATTR, "true");
       el.replaceWith(placeholder);
       pending.push(placeholder);
+
+      // Guard 1: prevent ad scripts from injecting INTO our placeholder.
+      const ownChildren = new Set(placeholder.children);
+      const innerGuard = new MutationObserver(mutations => {
+        mutations.forEach(m => {
+          m.addedNodes.forEach(node => {
+            if (node.nodeType === 1 && !ownChildren.has(node)) node.remove();
+          });
+        });
+      });
+      innerGuard.observe(placeholder, { childList: true });
+
+      // Guard 2: prevent ad scripts from injecting positioned overlays as SIBLINGS
+      // next to our placeholder.  Two patterns to catch:
+      //   a) Outer wrapper has inline position:absolute/fixed  → remove immediately.
+      //   b) Outer wrapper has no position but its children use z-index inline
+      //      (e.g. Celtra: outer div is width:100%;height:100%, inner divs carry
+      //      z-index:10001+ and position:absolute).  Those children haven't rendered
+      //      yet when the parent mutation fires, so we re-check after a short delay.
+      if (parent) {
+        priorSiblings.add(placeholder); // our placeholder is a legitimate child
+        const siblingGuard = new MutationObserver(mutations => {
+          mutations.forEach(m => {
+            m.addedNodes.forEach(node => {
+              if (node.nodeType !== 1 || priorSiblings.has(node)) return;
+
+              // Pattern (a): inline position on the injected element itself.
+              const pos = node.style?.position;
+              if (pos === "absolute" || pos === "fixed") { node.remove(); return; }
+
+              // Pattern (b): wrapper element whose children will carry inline z-index.
+              // Give the ad script ~150 ms to finish building its subtree, then check.
+              setTimeout(() => {
+                if (!node.isConnected) return;
+                if (node.querySelector("[style*='z-index']")) node.remove();
+              }, 150);
+            });
+          });
+        });
+        siblingGuard.observe(parent, { childList: true });
+      }
+
+      // Guard 3: scroll-back re-injection.
+      // Ad systems use IntersectionObserver to destroy their creative when off-screen
+      // and re-inject when scrolled back into view.  The re-injection often targets an
+      // ancestor container — above the level Guards 1 & 2 watch.
+      // When OUR placeholder becomes visible again, sample elementsFromPoint at its
+      // centre and remove any element that is (a) covering it, (b) positioned
+      // absolute/fixed, and (c) has a computed z-index > 1000 (universal ad-overlay
+      // fingerprint that won't hit normal nav/header elements).
+      const scrollbackGuard = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const r  = entry.boundingClientRect;
+          const cx = r.left + r.width  / 2;
+          const cy = r.top  + r.height / 2;
+          document.elementsFromPoint(cx, cy).forEach(hit => {
+            if (hit === placeholder || placeholder.contains(hit) || hit.contains(placeholder)) return;
+            if (hit === document.documentElement || hit === document.body) return;
+            const cs = window.getComputedStyle(hit);
+            if (
+              (cs.position === "absolute" || cs.position === "fixed") &&
+              parseInt(cs.zIndex, 10) > 1000
+            ) {
+              hit.remove();
+            }
+          });
+        });
+      });
+      scrollbackGuard.observe(placeholder);
+
+      // If dimensions still look suspect, watch the parent and correct once it settles.
+      if (parent && h < 100) {
+        const ro = new ResizeObserver(entries => {
+          for (const entry of entries) {
+            const ph = entry.contentRect.height;
+            if (ph > 50) {
+              placeholder.style.height = ph + "px";
+              ro.disconnect();
+            }
+          }
+        });
+        ro.observe(parent);
+      }
     });
 
     if (observer) observer.observe(document.body, { childList: true, subtree: true });
