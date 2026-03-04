@@ -68,8 +68,8 @@
             <span class="ml-header-sep">|</span>
             <span class="microlearn-topic microlearn-loading">Loading...</span>
           </div>
-          <div class="microlearn-headline microlearn-loading">Loading…</div>
-          <div class="microlearn-tagline"></div>
+          <div class="microlearn-headline microlearn-loading" style="text-align:center!important">Loading...</div>
+          <div class="microlearn-tagline" style="text-align:center!important"></div>
         </div>`;
       return el;
     }
@@ -85,8 +85,8 @@
           <span class="ml-header-sep">|</span>
           <span class="microlearn-topic microlearn-loading">Loading...</span>
         </div>
-        <div class="microlearn-headline microlearn-loading">Loading…</div>
-        <div class="microlearn-tagline"></div>
+        <div class="microlearn-headline microlearn-loading" style="text-align:center!important">Loading...</div>
+        <div class="microlearn-tagline" style="text-align:center!important"></div>
       </div>
       <button class="microlearn-next" title="Next lesson">&#8250;</button>`;
 
@@ -138,6 +138,10 @@
     }
 
     headlineEl.classList.remove("microlearn-loading");
+
+    // Force centering via inline style (page CSS can override class-based rules)
+    headlineEl.style.setProperty("text-align", "center", "important");
+    taglineEl.style.setProperty("text-align", "center", "important");
 
     setTimeout(() => {
       if (headlineEl.scrollHeight > headlineEl.clientHeight) {
