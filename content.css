@@ -270,9 +270,13 @@
   left: 50%;
   transform: translate(-50%, -50%);
 
-  /* Scale relative to the smaller dimension so it fits tall, wide, and square containers */
-  width:  min(35%, 35cqh);
-  height: min(35%, 35cqh);
+  /* Size relative to container width, but cap by container height via % so the logo
+     never overflows a short banner. % resolves correctly here because .ml-splash
+     is position:absolute inset:0, so its dimensions equal the placeholder exactly. */
+  width:  min(35cqw, 160px);
+  height: min(35cqw, 160px);
+  max-width:  70%;
+  max-height: 70%;
 
   object-fit: contain;
   pointer-events: none;

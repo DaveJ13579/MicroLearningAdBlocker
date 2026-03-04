@@ -35,39 +35,26 @@
     });
   }
 
-  function patternURL(patternId) {
-    const file = PATTERN_FILES[patternId];
-    if (!file) return null;
-    try {
-      return chrome.runtime.getURL(file);
-    } catch (e) {
-      return null;
-    }
-  }
 
-  function applyPattern(el, patternId) {
-    if (patternId && PATTERN_FILES[patternId]) {
-      el.style.backgroundImage    = `url("${patternURL(patternId)}")`;
-      el.style.backgroundSize     = "cover";
-      el.style.backgroundPosition = "center";
-      el.style.backgroundRepeat   = "no-repeat";
-    } else {
-      el.style.backgroundImage    = "";
-      el.style.backgroundSize     = "";
-      el.style.backgroundPosition = "";
-      el.style.backgroundRepeat   = "";
-    }
-  }
-
-  function refreshAllPatterns() {
+function refreshAllPatterns() {
+    const splashFile = activePattern ? PATTERN_FILES[activePattern] : DEFAULT_SPLASH;
+    const url = (splashFile && isExtensionAlive()) ? chrome.runtime.getURL(splashFile) : null;
     document.querySelectorAll(".microlearn-placeholder").forEach(el => {
-      applyPattern(el, activePattern);
+      if (url) {
+        el.style.backgroundImage    = `url("${url}")`;
+        el.style.backgroundSize     = "cover";
+        el.style.backgroundPosition = "center";
+        el.style.backgroundRepeat   = "no-repeat";
+      } else {
+        el.style.backgroundImage = "";
+      }
     });
   }
 
   // ── Splash Animation ──────────────────────────────────
   const SPLASH_MS      = 3000;
   const SPLASH_FADE_MS = 700;
+  const DEFAULT_SPLASH = "images/testpic1.png";
 
   function createPlaceholder(width, height) {
     const el = document.createElement("div");
@@ -77,12 +64,23 @@
     if (width  > 0) el.style.width  = width  + "px";
     if (height > 0) el.style.height = height + "px";
 
-    // Apply the user's chosen pattern as the card background (persists after splash fades).
-    applyPattern(el, activePattern);
-    const url = activePattern ? patternURL(activePattern) : null;
+    // Resolve the splash image: user-selected pattern, or the built-in default.
+    // This restores the always-present background + transition from before the merge.
+    const splashFile = activePattern ? PATTERN_FILES[activePattern] : DEFAULT_SPLASH;
+    const url = (splashFile && isExtensionAlive())
+      ? chrome.runtime.getURL(splashFile)
+      : null;
 
-    // Fallback: no pattern set or extension is dead → simple card with no animation.
-    if (!url || !isExtensionAlive()) {
+    // Apply as the persistent card background (remains visible after the splash fades out).
+    if (url) {
+      el.style.backgroundImage    = `url("${url}")`;
+      el.style.backgroundSize     = "cover";
+      el.style.backgroundPosition = "center";
+      el.style.backgroundRepeat   = "no-repeat";
+    }
+
+    // Fallback: extension is dead → simple card with no animation.
+    if (!url) {
       el.innerHTML = `
         <div class="ml-content">
           <div class="microlearn-header">MicroLearn</div>
@@ -238,7 +236,21 @@
       if (ad.hasAttribute(PROCESSED_ATTR)) return;
       const { w, h } = measureAd(ad);
       if (w < 50 || h < 50) return;
-      newAds.push({ el: ad, w, h });
+
+      // Walk up ancestors to find the real ad slot container — sites like CNN
+      // wrap a small ad element (e.g. 90px iframe) in several nested divs that
+      // together form the full-height reserved slot (e.g. 360px black wrapper).
+      // We take the tallest qualifying ancestor: taller than the measured ad but
+      // not so large that it's a page section (capped at 900px).
+      let finalH = h;
+      let ancestor = ad.parentElement;
+      for (let depth = 0; depth < 5 && ancestor && ancestor !== document.body; depth++) {
+        const ph = ancestor.offsetHeight;
+        if (ph > h * 1.2 && ph <= 600 && ph > finalH) finalH = ph;
+        ancestor = ancestor.parentElement;
+      }
+
+      newAds.push({ el: ad, w, h: finalH });
     });
 
     if (!newAds.length) return;
@@ -326,6 +338,27 @@
         });
       });
       scrollbackGuard.observe(placeholder);
+
+      // Guard 4: placeholder removal.
+      // Some ad systems detect that their slot was modified and respond by removing
+      // our placeholder entirely and reinserting the original ad.  Guards 1-3 all
+      // watch for additions; none of them fire when the placeholder itself disappears.
+      // This guard watches the parent for our node being removed and immediately
+      // re-runs the scan so the reinserted ad gets caught and replaced again.
+      if (parent) {
+        const removalGuard = new MutationObserver(mutations => {
+          for (const m of mutations) {
+            for (const node of m.removedNodes) {
+              if (node === placeholder) {
+                removalGuard.disconnect();
+                setTimeout(scanAndReplaceAds, 50);
+                return;
+              }
+            }
+          }
+        });
+        removalGuard.observe(parent, { childList: true });
+      }
 
       // If dimensions still look suspect, watch the parent and correct once it settles.
       if (parent && h < 100) {
