@@ -258,13 +258,24 @@ setInterval(() => chrome.storage.local.get("keepAlive", () => {}), 20000);
 
 // ── Lesson Stats Helpers ─────────────────────────────
 
+function localDateStr(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function localMonthStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 function getWeekStart(date) {
   const d = new Date(date);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
   const monday = new Date(d);
   monday.setDate(diff);
-  return monday.toISOString().slice(0, 10);
+  return localDateStr(monday);
 }
 
 // ── Message Handler ───────────────────────────────────
@@ -295,10 +306,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       const stats  = result.lessonStats  || { today: 0, weekly: 0, monthly: 0, total: 0 };
       const counts = result.topicCounts  || {};
 
-      const now      = new Date();
-      const todayStr = now.toISOString().slice(0, 10);
+      const now       = new Date();
+      const todayStr  = localDateStr(now);
       const weekStart = getWeekStart(now);
-      const monthStr = now.toISOString().slice(0, 7);
+      const monthStr  = localMonthStr(now);
 
       if (stats.lastDailyReset !== todayStr)   { stats.today = 0;   stats.lastDailyReset = todayStr; }
       if (stats.lastWeeklyReset !== weekStart)  { stats.weekly = 0;  stats.lastWeeklyReset = weekStart; }
@@ -308,6 +319,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       stats.weekly++;
       stats.monthly++;
       stats.total++;
+
+      // Enforce invariant: today <= weekly <= monthly
+      if (stats.weekly < stats.today)   stats.weekly  = stats.today;
+      if (stats.monthly < stats.weekly) stats.monthly = stats.weekly;
+
       if (topic) counts[topic] = (counts[topic] || 0) + 1;
 
       chrome.storage.local.set({ lessonStats: stats, topicCounts: counts });
