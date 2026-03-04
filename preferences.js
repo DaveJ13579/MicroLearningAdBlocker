@@ -123,6 +123,7 @@ const MAX_SUBJECTS = 5;
 
 // ── State ─────────────────────────────────────────────
 let subjects           = [...DEFAULT_SUBJECTS];
+let customEducationalSubjects = [...DEFAULT_SUBJECTS];
 let selectedSubjects   = [];
 let activeGroupId      = null;
 let isMentalHealthMode = false;
@@ -233,11 +234,12 @@ function switchLearningPath(path) {
     selectedSubjects = SECURITY_PLUS_TOPICS.slice(0, MAX_SUBJECTS);
   } else {
     customTab.classList.add("active");
-    subjects         = [...DEFAULT_SUBJECTS];
+    subjects         = [...customEducationalSubjects];
     selectedSubjects = [];
   }
 
   activeGroupId = null;
+  updateAddSubjectVisibility();
   renderSubjects();
   renderGroups();
 }
@@ -263,6 +265,7 @@ function switchBehavioralPath(path) {
   }
 
   activeGroupId = null;
+  updateAddSubjectVisibility();
   renderBehavioralSubjects();
   renderGroups();
 }
@@ -270,6 +273,14 @@ function switchBehavioralPath(path) {
 stressTab.addEventListener("click",          () => switchBehavioralPath("stress"));
 financialTab.addEventListener("click",       () => switchBehavioralPath("finance"));
 behavioralCustomTab.addEventListener("click", () => switchBehavioralPath("custom-beh"));
+
+// ── Add-Subject Visibility ────────────────────────────
+function updateAddSubjectVisibility() {
+  const isCustomPath = isMentalHealthMode
+    ? (behavioralPath === "custom-beh")
+    : (learningPath === "custom");
+  document.querySelector(".add-subject-row").style.display = isCustomPath ? "flex" : "none";
+}
 
 // ── Mode Toggle ───────────────────────────────────────
 function updateModeUI() {
@@ -283,11 +294,7 @@ function updateModeUI() {
   // Topic selection stays enabled in both modes
   topicSelection.classList.remove("disabled");
 
-  // Show/hide add-subject input based on whether the active path allows custom subjects
-  const isCustomPath = isMentalHealthMode
-    ? (behavioralPath === "custom-beh")
-    : (learningPath === "custom");
-  document.querySelector(".add-subject-row").style.display = isCustomPath ? "flex" : "none";
+  updateAddSubjectVisibility();
 
   // Show/hide create group button (available in all paths)
   document.getElementById("createGroupBtn").style.display = "block";
@@ -360,6 +367,7 @@ function renderSubjects() {
         }
         subjects         = subjects.filter(s => s !== subject);
         selectedSubjects = selectedSubjects.filter(s => s !== subject);
+        customEducationalSubjects = [...subjects];
         renderSubjects();
       });
       item.appendChild(removeBtn);
@@ -469,6 +477,7 @@ function addSubject() {
   } else {
     if (subjects.includes(val)) { alert(`"${val}" is already in your library.`); return; }
     subjects.push(val);
+    customEducationalSubjects = [...subjects];
     addSubjectInput.value = "";
     renderSubjects();
   }
@@ -533,19 +542,49 @@ function showGroupActions(group) {
   document.getElementById("deleteGroupBtn").addEventListener("click", () => { closeModal(); showDeleteGroup(group); });
 }
 
+function allSubjectsForMode() {
+  if (isMentalHealthMode) {
+    return [
+      { id: "stress", label: "Stress & Resilience", topics: BEHAVIORAL_PATHS.stress.topics },
+      { id: "finance", label: "Financial Habits", topics: BEHAVIORAL_PATHS.finance.topics },
+      { id: "custom-beh", label: "Custom", topics: behavioralCustomSubjects }
+    ];
+  }
+  return [
+    { id: "ccna", label: "CCNA", topics: CCNA_TOPICS },
+    { id: "security+", label: "Security+", topics: SECURITY_PLUS_TOPICS },
+    { id: "custom", label: "Custom", topics: customEducationalSubjects }
+  ];
+}
+
 function buildSubjectSelector(selectedSet) {
   const selector = document.createElement("div");
   selector.className = "subject-selector";
-  subjects.forEach(subject => {
-    const chip = document.createElement("button");
-    chip.className   = "subject-chip" + (selectedSet.has(subject) ? " selected" : "");
-    chip.textContent = subject;
-    chip.addEventListener("click", () => {
-      selectedSet.has(subject) ? selectedSet.delete(subject) : selectedSet.add(subject);
-      chip.classList.toggle("selected", selectedSet.has(subject));
+
+  const modeLabel = isMentalHealthMode ? "behavioral" : "educational";
+  const hint = document.createElement("div");
+  hint.className = "subject-selector-hint";
+  hint.textContent = `Mix subjects from any ${modeLabel} path.`;
+  selector.appendChild(hint);
+
+  allSubjectsForMode().forEach(section => {
+    const header = document.createElement("div");
+    header.className = "subject-selector-header";
+    header.textContent = section.label;
+    selector.appendChild(header);
+
+    section.topics.forEach(subject => {
+      const chip = document.createElement("button");
+      chip.className = "subject-chip" + (selectedSet.has(subject) ? " selected" : "");
+      chip.textContent = subject;
+      chip.addEventListener("click", () => {
+        selectedSet.has(subject) ? selectedSet.delete(subject) : selectedSet.add(subject);
+        chip.classList.toggle("selected", selectedSet.has(subject));
+      });
+      selector.appendChild(chip);
     });
-    selector.appendChild(chip);
   });
+
   return selector;
 }
 
@@ -553,7 +592,6 @@ function showEditGroup(group) {
   openModal(
     "Edit Group",
     `<input type="text" class="text-input" id="editGroupName" value="${group.name}" placeholder="Group name" />
-     <div class="modal-hint">Select subjects for this group:</div>
      <div id="subjectSelector"></div>`,
     `<button class="modal-btn secondary" id="cancelEdit">Cancel</button>
      <button class="modal-btn primary"   id="confirmEdit">Save Group</button>`
@@ -596,7 +634,6 @@ createGroupBtn.addEventListener("click", () => {
   openModal(
     "New Group",
     `<input type="text" class="text-input" id="newGroupName" placeholder="e.g. Work Skills" />
-     <div class="modal-hint">Select subjects for this group:</div>
      <div id="subjectSelector"></div>`,
     `<button class="modal-btn secondary" id="cancelCreate">Cancel</button>
      <button class="modal-btn primary"   id="confirmCreate">Create</button>`
@@ -768,11 +805,12 @@ chrome.storage.sync.get(
       groupsByPath.custom        = groupsByPath.custom        || [];
     }
 
+    if (result.subjects?.length) customEducationalSubjects = result.subjects;
+
     if (result.learningPath) {
       switchLearningPath(result.learningPath);
 
       if (result.learningPath === "custom") {
-        if (result.subjects?.length)  subjects         = result.subjects;
         if (result.selectedSubjects)  selectedSubjects = result.selectedSubjects;
       }
     }
