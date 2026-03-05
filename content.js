@@ -86,6 +86,11 @@
     el.className = "microlearn-placeholder ml-has-splash";
     if (width  > 0) el.style.width  = width  + "px";
     if (height > 0) el.style.height = height + "px";
+    if (width > 0 && height > 0) {
+      const ratio = width / height;
+      if (ratio >= 3)    el.classList.add("ml-banner"); // wide-short (leaderboard/banner)
+      else if (ratio <= 0.5) el.classList.add("ml-tall"); // narrow-tall (skyscraper)
+    }
 
     const url = getNextBgURL();
 
@@ -350,7 +355,15 @@
       // siblings injected by ad scripts after the placeholder is in place.
       const priorSiblings = parent ? new Set(parent.children) : null;
 
-      const placeholder = createPlaceholder(w, h);
+      // Expand to fill the ad slot: the parent container may be explicitly
+      // taller than the inner ad element (e.g. a 250px slot holding a 90px iframe).
+      let finalH = h;
+      if (parent) {
+        const ph = parent.offsetHeight;
+        if (ph > h * 1.1 && ph <= h * 5) finalH = ph;
+      }
+
+      const placeholder = createPlaceholder(w, finalH);
       placeholder.setAttribute(PROCESSED_ATTR, "true");
       el.replaceWith(placeholder);
       pending.push(placeholder);

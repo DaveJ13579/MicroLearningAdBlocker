@@ -35,7 +35,7 @@
   padding: 16px;
   box-sizing: border-box;
   overflow: hidden;
-  container-type: inline-size;
+  container-type: size;
 
   min-width: 0;
 }
@@ -118,7 +118,7 @@
 /* ────────────────────────────────────────────── */
 
 .microlearn-headline {
-  font-size: clamp(14px, 3.2cqw, 22px);
+  font-size: clamp(14px, max(3.2cqw, 6cqh), 34px);
   font-weight: 800;
   line-height: 1.2;
   overflow: hidden;
@@ -138,7 +138,7 @@
 /* ────────────────────────────────────────────── */
 
 .microlearn-tagline {
-  font-size: clamp(10px, 2cqw, 14px);
+  font-size: clamp(10px, max(2cqw, 3.5cqh), 18px);
   font-weight: 500;
   line-height: 1.3;
   overflow: hidden;
@@ -239,6 +239,50 @@
 .microlearn-placeholder[style*="height: 66px"] .microlearn-tagline,
 .microlearn-placeholder[style*="height: 60px"] .microlearn-tagline,
 .microlearn-placeholder[style*="height: 50px"] .microlearn-tagline {
+  font-size: clamp(9px, 1.3cqw, 11px);
+  -webkit-line-clamp: 1;
+}
+
+/* ────────────────────────────────────────────── */
+/* Tall class (aspect-ratio-based, height ≥ 2×w)  */
+/* e.g. 120×600, 160×600 skyscrapers              */
+/* Width is the constraint here — cap to cqw only  */
+/* ────────────────────────────────────────────── */
+
+.ml-tall .microlearn-headline {
+  font-size: clamp(14px, 5cqw, 22px);
+  -webkit-line-clamp: 6;
+}
+
+.ml-tall .microlearn-tagline {
+  font-size: clamp(10px, 3.2cqw, 16px);
+  -webkit-line-clamp: 4;
+}
+
+/* ────────────────────────────────────────────── */
+/* Banner class (aspect-ratio-based, width ≥ 3×h) */
+/* Applies regardless of exact pixel height value */
+/* ────────────────────────────────────────────── */
+
+.ml-banner {
+  padding: 8px 14px;
+}
+
+.ml-banner .ml-content {
+  justify-content: center;
+}
+
+.ml-banner .ml-header-row {
+  margin-bottom: 2px;
+}
+
+.ml-banner .microlearn-headline {
+  font-size: clamp(10px, 1.8cqw, 14px);
+  -webkit-line-clamp: 2;
+  margin-bottom: 2px;
+}
+
+.ml-banner .microlearn-tagline {
   font-size: clamp(9px, 1.3cqw, 11px);
   -webkit-line-clamp: 1;
 }
@@ -355,10 +399,18 @@
 }
 
 .ml-header-sep {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 400;
   color: #000000;
   opacity: 0.3;
+}
+
+/* Override per-component defaults inside the header row so brand + topic
+   sit on exactly the same baseline with no extra spacing. */
+.ml-header-row .microlearn-brand,
+.ml-header-row .microlearn-topic {
+  font-size: 8px;
+  margin-bottom: 0;
 }
 
 /* ────────────────────────────────────────────── */
