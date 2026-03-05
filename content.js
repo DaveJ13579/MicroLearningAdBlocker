@@ -355,15 +355,7 @@
       // siblings injected by ad scripts after the placeholder is in place.
       const priorSiblings = parent ? new Set(parent.children) : null;
 
-      // Expand to fill the ad slot: the parent container may be explicitly
-      // taller than the inner ad element (e.g. a 250px slot holding a 90px iframe).
-      let finalH = h;
-      if (parent) {
-        const ph = parent.offsetHeight;
-        if (ph > h * 1.1 && ph <= h * 5) finalH = ph;
-      }
-
-      const placeholder = createPlaceholder(w, finalH);
+      const placeholder = createPlaceholder(w, h);
       placeholder.setAttribute(PROCESSED_ATTR, "true");
       el.replaceWith(placeholder);
       pending.push(placeholder);
@@ -390,10 +382,11 @@
               const pos = node.style?.position;
               if (pos === "absolute" || pos === "fixed") { node.remove(); return; }
               // Block ad scripts re-injecting a new ad element in the same slot.
-              try { if (node.matches(AD_SELECTORS)) { node.remove(); return; } } catch (e) {}
+              // Replace with a MicroLearn card instead of just removing.
+              try { if (node.matches(AD_SELECTORS)) { setTimeout(scanAndReplaceAds, 100); return; } } catch (e) {}
               setTimeout(() => {
                 if (!node.isConnected) return;
-                try { if (node.matches(AD_SELECTORS)) { node.remove(); return; } } catch (e) {}
+                try { if (node.matches(AD_SELECTORS)) { setTimeout(scanAndReplaceAds, 50); return; } } catch (e) {}
                 if (node.querySelector("[style*='z-index']")) node.remove();
               }, 150);
             });
