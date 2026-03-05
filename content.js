@@ -1,7 +1,7 @@
 (function () {
 
   const PROCESSED_ATTR = "data-microlearn-replaced";
-  const FALLBACK       = "💡 Stay curious — ask questions every day.";
+  const FALLBACK       = "Stay curious — ask questions every day.";
 
   let pending       = [];
   let isFlushing    = false;
@@ -9,6 +9,16 @@
   let observer      = null;
   let pollInterval  = null;
   let activePattern = null;
+
+  // Amanda's rotating background images — used when no user pattern is selected
+  const BG_IMAGES = [
+    "images/northern-lights.png",
+    "images/warm-gradient.jpg",
+    "images/moonlight-snow.jpg",
+    "images/sunset-cliffs.jpg",
+    "images/alpine-reflection.jpg"
+  ];
+  let bgIndex = Math.floor(Math.random() * BG_IMAGES.length);
 
   function isExtensionAlive() {
     try {
@@ -37,42 +47,48 @@
     });
   }
 
+  // Returns the URL for the next placeholder background.
+  // Priority: user-selected pattern → Amanda's rotating landscape images.
+  function getNextBgURL() {
+    if (activePattern && PATTERN_FILES[activePattern] && isExtensionAlive()) {
+      try { return chrome.runtime.getURL(PATTERN_FILES[activePattern]); } catch (e) {}
+    }
+    try {
+      const url = chrome.runtime.getURL(BG_IMAGES[bgIndex % BG_IMAGES.length]);
+      bgIndex++;
+      return url;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Re-apply the user-selected pattern to all existing placeholders.
+  // Only runs when activePattern is set — rotating images stay as-is.
   function refreshAllPatterns() {
-    const splashFile = activePattern ? PATTERN_FILES[activePattern] : DEFAULT_SPLASH;
+    if (!activePattern) return;
+    const splashFile = PATTERN_FILES[activePattern];
     const url = (splashFile && isExtensionAlive()) ? chrome.runtime.getURL(splashFile) : null;
+    if (!url) return;
     document.querySelectorAll(".microlearn-placeholder").forEach(el => {
-      if (url) {
-        el.style.backgroundImage    = `url("${url}")`;
-        el.style.backgroundSize     = "cover";
-        el.style.backgroundPosition = "center";
-        el.style.backgroundRepeat   = "no-repeat";
-      } else {
-        el.style.backgroundImage = "";
-      }
+      el.style.backgroundImage    = `url("${url}")`;
+      el.style.backgroundSize     = "cover";
+      el.style.backgroundPosition = "center";
+      el.style.backgroundRepeat   = "no-repeat";
     });
   }
 
   // ── Splash Animation ──────────────────────────────────
   const SPLASH_MS      = 3000;
   const SPLASH_FADE_MS = 700;
-  const DEFAULT_SPLASH = "images/testpic1.png";
 
   function createPlaceholder(width, height) {
     const el = document.createElement("div");
     el.className = "microlearn-placeholder ml-has-splash";
-    // Pin both dimensions to the ad's measured size so the placeholder occupies
-    // exactly the same space and nothing around it shifts or leaves black gaps.
     if (width  > 0) el.style.width  = width  + "px";
     if (height > 0) el.style.height = height + "px";
 
-    // Resolve the splash image: user-selected pattern, or the built-in default.
-    // This restores the always-present background + transition from before the merge.
-    const splashFile = activePattern ? PATTERN_FILES[activePattern] : DEFAULT_SPLASH;
-    const url = (splashFile && isExtensionAlive())
-      ? chrome.runtime.getURL(splashFile)
-      : null;
+    const url = getNextBgURL();
 
-    // Apply as the persistent card background (remains visible after the splash fades out).
     if (url) {
       el.style.backgroundImage    = `url("${url}")`;
       el.style.backgroundSize     = "cover";
@@ -80,19 +96,22 @@
       el.style.backgroundRepeat   = "no-repeat";
     }
 
-    // Fallback: extension is dead → simple card with no animation.
+    // Fallback: no URL → simple card with no animation.
     if (!url) {
       el.innerHTML = `
         <div class="ml-content">
-          <div class="microlearn-header">MicroLearn</div>
-          <div class="microlearn-topic microlearn-loading">Loading...</div>
-          <div class="microlearn-body microlearn-loading">Loading…</div>
-        </div>
-      `;
+          <div class="ml-header-row">
+            <span class="microlearn-brand">MicroLearn</span>
+            <span class="ml-header-sep">|</span>
+            <span class="microlearn-topic microlearn-loading">Loading...</span>
+          </div>
+          <div class="microlearn-headline microlearn-loading">Loading...</div>
+          <div class="microlearn-tagline"></div>
+        </div>`;
       return el;
     }
 
-    // Get logo URL
+    // Get logo URL (Harman's logo over the splash image)
     let logoUrl = null;
     try {
       if (isExtensionAlive()) logoUrl = chrome.runtime.getURL("images/logo 5.1.png");
@@ -103,13 +122,16 @@
         <img class="ml-splash-img" src="${url}" alt="" />
         ${logoUrl ? `<img class="ml-splash-logo" src="${logoUrl}" alt="MicroLearn" />` : ""}
       </div>
-
       <div class="ml-content ml-hidden">
-        <div class="microlearn-header">MicroLearn</div>
-        <div class="microlearn-topic microlearn-loading">Loading...</div>
-        <div class="microlearn-body microlearn-loading">Loading…</div>
+        <div class="ml-header-row">
+          <span class="microlearn-brand">MicroLearn</span>
+          <span class="ml-header-sep">|</span>
+          <span class="microlearn-topic microlearn-loading">Loading...</span>
+        </div>
+        <div class="microlearn-headline microlearn-loading">Loading...</div>
+        <div class="microlearn-tagline"></div>
       </div>
-    `;
+      <button class="microlearn-next" title="Next lesson">&#8250;</button>`;
 
     const splash  = el.querySelector(".ml-splash");
     const content = el.querySelector(".ml-content");
@@ -117,10 +139,10 @@
     if (content) content.classList.add("ml-hidden");
 
     // After SPLASH_MS, fade out the splash overlay and reveal the lesson.
-    // The pattern background image stays on the card itself the whole time.
+    // The background image stays on the card itself the whole time.
     setTimeout(() => {
       if (!el.isConnected) return;
-      if (splash)  splash.classList.add("ml-fadeout");
+      if (splash) splash.classList.add("ml-fadeout");
       setTimeout(() => {
         if (!el.isConnected) return;
         if (splash)  splash.remove();
@@ -132,9 +154,10 @@
   }
 
   function setLesson(placeholder, lessonData) {
-    const topicEl = placeholder.querySelector(".microlearn-topic");
-    const bodyEl  = placeholder.querySelector(".microlearn-body");
-    if (!bodyEl) return;
+    const topicEl    = placeholder.querySelector(".microlearn-topic");
+    const headlineEl = placeholder.querySelector(".microlearn-headline");
+    const taglineEl  = placeholder.querySelector(".microlearn-tagline");
+    if (!headlineEl) return;
 
     const text  = lessonData?.text  ?? (typeof lessonData === "string" ? lessonData : null) ?? FALLBACK;
     const topic = lessonData?.topic ?? null;
@@ -146,15 +169,56 @@
       topicEl.style.display = "none";
     }
 
-    bodyEl.textContent = text;
-    bodyEl.classList.remove("microlearn-loading");
+    // Parse HEADLINE/TAGLINE format from Amanda
+    const headlineMatch = text.match(/HEADLINE:\s*(.+?)(?:\s*TAGLINE:|\s*$)/i);
+    const taglineMatch  = text.match(/TAGLINE:\s*(.+)/i);
+
+    if (headlineMatch && taglineMatch) {
+      headlineEl.textContent = headlineMatch[1].trim();
+      if (taglineEl) taglineEl.textContent = taglineMatch[1].trim();
+    } else {
+      headlineEl.textContent = text;
+      if (taglineEl) taglineEl.style.display = "none";
+    }
+
+    headlineEl.classList.remove("microlearn-loading");
+
+    // Force centering (page CSS can override class-based rules)
+    headlineEl.style.setProperty("text-align", "center", "important");
+    if (taglineEl) taglineEl.style.setProperty("text-align", "center", "important");
 
     setTimeout(() => {
-      if (bodyEl.scrollHeight > bodyEl.clientHeight) {
-        bodyEl.title        = text;
-        bodyEl.style.cursor = "help";
+      if (headlineEl.scrollHeight > headlineEl.clientHeight) {
+        headlineEl.title        = headlineEl.textContent;
+        headlineEl.style.cursor = "help";
       }
     }, 10);
+
+    // Track lesson view
+    if (topic && isExtensionAlive()) {
+      try {
+        chrome.runtime.sendMessage({ type: "LESSON_VIEWED", topic });
+      } catch (e) { /* extension context may be gone */ }
+    }
+
+    // Attach Next button handler
+    const nextBtn = placeholder.querySelector(".microlearn-next");
+    if (nextBtn && !nextBtn._mlBound) {
+      nextBtn._mlBound = true;
+      nextBtn.addEventListener("click", () => {
+        if (!isExtensionAlive()) return;
+        try {
+          chrome.runtime.sendMessage({ type: "FETCH_LESSONS", count: 1 }, response => {
+            if (chrome.runtime.lastError) return;
+            const lesson = response?.lessons?.[0];
+            if (lesson) {
+              if (taglineEl) taglineEl.style.display = "";
+              setLesson(placeholder, lesson);
+            }
+          });
+        } catch (e) { /* extension context may be gone */ }
+      });
+    }
   }
 
   // ── Batching ──────────────────────────────────────────
@@ -210,14 +274,12 @@
     'div[data-testid="text-ads-container"]'
   ].join(", ");
 
-  // Returns the best available pixel dimensions for an element.
   // offsetWidth/offsetHeight are preferred: they reflect actual layout space,
   // are unaffected by transforms, and don't shift with scroll position.
   function measureAd(el) {
     let w = el.offsetWidth;
     let h = el.offsetHeight;
 
-    // offsetWidth can be 0 for elements not yet in flow; fall back to computed style.
     if (!w || !h) {
       const cs = window.getComputedStyle(el);
       w = w || parseInt(cs.width,  10) || 0;
@@ -237,7 +299,6 @@
       if (ad.hasAttribute(PROCESSED_ATTR)) return;
       const { w, h } = measureAd(ad);
       if (w < 50 || h < 50) return;
-
       newAds.push({ el: ad, w, h });
     });
 
@@ -268,26 +329,15 @@
       });
       innerGuard.observe(placeholder, { childList: true });
 
-      // Guard 2: prevent ad scripts from injecting positioned overlays as SIBLINGS
-      // next to our placeholder.  Two patterns to catch:
-      //   a) Outer wrapper has inline position:absolute/fixed  → remove immediately.
-      //   b) Outer wrapper has no position but its children use z-index inline
-      //      (e.g. Celtra: outer div is width:100%;height:100%, inner divs carry
-      //      z-index:10001+ and position:absolute).  Those children haven't rendered
-      //      yet when the parent mutation fires, so we re-check after a short delay.
+      // Guard 2: prevent ad scripts from injecting positioned overlays as SIBLINGS.
       if (parent) {
-        priorSiblings.add(placeholder); // our placeholder is a legitimate child
+        priorSiblings.add(placeholder);
         const siblingGuard = new MutationObserver(mutations => {
           mutations.forEach(m => {
             m.addedNodes.forEach(node => {
               if (node.nodeType !== 1 || priorSiblings.has(node)) return;
-
-              // Pattern (a): inline position on the injected element itself.
               const pos = node.style?.position;
               if (pos === "absolute" || pos === "fixed") { node.remove(); return; }
-
-              // Pattern (b): wrapper element whose children will carry inline z-index.
-              // Give the ad script ~150 ms to finish building its subtree, then check.
               setTimeout(() => {
                 if (!node.isConnected) return;
                 if (node.querySelector("[style*='z-index']")) node.remove();
@@ -298,14 +348,7 @@
         siblingGuard.observe(parent, { childList: true });
       }
 
-      // Guard 3: scroll-back re-injection.
-      // Ad systems use IntersectionObserver to destroy their creative when off-screen
-      // and re-inject when scrolled back into view.  The re-injection often targets an
-      // ancestor container — above the level Guards 1 & 2 watch.
-      // When OUR placeholder becomes visible again, sample elementsFromPoint at its
-      // centre and remove any element that is (a) covering it, (b) positioned
-      // absolute/fixed, and (c) has a computed z-index > 1000 (universal ad-overlay
-      // fingerprint that won't hit normal nav/header elements).
+      // Guard 3: scroll-back re-injection via IntersectionObserver + elementsFromPoint.
       const scrollbackGuard = new IntersectionObserver(entries => {
         entries.forEach(entry => {
           if (!entry.isIntersecting) return;
@@ -327,12 +370,7 @@
       });
       scrollbackGuard.observe(placeholder);
 
-      // Guard 4: placeholder removal.
-      // Some ad systems detect that their slot was modified and respond by removing
-      // our placeholder entirely and reinserting the original ad.  Guards 1-3 all
-      // watch for additions; none of them fire when the placeholder itself disappears.
-      // This guard watches the parent for our node being removed and immediately
-      // re-runs the scan so the reinserted ad gets caught and replaced again.
+      // Guard 4: placeholder removal — re-scan after 50ms if our node is removed.
       if (parent) {
         const removalGuard = new MutationObserver(mutations => {
           for (const m of mutations) {

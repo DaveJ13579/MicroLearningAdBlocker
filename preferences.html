@@ -3,127 +3,171 @@
   <head>
     <meta charset="UTF-8" />
     <title>MicroLearn – Customize Your Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="preferences.css" />
   </head>
   <body>
     <!-- Header -->
-    <div class="page-header">
+    <div class="page-header m-step" style="animation-delay: 0s">
       <div class="header-left">
-        <div class="logo-wrap">
-          <img src="images/logo 5.1.png" class="logo" />
-        </div>
+        <img src="images/logo 5.1.png" class="logo" />
         <div class="header-brand">
-          <div class="brand">MicroLearn</div>
-          <div class="tagline">Replace Ads With Learning</div>
+          <span class="brand">MicroLearn</span>
+          <span class="brand-tagline">Turn Ad Space Into Brain Space</span>
         </div>
+        <div class="header-divider"></div>
+        <span class="header-subtitle">Customize Your Learning</span>
       </div>
-
-      <div class="header-divider"></div>
-
-      <div class="header-right">
-        <div class="page-title">Customize<br />Your Learning</div>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeToggleBtn" title="Toggle theme"></button>
+        <button class="icon-btn" id="adContainersBtn" title="Learning Containers"></button>
+        <button class="icon-btn" id="settingsBtn" title="API Settings"></button>
       </div>
-
-      <button class="settings-icon-btn" id="settingsBtn" title="API Settings">
-        ⚙️
-      </button>
     </div>
 
-    <!-- Content Mode Toggle — segmented control -->
-    <div class="card mode-card">
-      <input type="checkbox" id="modeToggle" />
-      <div class="mode-toggle-row">
-        <div class="mode-option" id="modeOptionLeft">
+    <!-- Content mode -->
+    <div class="section-header m-step" style="animation-delay: 0.06s">
+      <span class="section-label">Content mode</span>
+      <span class="section-description">Learn something new, or build better habits.</span>
+    </div>
+    <div class="mode-toggle-row m-step" style="animation-delay: 0.06s">
+      <div class="mode-option" id="modeOptionLeft">
+        <div class="mode-top">
           <div class="mode-label">Educational</div>
-          <div class="mode-description">
-            Educational content on your chosen topics
-          </div>
+          <div class="mode-check" id="modeCheckLeft"></div>
         </div>
-        <div class="mode-divider"></div>
-        <div class="mode-option" id="modeOptionRight">
+        <div class="mode-description">Topics you choose</div>
+      </div>
+      <div class="mode-option" id="modeOptionRight">
+        <div class="mode-top">
           <div class="mode-label">Behavioral</div>
-          <div class="mode-description">
-            Supportive tips and coping strategies
-          </div>
+          <div class="mode-check" id="modeCheckRight"></div>
         </div>
+        <div class="mode-description">Wellness and coping strategies</div>
       </div>
     </div>
 
-    <!-- Learning Path Tabs (only visible in Learning Facts mode) -->
-    <div id="learningPathSection" class="learning-path-section">
-      <div class="section-label">Learning Path</div>
+    <!-- Learning Path Tabs (Educational) -->
+    <div id="learningPathSection" class="learning-path-section m-step" style="animation-delay: 0.12s">
+      <div class="section-header">
+        <span class="section-label">Learning path</span>
+        <span class="section-description">Pick a preset to get started, or go custom to choose your own subjects.</span>
+      </div>
       <div class="card learning-path-card">
         <div class="learning-path-tabs">
-          <button class="path-tab active" id="ccnaTab" data-path="ccna">
-            CCNA
-          </button>
-          <button class="path-tab" id="securityPlusTab" data-path="security+">
-            Security+
-          </button>
-          <button class="path-tab" id="customTab" data-path="custom">
-            Custom
-          </button>
+          <button class="path-tab active" id="ccnaTab" data-path="ccna">CCNA</button>
+          <button class="path-tab" id="securityPlusTab" data-path="security+">Security+</button>
+          <button class="path-tab" id="customTab" data-path="custom">Custom</button>
         </div>
       </div>
     </div>
 
-    <!-- Two column layout -->
-    <div class="columns" id="topicSelection">
-      <!-- Learner Groups (LEFT) -->
-      <div class="column">
-        <div class="col-header">
-          <div class="section-label">Learner Groups</div>
+    <!-- Learning Path Tabs (Behavioral) -->
+    <div id="behavioralPathSection" class="learning-path-section m-step" style="display: none; animation-delay: 0.12s">
+      <div class="section-header">
+        <span class="section-label">Learning path</span>
+        <span class="section-description">Pick a preset to get started, or go custom to choose your own subjects.</span>
+      </div>
+      <div class="card learning-path-card">
+        <div class="learning-path-tabs">
+          <button class="path-tab active" id="stressTab" data-path="stress">Stress &amp; Resilience</button>
+          <button class="path-tab" id="financialTab" data-path="finance">Financial Habits</button>
+          <button class="path-tab" id="behavioralCustomTab" data-path="custom-beh">Custom</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Select subjects -->
+    <div class="section-header m-step" style="animation-delay: 0.18s">
+      <span class="section-label">Select subjects</span>
+      <span class="section-description">Presets come with subjects ready to go. Create a group to mix subjects from any path.</span>
+    </div>
+    <div class="columns m-step" id="topicSelection" style="animation-delay: 0.18s">
+      <!-- Groups (LEFT) -->
+      <div class="column">
         <div class="card list-card">
-          <ul class="group-list" id="groupList"></ul>
+          <div class="groups-header">
+            <div class="panel-title">Groups</div>
+            <div class="panel-hint">Save presets</div>
+          </div>
+          <ul class="group-list m-scroll" id="groupList"></ul>
           <div style="padding: 6px 8px 8px">
-            <button class="add-btn" id="createGroupBtn">
-              + Create New Group
-            </button>
+            <button class="add-btn" id="createGroupBtn">+ Create New Group</button>
           </div>
         </div>
       </div>
 
-      <!-- Learning Subjects Library (RIGHT) -->
+      <!-- Subjects (RIGHT) -->
       <div class="column">
-        <div class="col-header">
-          <div class="section-label">Learning Subjects</div>
-        </div>
         <div class="card subjects-card">
-          <div class="subjects-library" id="subjectsList"></div>
+          <div class="subjects-header">
+            <div>
+              <div class="panel-title">Subjects</div>
+              <div class="panel-hint">Pick up to 5 at a time</div>
+            </div>
+            <span class="subjects-counter" id="subjectCounter">0 / 5</span>
+          </div>
+          <div class="subjects-library m-scroll" id="subjectsList"></div>
           <div class="add-subject-row">
-            <input
-              type="text"
-              id="addSubjectInput"
-              class="text-input add-subject-input"
-              placeholder="Add custom topic..."
-            />
+            <input type="text" id="addSubjectInput" class="text-input add-subject-input" placeholder="Add custom topic..." />
             <button class="add-subject-btn" id="addSubjectBtn">+</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Theme Customization -->
-    <div class="section-label">Theme Customization</div>
-    <div class="theme-customization-card card">
-      <button class="theme-btn active" id="themeLightBtn">Light Mode</button>
-      <button class="theme-btn" id="themeDarkBtn">Dark Mode</button>
-      <button class="theme-btn" id="adContainersBtn">
-        Learning Containers
-      </button>
-    </div>
-
     <!-- Save bar -->
-    <div class="save-bar">
+    <div class="save-bar m-step" style="animation-delay: 0.24s">
       <button class="save-btn" id="saveBtn">Save &amp; Regenerate</button>
       <div id="saveStatus" class="save-status"></div>
+    </div>
+
+    <!-- Learning Activity Dashboard -->
+    <div class="section-header m-step" style="animation-delay: 0.30s">
+      <span class="section-label">Learning activity</span>
+      <span class="section-description">Your learning at a glance.</span>
+    </div>
+    <div class="card dashboard-card m-step" style="animation-delay: 0.30s">
+      <!-- Zone 1: Summary row -->
+      <div class="dash-summary">
+        <div class="dash-summary-left">
+          <div class="dash-big-number" id="dashBigNumber">0</div>
+          <div class="dash-big-label">lessons viewed</div>
+        </div>
+        <div class="dash-period-tabs">
+          <button class="dash-tab active" data-period="daily">Daily</button>
+          <button class="dash-tab" data-period="weekly">Weekly</button>
+          <button class="dash-tab" data-period="monthly">Monthly</button>
+        </div>
+      </div>
+
+      <!-- Zone 2: Averages row -->
+      <div class="dash-averages">
+        <div class="dash-avg-col">
+          <div class="dash-avg-number" id="dashToday">0</div>
+          <div class="dash-avg-label">Today</div>
+        </div>
+        <div class="dash-avg-col">
+          <div class="dash-avg-number" id="dashWeekly">0</div>
+          <div class="dash-avg-label">This week</div>
+        </div>
+        <div class="dash-avg-col">
+          <div class="dash-avg-number" id="dashMonthly">0</div>
+          <div class="dash-avg-label">This month</div>
+        </div>
+      </div>
+
+      <!-- Zone 3: Topic breakdown -->
+      <div class="dash-topics">
+        <div class="dash-topics-header">By topic</div>
+        <div class="dash-topics-list" id="dashTopicsList"></div>
+      </div>
     </div>
 
     <!-- Modal overlay -->
     <div class="modal-overlay" id="modalOverlay">
       <div class="modal" id="modal">
-        <button class="modal-close" id="modalClose">✕</button>
+        <button class="modal-close" id="modalClose">&#10005;</button>
         <div class="modal-title" id="modalTitle">New Group</div>
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-actions" id="modalActions"></div>
@@ -163,12 +207,8 @@
         </div>
 
         <div class="modal-actions" style="margin-top: 16px">
-          <button class="modal-btn secondary" id="adContainersCancel">
-            Cancel
-          </button>
-          <button class="modal-btn primary" id="adContainersSave">
-            Save Pattern
-          </button>
+          <button class="modal-btn secondary" id="adContainersCancel">Cancel</button>
+          <button class="modal-btn primary" id="adContainersSave">Save Pattern</button>
         </div>
       </div>
     </div>

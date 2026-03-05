@@ -1,5 +1,5 @@
 /* ────────────────────────────────────────────── */
-/* MicroLearn Placeholder Card */
+/* MicroLearn Placeholder Card                    */
 /* ────────────────────────────────────────────── */
 
 @font-face {
@@ -52,7 +52,7 @@
 }
 
 /* ────────────────────────────────────────────── */
-/* Header + Topic */
+/* Header + Topic                                 */
 /* ────────────────────────────────────────────── */
 
 .microlearn-header {
@@ -68,7 +68,7 @@
 }
 
 .microlearn-topic {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -76,10 +76,11 @@
   margin-bottom: 6px;
   color: #0d6b2a;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* ────────────────────────────────────────────── */
-/* Fact Body */
+/* Fact Body (legacy — kept for compatibility)    */
 /* ────────────────────────────────────────────── */
 
 .microlearn-body {
@@ -97,7 +98,63 @@
 }
 
 /* ────────────────────────────────────────────── */
-/* Tall containers */
+/* Brand Label                                    */
+/* ────────────────────────────────────────────── */
+
+.microlearn-brand {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  opacity: 0.35;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: #000000;
+  z-index: 3;
+}
+
+/* ────────────────────────────────────────────── */
+/* Headline (the fact)                            */
+/* ────────────────────────────────────────────── */
+
+.microlearn-headline {
+  font-size: clamp(14px, 3.2cqw, 22px);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  word-break: break-word;
+  color: #000000;
+  z-index: 3;
+  margin-bottom: 4px;
+  text-align: center !important;
+  width: 100%;
+}
+
+/* ────────────────────────────────────────────── */
+/* Tagline (the hook)                             */
+/* ────────────────────────────────────────────── */
+
+.microlearn-tagline {
+  font-size: clamp(10px, 2cqw, 14px);
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  word-break: break-word;
+  color: #000000;
+  opacity: 0.7;
+  z-index: 3;
+  text-align: center !important;
+  width: 100%;
+}
+
+/* ────────────────────────────────────────────── */
+/* Tall containers (skyscrapers)                  */
 /* ────────────────────────────────────────────── */
 
 .microlearn-placeholder[style*="height: 600px"],
@@ -114,8 +171,7 @@
 }
 
 /* ────────────────────────────────────────────── */
-/* Square / medium cards */
-/* Make side cards easier to read */
+/* Square / medium cards                          */
 /* ────────────────────────────────────────────── */
 
 .microlearn-placeholder[style*="height: 250px"],
@@ -133,7 +189,7 @@
 }
 
 /* ────────────────────────────────────────────── */
-/* Banner / Leaderboard Layout */
+/* Banner / Leaderboard layout                    */
 /* Wide and short (e.g. 728x90, 970x90, 320x50)  */
 /* ────────────────────────────────────────────── */
 
@@ -141,32 +197,24 @@
 .microlearn-placeholder[style*="height: 66px"],
 .microlearn-placeholder[style*="height: 60px"],
 .microlearn-placeholder[style*="height: 50px"] {
-  padding: 8px 16px;
-  flex-direction: row;
-  gap: 12px;
-  text-align: left;
+  padding: 10px 14px;
+  gap: 4px;
 }
 
-/* Let banner content area use the full width */
 .microlearn-placeholder[style*="height: 90px"] .ml-content,
 .microlearn-placeholder[style*="height: 66px"] .ml-content,
 .microlearn-placeholder[style*="height: 60px"] .ml-content,
 .microlearn-placeholder[style*="height: 50px"] .ml-content {
   width: 100%;
   max-width: 100%;
+  justify-content: center;
 }
 
-/* Header stands vertically on the left side of banner */
-.microlearn-placeholder[style*="height: 90px"] .microlearn-header,
-.microlearn-placeholder[style*="height: 66px"] .microlearn-header,
-.microlearn-placeholder[style*="height: 60px"] .microlearn-header,
-.microlearn-placeholder[style*="height: 50px"] .microlearn-header {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  margin-bottom: 0;
-  margin-right: 0;
-  flex-shrink: 0;
+.microlearn-placeholder[style*="height: 90px"] .ml-header-row,
+.microlearn-placeholder[style*="height: 66px"] .ml-header-row,
+.microlearn-placeholder[style*="height: 60px"] .ml-header-row,
+.microlearn-placeholder[style*="height: 50px"] .ml-header-row {
+  margin-bottom: 4px;
 }
 
 .microlearn-placeholder[style*="height: 90px"] .microlearn-body,
@@ -178,13 +226,30 @@
   line-height: 1.18;
 }
 
+.microlearn-placeholder[style*="height: 90px"] .microlearn-headline,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-headline,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-headline,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-headline {
+  font-size: clamp(10px, 1.8cqw, 13px);
+  -webkit-line-clamp: 2;
+  margin-bottom: 2px;
+}
+
+.microlearn-placeholder[style*="height: 90px"] .microlearn-tagline,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-tagline,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-tagline,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-tagline {
+  font-size: clamp(9px, 1.3cqw, 11px);
+  -webkit-line-clamp: 1;
+}
+
 /* ────────────────────────────────────────────── */
-/* Loading Pulse */
+/* Loading Pulse                                  */
 /* ────────────────────────────────────────────── */
 
 @keyframes microlearn-pulse {
   0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.7; }
+  50%       { opacity: 0.7; }
 }
 
 .microlearn-loading {
@@ -195,17 +260,17 @@
 }
 
 /* ────────────────────────────────────────────── */
-/* Splash Pattern Overlay */
+/* Splash / Animation System                      */
 /* ────────────────────────────────────────────── */
 
-/* Hide WITHOUT collapsing layout */
+/* Hide without collapsing layout */
 .ml-hidden {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
 
-/* Splash layer */
+/* Splash layer — sits above the ::after overlay */
 .microlearn-placeholder .ml-splash {
   position: absolute;
   inset: 0;
@@ -239,7 +304,7 @@
   transform: scale(1.03);
 }
 
-/* Content above overlay */
+/* Content layer — sits above splash */
 .microlearn-placeholder .ml-content {
   position: relative;
   z-index: 3;
@@ -247,9 +312,9 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
 
-  text-align: center;
+  text-align: center !important;
   height: 100%;
   width: 100%;
 }
@@ -261,9 +326,6 @@
   left: 50%;
   transform: translate(-50%, -50%);
 
-  /* Size relative to container width, but cap by container height via % so the logo
-     never overflows a short banner. % resolves correctly here because .ml-splash
-     is position:absolute inset:0, so its dimensions equal the placeholder exactly. */
   width:  min(35cqw, 160px);
   height: min(35cqw, 160px);
   max-width:  70%;
@@ -272,9 +334,60 @@
   object-fit: contain;
   pointer-events: none;
 
-  /* mix-blend-mode: multiply makes white PNG pixels transparent against the splash image */
   mix-blend-mode: multiply;
-
-  /* Slight drop-shadow so the green logo pops on any background */
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+}
+
+/* ────────────────────────────────────────────── */
+/* Header Row: MICROLEARN | Subject               */
+/* ────────────────────────────────────────────── */
+
+.ml-header-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ml-header-sep {
+  font-size: 9px;
+  font-weight: 400;
+  color: #000000;
+  opacity: 0.3;
+}
+
+/* ────────────────────────────────────────────── */
+/* Next Lesson Button                             */
+/* ────────────────────────────────────────────── */
+
+.microlearn-next {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: #0d0f5d;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+}
+
+.microlearn-placeholder:hover .microlearn-next {
+  opacity: 1;
+}
+
+.microlearn-next:hover {
+  background: rgba(0, 0, 0, 0.15);
 }
