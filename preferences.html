@@ -10,7 +10,7 @@
     <div class="page-header">
       <div class="header-left">
         <div class="logo-wrap">
-          <img src="images/logo 5.1.png" class="logo" />
+          <img src="images/logo 5.1.png" class="logo" alt="MicroLearn logo" />
         </div>
         <div class="header-brand">
           <div class="brand">MicroLearn</div>
@@ -18,29 +18,44 @@
         </div>
       </div>
 
-      <div class="header-divider"></div>
+      <div class="header-divider" role="separator"></div>
 
       <div class="header-right">
         <div class="page-title">Customize<br />Your Learning</div>
       </div>
 
-      <button class="settings-icon-btn" id="settingsBtn" title="API Settings">
+      <button
+        class="settings-icon-btn"
+        id="settingsBtn"
+        aria-label="Open API Settings"
+      >
         ⚙️
       </button>
     </div>
 
     <!-- Content Mode Toggle — segmented control -->
     <div class="card mode-card">
-      <input type="checkbox" id="modeToggle" />
-      <div class="mode-toggle-row">
-        <div class="mode-option" id="modeOptionLeft">
+      <div class="mode-toggle-row" role="radiogroup" aria-label="Content mode">
+        <div
+          class="mode-option"
+          id="modeOptionLeft"
+          role="radio"
+          aria-checked="true"
+          tabindex="0"
+        >
           <div class="mode-label">Educational</div>
           <div class="mode-description">
             Educational content on your chosen topics
           </div>
         </div>
-        <div class="mode-divider"></div>
-        <div class="mode-option" id="modeOptionRight">
+        <div class="mode-divider" role="separator"></div>
+        <div
+          class="mode-option"
+          id="modeOptionRight"
+          role="radio"
+          aria-checked="false"
+          tabindex="0"
+        >
           <div class="mode-label">Behavioral</div>
           <div class="mode-description">
             Supportive tips and coping strategies
@@ -49,18 +64,43 @@
       </div>
     </div>
 
-    <!-- Learning Path Tabs (only visible in Learning Facts mode) -->
+    <!-- Learning Path Tabs (only visible in Educational mode) -->
     <div id="learningPathSection" class="learning-path-section">
-      <div class="section-label">Learning Path</div>
+      <div class="section-label" id="learningPathLabel">Learning Path</div>
       <div class="card learning-path-card">
-        <div class="learning-path-tabs">
-          <button class="path-tab active" id="ccnaTab" data-path="ccna">
+        <div
+          class="learning-path-tabs"
+          role="tablist"
+          aria-labelledby="learningPathLabel"
+        >
+          <button
+            class="path-tab active"
+            id="ccnaTab"
+            data-path="ccna"
+            role="tab"
+            aria-selected="true"
+            aria-controls="topicSelection"
+          >
             CCNA
           </button>
-          <button class="path-tab" id="securityPlusTab" data-path="security+">
+          <button
+            class="path-tab"
+            id="securityPlusTab"
+            data-path="security+"
+            role="tab"
+            aria-selected="false"
+            aria-controls="topicSelection"
+          >
             Security+
           </button>
-          <button class="path-tab" id="customTab" data-path="custom">
+          <button
+            class="path-tab"
+            id="customTab"
+            data-path="custom"
+            role="tab"
+            aria-selected="false"
+            aria-controls="topicSelection"
+          >
             Custom
           </button>
         </div>
@@ -68,16 +108,26 @@
     </div>
 
     <!-- Two column layout -->
-    <div class="columns" id="topicSelection">
+    <div class="columns" id="topicSelection" role="tabpanel">
       <!-- Learner Groups (LEFT) -->
       <div class="column">
         <div class="col-header">
-          <div class="section-label">Learner Groups</div>
+          <div class="section-label" id="learnerGroupsLabel">
+            Learner Groups
+          </div>
         </div>
         <div class="card list-card">
-          <ul class="group-list" id="groupList"></ul>
+          <ul
+            class="group-list"
+            id="groupList"
+            aria-labelledby="learnerGroupsLabel"
+          ></ul>
           <div style="padding: 6px 8px 8px">
-            <button class="add-btn" id="createGroupBtn">
+            <button
+              class="add-btn"
+              id="createGroupBtn"
+              aria-label="Create a new learner group"
+            >
               + Create New Group
             </button>
           </div>
@@ -87,43 +137,96 @@
       <!-- Learning Subjects Library (RIGHT) -->
       <div class="column">
         <div class="col-header">
-          <div class="section-label">Learning Subjects</div>
+          <div class="section-label" id="subjectsLabel">Learning Subjects</div>
         </div>
         <div class="card subjects-card">
-          <div class="subjects-library" id="subjectsList"></div>
+          <div
+            class="subjects-library"
+            id="subjectsList"
+            role="list"
+            aria-labelledby="subjectsLabel"
+          ></div>
           <div class="add-subject-row">
             <input
               type="text"
               id="addSubjectInput"
               class="text-input add-subject-input"
               placeholder="Add custom topic..."
+              aria-label="Add a custom subject topic"
             />
-            <button class="add-subject-btn" id="addSubjectBtn">+</button>
+            <button
+              class="add-subject-btn"
+              id="addSubjectBtn"
+              aria-label="Add subject"
+            >
+              +
+            </button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Theme Customization -->
-    <div class="section-label">Theme Customization</div>
-    <div class="theme-customization-card card">
-      <button class="theme-btn active" id="themeLightBtn">Light Mode</button>
-      <button class="theme-btn" id="themeDarkBtn">Dark Mode</button>
-      <button class="theme-btn" id="adContainersBtn">
+    <div class="section-label" id="themeLabel">Theme Customization</div>
+    <div
+      class="theme-customization-card card"
+      role="group"
+      aria-labelledby="themeLabel"
+    >
+      <button
+        class="theme-btn active"
+        id="themeLightBtn"
+        aria-pressed="true"
+        aria-label="Switch to Light Mode"
+      >
+        Light Mode
+      </button>
+      <button
+        class="theme-btn"
+        id="themeDarkBtn"
+        aria-pressed="false"
+        aria-label="Switch to Dark Mode"
+      >
+        Dark Mode
+      </button>
+      <button
+        class="theme-btn"
+        id="adContainersBtn"
+        aria-label="Customize Learning Containers"
+      >
         Learning Containers
       </button>
     </div>
 
     <!-- Save bar -->
     <div class="save-bar">
-      <button class="save-btn" id="saveBtn">Save &amp; Regenerate</button>
-      <div id="saveStatus" class="save-status"></div>
+      <button
+        class="save-btn"
+        id="saveBtn"
+        aria-label="Save settings and regenerate lessons"
+      >
+        Save &amp; Regenerate
+      </button>
+      <div
+        id="saveStatus"
+        class="save-status"
+        role="status"
+        aria-live="polite"
+      ></div>
     </div>
 
     <!-- Modal overlay -->
-    <div class="modal-overlay" id="modalOverlay">
+    <div
+      class="modal-overlay"
+      id="modalOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
       <div class="modal" id="modal">
-        <button class="modal-close" id="modalClose">✕</button>
+        <button class="modal-close" id="modalClose" aria-label="Close dialog">
+          ✕
+        </button>
         <div class="modal-title" id="modalTitle">New Group</div>
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-actions" id="modalActions"></div>
@@ -131,42 +234,104 @@
     </div>
 
     <!-- Ad Containers Modal -->
-    <div class="modal-overlay" id="adContainersOverlay">
+    <div
+      class="modal-overlay"
+      id="adContainersOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="adContainersTitle"
+    >
       <div class="modal ad-containers-modal" id="adContainersModal">
-        <button class="modal-close" id="adContainersClose">✕</button>
-        <div class="modal-title">Customize Learning Container</div>
+        <button
+          class="modal-close"
+          id="adContainersClose"
+          aria-label="Close Learning Containers dialog"
+        >
+          ✕
+        </button>
+        <div class="modal-title" id="adContainersTitle">
+          Customize Learning Container
+        </div>
 
         <!-- Pattern Picker -->
-        <div class="pattern-section-label">Choose Background Pattern</div>
-        <div class="pattern-slideshow">
-          <button class="slide-arrow left" id="slideLeft">&#8249;</button>
+        <div class="pattern-section-label" id="patternPickerLabel">
+          Choose Background Pattern
+        </div>
+        <div
+          class="pattern-slideshow"
+          role="group"
+          aria-labelledby="patternPickerLabel"
+        >
+          <button
+            class="slide-arrow left"
+            id="slideLeft"
+            aria-label="Scroll patterns left"
+          >
+            &#8249;
+          </button>
           <div class="pattern-track-wrap">
-            <div class="pattern-track" id="patternTrack"></div>
+            <div
+              class="pattern-track"
+              id="patternTrack"
+              role="listbox"
+              aria-label="Background patterns"
+            ></div>
           </div>
-          <button class="slide-arrow right" id="slideRight">&#8250;</button>
+          <button
+            class="slide-arrow right"
+            id="slideRight"
+            aria-label="Scroll patterns right"
+          >
+            &#8250;
+          </button>
         </div>
 
         <!-- Preview -->
-        <div class="pattern-section-label">Preview</div>
-        <div class="pattern-preview" id="patternPreview">
-          <div class="preview-placeholder-msg" id="previewPlaceholderMsg">
+        <div class="pattern-section-label" id="previewLabel">Preview</div>
+        <div
+          class="pattern-preview"
+          id="patternPreview"
+          aria-labelledby="previewLabel"
+        >
+          <div
+            class="preview-placeholder-msg"
+            id="previewPlaceholderMsg"
+            aria-live="polite"
+          >
             Choose a background pattern
           </div>
-          <div class="preview-card" id="previewCard" style="display: none">
+          <div
+            class="preview-card"
+            id="previewCard"
+            style="display: none"
+            aria-label="Pattern preview card"
+          >
             <div class="preview-topic">Path: Subject</div>
             <div class="preview-body">
               IPv4 uses 32-bit addresses divided into network and host portions;
               subnet masks define the boundary between them.
             </div>
-            <img src="images/logo 5.1.png" class="preview-logo" />
+            <img
+              src="images/logo 5.1.png"
+              class="preview-logo"
+              alt="MicroLearn logo"
+            />
           </div>
         </div>
 
         <div class="modal-actions" style="margin-top: 16px">
-          <button class="modal-btn secondary" id="adContainersCancel">
+          <button
+            class="modal-btn secondary"
+            id="adContainersCancel"
+            aria-label="Cancel and close"
+          >
             Cancel
           </button>
-          <button class="modal-btn primary" id="adContainersSave">
+          <button
+            class="modal-btn primary"
+            id="adContainersSave"
+            aria-label="Save selected pattern"
+          >
             Save Pattern
           </button>
         </div>
