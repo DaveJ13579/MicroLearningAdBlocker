@@ -3,338 +3,409 @@
   <head>
     <meta charset="UTF-8" />
     <title>MicroLearn – Customize Your Learning</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="preferences.css" />
   </head>
   <body>
     <!-- Header -->
-    <div class="page-header">
+    <header class="page-header m-step" style="animation-delay: 0s">
       <div class="header-left">
-        <div class="logo-wrap">
-          <img src="images/logo 5.1.png" class="logo" alt="MicroLearn logo" />
+        <!-- WCAG 1.1.1: meaningful alt text on logo -->
+        <img src="images/logo 5.1.png" class="logo" alt="MicroLearn logo" />
+        <div class="header-brand" aria-hidden="true">
+          <span class="brand">MicroLearn</span>
+          <span class="brand-tagline">Turn Ad Space Into Brain Space</span>
         </div>
-        <div class="header-brand">
-          <div class="brand">MicroLearn</div>
-          <div class="tagline">Replace Ads With Learning</div>
-        </div>
+        <div class="header-divider" aria-hidden="true"></div>
+        <!-- WCAG 1.3.1: page title exposed as a heading -->
+        <h1 class="header-subtitle">Customize Your Learning</h1>
       </div>
-
-      <div class="header-divider" role="separator"></div>
-
-      <div class="header-right">
-        <div class="page-title">Customize<br />Your Learning</div>
+      <div class="header-actions">
+        <!-- WCAG 4.1.2: icon-only buttons need aria-label -->
+        <button
+          class="icon-btn"
+          id="themeToggleBtn"
+          aria-label="Toggle dark/light theme"
+        ></button>
+        <button
+          class="icon-btn"
+          id="settingsBtn"
+          aria-label="API Settings"
+        ></button>
       </div>
+    </header>
 
-      <button
-        class="settings-icon-btn"
-        id="settingsBtn"
-        aria-label="Open API Settings"
-      >
-        ⚙️
-      </button>
-    </div>
-
-    <!-- Content Mode Toggle — segmented control -->
-    <div class="card mode-card">
-      <div class="mode-toggle-row" role="radiogroup" aria-label="Content mode">
-        <div
-          class="mode-option"
-          id="modeOptionLeft"
-          role="radio"
-          aria-checked="true"
-          tabindex="0"
+    <!-- Content mode -->
+    <!-- WCAG 1.3.1: section landmark with label -->
+    <section aria-labelledby="contentModeHeading">
+      <div class="section-header m-step" style="animation-delay: 0.06s">
+        <span class="section-label" id="contentModeHeading">Content mode</span>
+        <span class="section-description"
+          >Learn something new, or build better habits.</span
         >
-          <div class="mode-label">Educational</div>
-          <div class="mode-description">
-            Educational content on your chosen topics
+      </div>
+      <!--
+        WCAG 1.3.1 / 4.1.2: mode options are now <button> elements.
+        aria-pressed communicates toggle state to screen readers.
+        role="group" + aria-labelledby groups them semantically.
+      -->
+      <div
+        class="mode-toggle-row m-step"
+        style="animation-delay: 0.06s"
+        role="group"
+        aria-labelledby="contentModeHeading"
+      >
+        <button
+          class="mode-option active"
+          id="modeOptionLeft"
+          aria-pressed="true"
+          aria-describedby="modeDescLeft"
+        >
+          <div class="mode-top">
+            <span class="mode-label">Educational</span>
+            <span
+              class="mode-check"
+              id="modeCheckLeft"
+              aria-hidden="true"
+            ></span>
           </div>
-        </div>
-        <div class="mode-divider" role="separator"></div>
-        <div
+          <span class="mode-description" id="modeDescLeft"
+            >Topics you choose</span
+          >
+        </button>
+        <button
           class="mode-option"
           id="modeOptionRight"
-          role="radio"
-          aria-checked="false"
-          tabindex="0"
+          aria-pressed="false"
+          aria-describedby="modeDescRight"
         >
-          <div class="mode-label">Behavioral</div>
-          <div class="mode-description">
-            Supportive tips and coping strategies
+          <div class="mode-top">
+            <span class="mode-label">Behavioral</span>
+            <span
+              class="mode-check"
+              id="modeCheckRight"
+              aria-hidden="true"
+            ></span>
           </div>
-        </div>
+          <span class="mode-description" id="modeDescRight"
+            >Wellness and coping strategies</span
+          >
+        </button>
       </div>
-    </div>
+    </section>
 
-    <!-- Learning Path Tabs (only visible in Educational mode) -->
-    <div id="learningPathSection" class="learning-path-section">
-      <div class="section-label" id="learningPathLabel">Learning Path</div>
+    <!-- Learning Path Tabs (Educational) -->
+    <section
+      id="learningPathSection"
+      class="learning-path-section m-step"
+      style="animation-delay: 0.12s"
+      aria-label="Educational learning path"
+    >
+      <div class="section-header">
+        <span class="section-label" id="edPathLabel">Learning path</span>
+        <span class="section-description"
+          >Pick a preset to get started, or go custom to choose your own
+          subjects.</span
+        >
+      </div>
       <div class="card learning-path-card">
+        <!--
+          WCAG 1.3.1 / 4.1.2: tab list pattern.
+          aria-selected communicates which tab is active.
+        -->
         <div
           class="learning-path-tabs"
           role="tablist"
-          aria-labelledby="learningPathLabel"
+          aria-labelledby="edPathLabel"
         >
           <button
             class="path-tab active"
             id="ccnaTab"
-            data-path="ccna"
             role="tab"
             aria-selected="true"
-            aria-controls="topicSelection"
+            data-path="ccna"
           >
             CCNA
           </button>
           <button
             class="path-tab"
             id="securityPlusTab"
-            data-path="security+"
             role="tab"
             aria-selected="false"
-            aria-controls="topicSelection"
+            data-path="security+"
           >
             Security+
           </button>
           <button
             class="path-tab"
             id="customTab"
-            data-path="custom"
             role="tab"
             aria-selected="false"
-            aria-controls="topicSelection"
+            data-path="custom"
           >
             Custom
           </button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Two column layout -->
-    <div class="columns" id="topicSelection" role="tabpanel">
-      <!-- Learner Groups (LEFT) -->
-      <div class="column">
-        <div class="col-header">
-          <div class="section-label" id="learnerGroupsLabel">
-            Learner Groups
-          </div>
-        </div>
-        <div class="card list-card">
-          <ul
-            class="group-list"
-            id="groupList"
-            aria-labelledby="learnerGroupsLabel"
-          ></ul>
-          <div style="padding: 6px 8px 8px">
-            <button
-              class="add-btn"
-              id="createGroupBtn"
-              aria-label="Create a new learner group"
-            >
-              + Create New Group
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Learning Subjects Library (RIGHT) -->
-      <div class="column">
-        <div class="col-header">
-          <div class="section-label" id="subjectsLabel">Learning Subjects</div>
-        </div>
-        <div class="card subjects-card">
-          <div
-            class="subjects-library"
-            id="subjectsList"
-            role="list"
-            aria-labelledby="subjectsLabel"
-          ></div>
-          <div class="add-subject-row">
-            <input
-              type="text"
-              id="addSubjectInput"
-              class="text-input add-subject-input"
-              placeholder="Add custom topic..."
-              aria-label="Add a custom subject topic"
-            />
-            <button
-              class="add-subject-btn"
-              id="addSubjectBtn"
-              aria-label="Add subject"
-            >
-              +
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Theme Customization -->
-    <div class="section-label" id="themeLabel">Theme Customization</div>
-    <div
-      class="theme-customization-card card"
-      role="group"
-      aria-labelledby="themeLabel"
+    <!-- Learning Path Tabs (Behavioral) -->
+    <section
+      id="behavioralPathSection"
+      class="learning-path-section m-step"
+      style="display: none; animation-delay: 0.12s"
+      aria-label="Behavioral learning path"
     >
-      <button
-        class="theme-btn active"
-        id="themeLightBtn"
-        aria-pressed="true"
-        aria-label="Switch to Light Mode"
+      <div class="section-header">
+        <span class="section-label" id="behPathLabel">Learning path</span>
+        <span class="section-description"
+          >Pick a preset to get started, or go custom to choose your own
+          subjects.</span
+        >
+      </div>
+      <div class="card learning-path-card">
+        <div
+          class="learning-path-tabs"
+          role="tablist"
+          aria-labelledby="behPathLabel"
+        >
+          <button
+            class="path-tab active"
+            id="stressTab"
+            role="tab"
+            aria-selected="true"
+            data-path="stress"
+          >
+            Stress &amp; Resilience
+          </button>
+          <button
+            class="path-tab"
+            id="financialTab"
+            role="tab"
+            aria-selected="false"
+            data-path="finance"
+          >
+            Financial Habits
+          </button>
+          <button
+            class="path-tab"
+            id="behavioralCustomTab"
+            role="tab"
+            aria-selected="false"
+            data-path="custom-beh"
+          >
+            Custom
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Select subjects -->
+    <section aria-labelledby="selectSubjectsHeading">
+      <div class="section-header m-step" style="animation-delay: 0.18s">
+        <span class="section-label" id="selectSubjectsHeading"
+          >Select subjects</span
+        >
+        <span class="section-description"
+          >Presets come with subjects ready to go. Create a group to mix
+          subjects from any path.</span
+        >
+      </div>
+      <div
+        class="columns m-step"
+        id="topicSelection"
+        style="animation-delay: 0.18s"
       >
-        Light Mode
-      </button>
-      <button
-        class="theme-btn"
-        id="themeDarkBtn"
-        aria-pressed="false"
-        aria-label="Switch to Dark Mode"
-      >
-        Dark Mode
-      </button>
-      <button
-        class="theme-btn"
-        id="adContainersBtn"
-        aria-label="Customize Learning Containers"
-      >
-        Learning Containers
-      </button>
-    </div>
+        <!-- Groups (LEFT) -->
+        <div class="column">
+          <div class="card list-card">
+            <div class="groups-header">
+              <div class="panel-title" id="groupsPanelTitle">Groups</div>
+              <div class="panel-hint">Save presets</div>
+            </div>
+            <!--
+              WCAG 1.3.1: <ul> with <li> wrappers; each interactive row
+              is a <button> inside <li> so the list semantics are preserved.
+            -->
+            <ul
+              class="group-list m-scroll"
+              id="groupList"
+              aria-labelledby="groupsPanelTitle"
+              aria-live="polite"
+            ></ul>
+            <div style="padding: 6px 8px 8px">
+              <button class="add-btn" id="createGroupBtn">
+                + Create New Group
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subjects (RIGHT) -->
+        <div class="column">
+          <div class="card subjects-card">
+            <div class="subjects-header">
+              <div>
+                <div class="panel-title" id="subjectsPanelTitle">Subjects</div>
+                <div class="panel-hint">Pick up to 5 at a time</div>
+              </div>
+              <!--
+                WCAG 4.1.2 / 1.3.1: aria-live so screen readers announce
+                counter changes when subjects are toggled.
+              -->
+              <span
+                class="subjects-counter"
+                id="subjectCounter"
+                aria-live="polite"
+                aria-atomic="true"
+                >0 / 5</span
+              >
+            </div>
+            <!--
+              WCAG 1.3.1: subjects rendered as <button> elements inside this
+              container (done in preferences.js). aria-live announces additions.
+            -->
+            <div
+              class="subjects-library m-scroll"
+              id="subjectsList"
+              role="group"
+              aria-labelledby="subjectsPanelTitle"
+            ></div>
+            <div class="add-subject-row">
+              <!--
+                WCAG 3.3.2: label provided via aria-label since there is no
+                visible <label> element here.
+              -->
+              <input
+                type="text"
+                id="addSubjectInput"
+                class="text-input add-subject-input"
+                placeholder="Add custom topic..."
+                aria-label="Add a custom subject"
+              />
+              <button
+                class="add-subject-btn"
+                id="addSubjectBtn"
+                aria-label="Add subject"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Save bar -->
-    <div class="save-bar">
-      <button
-        class="save-btn"
-        id="saveBtn"
-        aria-label="Save settings and regenerate lessons"
-      >
-        Save &amp; Regenerate
-      </button>
+    <div class="save-bar m-step" style="animation-delay: 0.24s">
+      <button class="save-btn" id="saveBtn">Save &amp; Regenerate</button>
+      <!--
+        WCAG 4.1.3 / 3.3.1: aria-live="assertive" so save errors / successes
+        are immediately announced by screen readers.
+      -->
       <div
         id="saveStatus"
         class="save-status"
         role="status"
-        aria-live="polite"
+        aria-live="assertive"
+        aria-atomic="true"
       ></div>
     </div>
 
-    <!-- Modal overlay -->
+    <!-- Learning Activity Dashboard -->
+    <section aria-labelledby="activityHeading">
+      <div class="section-header m-step" style="animation-delay: 0.3s">
+        <span class="section-label" id="activityHeading"
+          >Learning activity</span
+        >
+        <span class="section-description">Your learning at a glance.</span>
+      </div>
+      <div class="card dashboard-card m-step" style="animation-delay: 0.3s">
+        <!-- Zone 1: Summary row -->
+        <div class="dash-summary">
+          <div class="dash-summary-left">
+            <!--
+              WCAG 4.1.3: aria-live so the big number updates are announced
+              when the user switches period tabs.
+            -->
+            <div
+              class="dash-big-number"
+              id="dashBigNumber"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              0
+            </div>
+            <div class="dash-big-label" aria-hidden="true">lessons viewed</div>
+          </div>
+          <div class="dash-period-tabs" role="group" aria-label="View period">
+            <button
+              class="dash-tab active"
+              data-period="daily"
+              aria-pressed="true"
+            >
+              Daily
+            </button>
+            <button class="dash-tab" data-period="weekly" aria-pressed="false">
+              Weekly
+            </button>
+            <button class="dash-tab" data-period="monthly" aria-pressed="false">
+              Monthly
+            </button>
+          </div>
+        </div>
+
+        <!-- Zone 2: Averages row -->
+        <!-- WCAG 1.3.1: use a <dl> (description list) for stat/label pairs -->
+        <dl class="dash-averages" aria-label="Lesson counts">
+          <div class="dash-avg-col">
+            <dt class="dash-avg-label">Today</dt>
+            <dd class="dash-avg-number" id="dashToday">0</dd>
+          </div>
+          <div class="dash-avg-col">
+            <dt class="dash-avg-label">This week</dt>
+            <dd class="dash-avg-number" id="dashWeekly">0</dd>
+          </div>
+          <div class="dash-avg-col">
+            <dt class="dash-avg-label">This month</dt>
+            <dd class="dash-avg-number" id="dashMonthly">0</dd>
+          </div>
+        </dl>
+
+        <!-- Zone 3: Topic breakdown -->
+        <div class="dash-topics">
+          <div class="dash-topics-header" id="dashTopicsHeading">By topic</div>
+          <div
+            class="dash-topics-list"
+            id="dashTopicsList"
+            aria-labelledby="dashTopicsHeading"
+          ></div>
+        </div>
+      </div>
+    </section>
+
+    <!--
+      WCAG 4.1.2 / 2.4.3: dialog role with aria-modal, aria-labelledby,
+      and focus management handled in preferences.js.
+    -->
     <div
       class="modal-overlay"
       id="modalOverlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modalTitle"
+      aria-hidden="true"
     >
       <div class="modal" id="modal">
         <button class="modal-close" id="modalClose" aria-label="Close dialog">
-          ✕
+          &#10005;
         </button>
-        <div class="modal-title" id="modalTitle">New Group</div>
+        <h2 class="modal-title" id="modalTitle">New Group</h2>
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-actions" id="modalActions"></div>
-      </div>
-    </div>
-
-    <!-- Ad Containers Modal -->
-    <div
-      class="modal-overlay"
-      id="adContainersOverlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="adContainersTitle"
-    >
-      <div class="modal ad-containers-modal" id="adContainersModal">
-        <button
-          class="modal-close"
-          id="adContainersClose"
-          aria-label="Close Learning Containers dialog"
-        >
-          ✕
-        </button>
-        <div class="modal-title" id="adContainersTitle">
-          Customize Learning Container
-        </div>
-
-        <!-- Pattern Picker -->
-        <div class="pattern-section-label" id="patternPickerLabel">
-          Choose Background Pattern
-        </div>
-        <div
-          class="pattern-slideshow"
-          role="group"
-          aria-labelledby="patternPickerLabel"
-        >
-          <button
-            class="slide-arrow left"
-            id="slideLeft"
-            aria-label="Scroll patterns left"
-          >
-            &#8249;
-          </button>
-          <div class="pattern-track-wrap">
-            <div
-              class="pattern-track"
-              id="patternTrack"
-              role="listbox"
-              aria-label="Background patterns"
-            ></div>
-          </div>
-          <button
-            class="slide-arrow right"
-            id="slideRight"
-            aria-label="Scroll patterns right"
-          >
-            &#8250;
-          </button>
-        </div>
-
-        <!-- Preview -->
-        <div class="pattern-section-label" id="previewLabel">Preview</div>
-        <div
-          class="pattern-preview"
-          id="patternPreview"
-          aria-labelledby="previewLabel"
-        >
-          <div
-            class="preview-placeholder-msg"
-            id="previewPlaceholderMsg"
-            aria-live="polite"
-          >
-            Choose a background pattern
-          </div>
-          <div
-            class="preview-card"
-            id="previewCard"
-            style="display: none"
-            aria-label="Pattern preview card"
-          >
-            <div class="preview-topic">Path: Subject</div>
-            <div class="preview-body">
-              IPv4 uses 32-bit addresses divided into network and host portions;
-              subnet masks define the boundary between them.
-            </div>
-            <img
-              src="images/logo 5.1.png"
-              class="preview-logo"
-              alt="MicroLearn logo"
-            />
-          </div>
-        </div>
-
-        <div class="modal-actions" style="margin-top: 16px">
-          <button
-            class="modal-btn secondary"
-            id="adContainersCancel"
-            aria-label="Cancel and close"
-          >
-            Cancel
-          </button>
-          <button
-            class="modal-btn primary"
-            id="adContainersSave"
-            aria-label="Save selected pattern"
-          >
-            Save Pattern
-          </button>
-        </div>
       </div>
     </div>
 

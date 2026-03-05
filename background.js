@@ -6,6 +6,24 @@ const USED_KEY       = "usedLessonIds";
 const HISTORICAL_KEY = "historicalFacts";
 const PARALLEL       = 5;
 
+const STRESS_RESILIENCE_TOPICS = [
+  "Cognitive Reframing",
+  "Box Breathing",
+  "Progressive Muscle Relaxation",
+  "Grounding Techniques",
+  "Boundary Setting",
+  "Self-Compassion"
+];
+
+const FINANCIAL_HABITS_TOPICS = [
+  "Budgeting Basics",
+  "Impulse Spending",
+  "Savings Habits",
+  "Student Loan Awareness",
+  "Needs vs. Wants",
+  "Subscription Tracking"
+];
+
 // ── Lesson Generation ─────────────────────────────────
 
 async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHealth = false) {
@@ -46,8 +64,38 @@ async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHe
     : learningHints[lessonIndex % learningHints.length];
 
   const prompt = mentalHealth
-    ? `${hint}\n\nRules:\n- EXACTLY 15 words or fewer\n- One sentence only\n- Direct and actionable\n- No fluff\n- Example: "Box breathing: Inhale 4s, hold 4s, exhale 4s, hold 4s."\n${avoidClause}`
-    : `Micro-learning fact about: ${topic}\n\nStyle: ${hint}\n\nRules:\n- Max 35 words\n- Technical content, NOT exam info\n- Concrete facts: definitions, numbers, comparisons\n- Flashcard format: clear, direct\n- No labels or headers\n- Single statement\n${avoidClause}`;
+    ? `You write supportive behavioral prompts. Your output replaces a banner ad on a webpage.
+
+Format — return EXACTLY two lines, nothing else:
+HEADLINE: [the technique or reframe — 5 to 8 words]
+TAGLINE: [why it helps or how to do it — 8 to 15 words]
+
+Topic: ${topic}
+Style: ${hint}
+
+Rules:
+- Headline is the action or insight. Direct and empowering.
+- Tagline makes it practical or personal.
+- Total must be under 25 words.
+- Supportive and direct. Never clinical, preachy, or condescending.
+- No intros, no labels beyond HEADLINE/TAGLINE, no explanations.
+${avoidClause}`
+    : `You write micro-learning ads. Your output replaces a banner ad on a webpage.
+
+Format — return EXACTLY two lines, nothing else:
+HEADLINE: [the fact — 5 to 8 words]
+TAGLINE: [why it matters — 8 to 15 words]
+
+Topic: ${topic}
+Style: ${hint}
+
+Rules:
+- Headline is the knowledge. Dense, concrete, no filler.
+- Tagline is the hook. Makes the headline stick.
+- Total must be under 25 words.
+- No intros, no labels beyond HEADLINE/TAGLINE, no explanations.
+- Write like a billboard, not a textbook.
+${avoidClause}`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -59,7 +107,7 @@ async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHe
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 80,
+      max_tokens: 40,
       messages: [{ role: "user", content: prompt }]
     })
   });
@@ -81,7 +129,7 @@ async function fetchLesson(apiKey, topic, lessonIndex, historical = [], mentalHe
 // ── Pool Management ───────────────────────────────────
 
 async function generatePool(apiKey, topics, mentalHealth = false) {
-  console.log("MicroLearn: generating pool of", POOL_SIZE, mentalHealth ? "mental health tips..." : "lessons...");
+  console.log("MicroLearn: generating pool of", POOL_SIZE, mentalHealth ? "behavioral tips..." : "lessons...");
 
   const { [HISTORICAL_KEY]: historical = [] } = await chrome.storage.local.get(HISTORICAL_KEY);
   const allFacts = [...historical];
@@ -92,13 +140,13 @@ async function generatePool(apiKey, topics, mentalHealth = false) {
     const batch = await Promise.all(
       Array.from({ length: batchSize }, (_, i) => {
         const idx   = start + i;
-        const topic = mentalHealth ? "Mental Health" : topics[idx % topics.length];
+        const topic = topics[idx % topics.length];
         return fetchLesson(apiKey, topic, idx, allFacts, mentalHealth)
           .then(text => {
             console.log("MicroLearn: lesson", idx + 1, "of", POOL_SIZE, "generated");
             return { id: idx, topic, text };
           })
-          .catch(err => { console.error("MicroLearn: lesson", idx, "failed —", err.message); return null; });
+          .catch(err => { console.error("MicroLearn: lesson", idx, "failed -", err.message); return null; });
       })
     );
 
@@ -113,7 +161,7 @@ async function generatePool(apiKey, topics, mentalHealth = false) {
       [USED_KEY]:       [],
       [HISTORICAL_KEY]: lessons.map(l => l.text)
     });
-    console.log("MicroLearn: pool saved —", lessons.length, "lessons ready");
+    console.log("MicroLearn: pool saved -", lessons.length, "lessons ready");
   } else {
     console.error("MicroLearn: no lessons generated");
   }
@@ -164,22 +212,31 @@ async function ensurePool(apiKey, topics) {
 // ── Auto-Regeneration ─────────────────────────────────
 
 async function triggerAutoRegeneration() {
-  const result = await chrome.storage.sync.get(["apiKey", "selectedSubjects", "groups", "activeGroupId", "isMentalHealthMode"]);
+  const result = await chrome.storage.sync.get(["apiKey", "selectedSubjects", "educationalGroups", "behavioralGroups", "activeGroupId", "isMentalHealthMode", "selectedBehavioralTopics"]);
   if (!result.apiKey) { console.warn("MicroLearn: no API key for auto-regen"); return; }
 
+  // If a group is active, use its subjects (works for both modes)
+  if (result.activeGroupId) {
+    const groups = result.isMentalHealthMode ? (result.behavioralGroups || []) : (result.educationalGroups || []);
+    const g = groups.find(g => g.id === result.activeGroupId);
+    if (g?.subjects?.length) {
+      await generatePool(result.apiKey, g.subjects, result.isMentalHealthMode === true).catch(err => console.error("MicroLearn: auto-regen failed -", err.message));
+      return;
+    }
+  }
+
   if (result.isMentalHealthMode === true) {
-    await generatePool(result.apiKey, ["Mental Health"], true).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
+    const behavioralTopics = result.selectedBehavioralTopics?.length
+      ? result.selectedBehavioralTopics
+      : STRESS_RESILIENCE_TOPICS;
+    await generatePool(result.apiKey, behavioralTopics, true).catch(err => console.error("MicroLearn: auto-regen failed -", err.message));
     return;
   }
 
   let topics = result.selectedSubjects?.length ? result.selectedSubjects : [];
-  if (!topics.length && result.activeGroupId && result.groups) {
-    const g = result.groups.find(g => g.id === result.activeGroupId);
-    if (g) topics = g.subjects;
-  }
 
   if (!topics.length) { console.warn("MicroLearn: no topics for auto-regen"); return; }
-  await generatePool(result.apiKey, topics, false).catch(err => console.error("MicroLearn: auto-regen failed —", err.message));
+  await generatePool(result.apiKey, topics, false).catch(err => console.error("MicroLearn: auto-regen failed -", err.message));
 }
 
 // ── Init ──────────────────────────────────────────────
@@ -198,6 +255,28 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 // Keep service worker alive
 setInterval(() => chrome.storage.local.get("keepAlive", () => {}), 20000);
+
+// ── Lesson Stats Helpers ─────────────────────────────
+
+function localDateStr(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function localMonthStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+  const monday = new Date(d);
+  monday.setDate(diff);
+  return localDateStr(monday);
+}
 
 // ── Message Handler ───────────────────────────────────
 
@@ -219,5 +298,36 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       })
       .catch(err => sendResponse({ error: err.message }));
     return true;
+  }
+
+  if (msg.type === "LESSON_VIEWED") {
+    const { topic } = msg;
+    chrome.storage.local.get(["lessonStats", "topicCounts"], (result) => {
+      const stats  = result.lessonStats  || { today: 0, weekly: 0, monthly: 0, total: 0 };
+      const counts = result.topicCounts  || {};
+
+      const now       = new Date();
+      const todayStr  = localDateStr(now);
+      const weekStart = getWeekStart(now);
+      const monthStr  = localMonthStr(now);
+
+      if (stats.lastDailyReset !== todayStr)   { stats.today = 0;   stats.lastDailyReset = todayStr; }
+      if (stats.lastWeeklyReset !== weekStart)  { stats.weekly = 0;  stats.lastWeeklyReset = weekStart; }
+      if (stats.lastMonthlyReset !== monthStr)  { stats.monthly = 0; stats.lastMonthlyReset = monthStr; }
+
+      stats.today++;
+      stats.weekly++;
+      stats.monthly++;
+      stats.total++;
+
+      // Enforce invariant: today <= weekly <= monthly
+      if (stats.weekly < stats.today)   stats.weekly  = stats.today;
+      if (stats.monthly < stats.weekly) stats.monthly = stats.weekly;
+
+      if (topic) counts[topic] = (counts[topic] || 0) + 1;
+
+      chrome.storage.local.set({ lessonStats: stats, topicCounts: counts });
+    });
+    return; // fire-and-forget
   }
 });

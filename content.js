@@ -1,49 +1,52 @@
 (function () {
 
   const PROCESSED_ATTR = "data-microlearn-replaced";
-  const FALLBACK       = "💡 Stay curious — ask questions every day.";
+  const FALLBACK       = "Stay curious - ask questions every day.";
 
-  const PATTERN_FILES = {
-    "green-dots":   "images/green dots.png",
-    "confetti":     "images/pink confetti.png",
-    "orange-waves": "images/orange waves.png",
-    "flowers":      "images/flowers.png"
-  };
+  let pending       = [];
+  let isFlushing    = false;
+  let flushTimer    = null;
+  let observer      = null;
+  let pollInterval  = null;
+  const BG_IMAGES = [
+    "images/northern-lights.png",
+    "images/warm-gradient.jpg",
+    "images/moonlight-snow.jpg",
+    "images/sunset-cliffs.jpg",
+    "images/alpine-reflection.jpg"
+  ];
+  let bgIndex = Math.floor(Math.random() * BG_IMAGES.length);
 
-  let pending      = [];
-  let isFlushing   = false;
-  let flushTimer   = null;
-  let observer     = null;
-  let pollInterval = null;
-  let activePattern = null; // currently loaded pattern id
-
-  // ── Load pattern from storage ─────────────────────────
-  function loadPattern(callback) {
-    chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
-      activePattern = adContainerPattern || null;
-      if (callback) callback();
-    });
-  }
-
-  // Resolve a chrome-extension:// URL for a pattern image
-  function patternURL(patternId) {
-    const file = PATTERN_FILES[patternId];
-    if (!file) return null;
-    return chrome.runtime.getURL(file);
-  }
-
-  // Apply (or remove) background pattern on a placeholder element
-  function applyPattern(el, patternId) {
-    if (patternId && PATTERN_FILES[patternId]) {
-      el.style.backgroundImage    = `url("${patternURL(patternId)}")`;
-      el.style.backgroundSize     = "cover";
-      el.style.backgroundPosition = "center";
-    } else {
-      el.style.backgroundImage    = "";
-      el.style.backgroundSize     = "";
-      el.style.backgroundPosition = "";
+  function isExtensionAlive() {
+    try {
+      return !!(chrome && chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
     }
   }
+
+  function nextBgURL() {
+    try {
+      const url = chrome.runtime.getURL(BG_IMAGES[bgIndex % BG_IMAGES.length]);
+      bgIndex++;
+      return url;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function applyPattern(el, url) {
+    if (url) {
+      el.style.backgroundImage    = `url("${url}")`;
+      el.style.backgroundSize     = "cover";
+      el.style.backgroundPosition = "center";
+      el.style.backgroundRepeat   = "no-repeat";
+    }
+  }
+
+  // ── Splash Animation ──────────────────────────────────
+  const SPLASH_MS      = 3000;
+  const SPLASH_FADE_MS = 700;
 
   // ── Placeholder ───────────────────────────────────────
   function createPlaceholder(width, height) {
@@ -51,18 +54,60 @@
     el.className = "microlearn-placeholder";
     if (width)  el.style.width  = width  + "px";
     if (height) el.style.height = height + "px";
-    el.innerHTML =
-      '<div class="microlearn-header">MicroLearn</div>' +
-      '<div class="microlearn-topic microlearn-loading">Loading...</div>' +
-      '<div class="microlearn-body microlearn-loading">Loading…</div>';
-    applyPattern(el, activePattern);
+
+    const url = nextBgURL();
+    applyPattern(el, url);
+
+    if (!url || !isExtensionAlive()) {
+      el.innerHTML = `
+        <div class="ml-content">
+          <div class="ml-header-row">
+            <span class="microlearn-brand">MicroLearn</span>
+            <span class="ml-header-sep">|</span>
+            <span class="microlearn-topic microlearn-loading">Loading...</span>
+          </div>
+          <div class="microlearn-headline microlearn-loading" style="text-align:center!important">Loading...</div>
+          <div class="microlearn-tagline" style="text-align:center!important"></div>
+        </div>`;
+      return el;
+    }
+
+    el.innerHTML = `
+      <div class="ml-splash" aria-hidden="true">
+        <img class="ml-splash-img" src="${url}" alt="" />
+      </div>
+      <div class="ml-content ml-hidden">
+        <div class="ml-header-row">
+          <span class="microlearn-brand">MicroLearn</span>
+          <span class="ml-header-sep">|</span>
+          <span class="microlearn-topic microlearn-loading"></span>
+        </div>
+        <div class="microlearn-headline microlearn-loading" style="text-align:center!important"></div>
+        <div class="microlearn-tagline" style="text-align:center!important"></div>
+      </div>
+      <button class="microlearn-next" title="Next lesson">&#8250;</button>`;
+
+    const splash  = el.querySelector(".ml-splash");
+    const content = el.querySelector(".ml-content");
+
+    setTimeout(() => {
+      if (!el.isConnected) return;
+      if (splash) splash.classList.add("ml-fadeout");
+      setTimeout(() => {
+        if (!el.isConnected) return;
+        if (splash)  splash.remove();
+        if (content) content.classList.remove("ml-hidden");
+      }, SPLASH_FADE_MS);
+    }, SPLASH_MS);
+
     return el;
   }
 
   function setLesson(placeholder, lessonData) {
-    const topicEl = placeholder.querySelector(".microlearn-topic");
-    const bodyEl  = placeholder.querySelector(".microlearn-body");
-    if (!bodyEl) return;
+    const topicEl    = placeholder.querySelector(".microlearn-topic");
+    const headlineEl = placeholder.querySelector(".microlearn-headline");
+    const taglineEl  = placeholder.querySelector(".microlearn-tagline");
+    if (!headlineEl) return;
 
     const text  = lessonData?.text  ?? (typeof lessonData === "string" ? lessonData : null) ?? FALLBACK;
     const topic = lessonData?.topic ?? null;
@@ -74,34 +119,69 @@
       topicEl.style.display = "none";
     }
 
-    bodyEl.textContent = text;
-    bodyEl.classList.remove("microlearn-loading");
+    const headlineMatch = text.match(/HEADLINE:\s*(.+?)(?:\s*TAGLINE:|\s*$)/i);
+    const taglineMatch  = text.match(/TAGLINE:\s*(.+)/i);
+
+    if (headlineMatch && taglineMatch) {
+      headlineEl.textContent = headlineMatch[1].trim();
+      taglineEl.textContent  = taglineMatch[1].trim();
+    } else {
+      headlineEl.textContent = text;
+      taglineEl.style.display = "none";
+    }
+
+    headlineEl.classList.remove("microlearn-loading");
+
+    headlineEl.style.setProperty("text-align", "center", "important");
+    taglineEl.style.setProperty("text-align", "center", "important");
 
     setTimeout(() => {
-      if (bodyEl.scrollHeight > bodyEl.clientHeight) {
-        bodyEl.title  = text;
-        bodyEl.style.cursor = "help";
+      if (headlineEl.scrollHeight > headlineEl.clientHeight) {
+        headlineEl.title        = headlineEl.textContent;
+        headlineEl.style.cursor = "help";
       }
     }, 10);
-  }
 
-  // ── Re-apply pattern to all existing placeholders ─────
-  function refreshAllPatterns() {
-    document.querySelectorAll(".microlearn-placeholder").forEach(el => {
-      applyPattern(el, activePattern);
-    });
+    if (topic && isExtensionAlive()) {
+      try {
+        chrome.runtime.sendMessage({ type: "LESSON_VIEWED", topic });
+      } catch (e) { /* extension context may be gone */ }
+    }
+
+    const nextBtn = placeholder.querySelector(".microlearn-next");
+    if (nextBtn && !nextBtn._mlBound) {
+      nextBtn._mlBound = true;
+      nextBtn.addEventListener("click", () => {
+        if (!isExtensionAlive()) return;
+        try {
+          chrome.runtime.sendMessage({ type: "FETCH_LESSONS", count: 1 }, response => {
+            if (chrome.runtime.lastError) return;
+            const lesson = response?.lessons?.[0];
+            if (lesson) {
+              if (taglineEl) taglineEl.style.display = "";
+              setLesson(placeholder, lesson);
+            }
+          });
+        } catch (e) { /* extension context may be gone */ }
+      });
+    }
   }
 
   // ── Batching ──────────────────────────────────────────
   function flush() {
     flushTimer = null;
-    if (isFlushing)          { flushTimer = setTimeout(flush, 200); return; }
+    if (isFlushing)      { flushTimer = setTimeout(flush, 200); return; }
     if (!pending.length) return;
 
     const toFill = pending.splice(0);
     isFlushing   = true;
 
     try {
+      if (!isExtensionAlive()) {
+        toFill.forEach(p => setLesson(p, FALLBACK));
+        isFlushing = false;
+        return;
+      }
       chrome.runtime.sendMessage({ type: "FETCH_LESSONS", count: toFill.length }, response => {
         isFlushing = false;
         if (chrome.runtime.lastError) {
@@ -115,7 +195,7 @@
       });
     } catch (err) {
       isFlushing = false;
-      console.warn("MicroLearn: context invalidated —", err.message);
+      console.warn("MicroLearn: context invalidated -", err.message);
       toFill.forEach(p => setLesson(p, FALLBACK));
     }
   }
@@ -127,6 +207,7 @@
 
   // ── Ad Detection ──────────────────────────────────────
   const AD_SELECTORS = [
+    // ── General ───────────────────────────────────────
     ".ad-slot",
     '[data-ad-label-text="Advertisement"]',
     "[data-desktop-slot-id]",
@@ -137,10 +218,42 @@
     'div.uitk-layout-grid:has(a[href*="doubleclick.net"])',
     'div.uitk-layout-grid:has(a[href*="adform.net"])',
     'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"])',
-    'div[data-testid="text-ads-container"]'
+    'div[data-testid="text-ads-container"]',
+
+    // ── YouTube ───────────────────────────────────────
+    "ytd-promoted-sparkles-web-renderer",  // in-feed sponsored cards
+    "ytd-promoted-video-renderer",         // promoted video results
+    "ytd-ad-slot-renderer",                // general ad slot container
+    "ytd-banner-promo-renderer",           // banner promos
+    "ytd-statement-banner-renderer",       // statement banners
+    "#masthead-ad",                        // top masthead ad
+    "ytd-in-feed-ad-layout-renderer",     // in-feed ad layout
+    '#panels ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"]'
   ].join(", ");
 
+  // ── YouTube: hide non-replaceable ad types ────────────
+  // Pre-roll and overlay ads can't be replaced cleanly so we hide them.
+  const YT_HIDE_SELECTORS = [
+    ".ytp-ad-overlay-container",   // overlay ads on video
+    ".ytp-ad-text-overlay",        // text overlays on video
+    ".ytp-ad-skip-button-container" // skip button (pre-roll remnant)
+  ].join(", ");
+
+  function hideYouTubeVideoAds() {
+    document.querySelectorAll(YT_HIDE_SELECTORS).forEach(el => {
+      if (!el.hasAttribute(PROCESSED_ATTR)) {
+        el.style.display = "none";
+        el.setAttribute(PROCESSED_ATTR, "true");
+      }
+    });
+  }
+
   function scanAndReplaceAds() {
+    if (!isExtensionAlive()) return;
+
+    // Hide video overlay ads that can't be replaced with cards
+    hideYouTubeVideoAds();
+
     const candidates = document.querySelectorAll(AD_SELECTORS);
     const newAds = [];
 
@@ -168,12 +281,10 @@
 
   // ── Enable / Disable ──────────────────────────────────
   function enableMicroLearn() {
-    loadPattern(() => {
-      scanAndReplaceAds();
-      observer = new MutationObserver(scanAndReplaceAds);
-      observer.observe(document.body, { childList: true, subtree: true });
-      pollInterval = setInterval(scanAndReplaceAds, 2000);
-    });
+    scanAndReplaceAds();
+    observer = new MutationObserver(scanAndReplaceAds);
+    observer.observe(document.body, { childList: true, subtree: true });
+    pollInterval = setInterval(scanAndReplaceAds, 2000);
   }
 
   function disableMicroLearn() {
@@ -192,14 +303,8 @@
   });
 
   chrome.storage.onChanged.addListener(changes => {
-    if ("enabled" in changes) {
+    if ("enabled" in changes)
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
-    }
-    // Live-update pattern if it changes while page is open
-    if ("adContainerPattern" in changes) {
-      activePattern = changes.adContainerPattern.newValue || null;
-      refreshAllPatterns();
-    }
   });
 
 })();
