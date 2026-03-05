@@ -10,7 +10,7 @@
     <!-- Header -->
     <div class="page-header m-step" style="animation-delay: 0s">
       <div class="header-left">
-        <img src="images/logo 5.1.png" class="logo" />
+        <img src="images/logo 5.1.png" class="logo" alt="MicroLearn logo" />
         <div class="header-brand">
           <span class="brand">MicroLearn</span>
           <span class="brand-tagline">Turn Ad Space Into Brain Space</span>
@@ -19,9 +19,9 @@
         <span class="header-subtitle">Customize Your Learning</span>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="themeToggleBtn" title="Toggle theme"></button>
-        <button class="icon-btn" id="adContainersBtn" title="Learning Containers"></button>
-        <button class="icon-btn" id="settingsBtn" title="API Settings"></button>
+        <button class="icon-btn" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle light/dark theme"></button>
+        <button class="icon-btn" id="adContainersBtn" title="Learning Containers" aria-label="Customize Learning Containers"></button>
+        <button class="icon-btn" id="settingsBtn" title="API Settings" aria-label="Open API Settings"></button>
       </div>
     </div>
 
@@ -30,15 +30,15 @@
       <span class="section-label">Content mode</span>
       <span class="section-description">Learn something new, or build better habits.</span>
     </div>
-    <div class="mode-toggle-row m-step" style="animation-delay: 0.06s">
-      <div class="mode-option" id="modeOptionLeft">
+    <div class="mode-toggle-row m-step" style="animation-delay: 0.06s" role="radiogroup" aria-label="Content mode">
+      <div class="mode-option" id="modeOptionLeft" role="radio" aria-checked="true" tabindex="0">
         <div class="mode-top">
           <div class="mode-label">Educational</div>
           <div class="mode-check" id="modeCheckLeft"></div>
         </div>
         <div class="mode-description">Topics you choose</div>
       </div>
-      <div class="mode-option" id="modeOptionRight">
+      <div class="mode-option" id="modeOptionRight" role="radio" aria-checked="false" tabindex="0">
         <div class="mode-top">
           <div class="mode-label">Behavioral</div>
           <div class="mode-check" id="modeCheckRight"></div>
@@ -54,10 +54,10 @@
         <span class="section-description">Pick a preset to get started, or go custom to choose your own subjects.</span>
       </div>
       <div class="card learning-path-card">
-        <div class="learning-path-tabs">
-          <button class="path-tab active" id="ccnaTab" data-path="ccna">CCNA</button>
-          <button class="path-tab" id="securityPlusTab" data-path="security+">Security+</button>
-          <button class="path-tab" id="customTab" data-path="custom">Custom</button>
+        <div class="learning-path-tabs" role="tablist" aria-label="Educational learning path">
+          <button class="path-tab active" id="ccnaTab" data-path="ccna" role="tab" aria-selected="true">CCNA</button>
+          <button class="path-tab" id="securityPlusTab" data-path="security+" role="tab" aria-selected="false">Security+</button>
+          <button class="path-tab" id="customTab" data-path="custom" role="tab" aria-selected="false">Custom</button>
         </div>
       </div>
     </div>
@@ -69,7 +69,7 @@
         <span class="section-description">Pick a preset to get started, or go custom to choose your own subjects.</span>
       </div>
       <div class="card learning-path-card">
-        <div class="learning-path-tabs">
+        <div class="learning-path-tabs" role="tablist" aria-label="Behavioral learning path">
           <button class="path-tab active" id="stressTab" data-path="stress">Stress &amp; Resilience</button>
           <button class="path-tab" id="financialTab" data-path="finance">Financial Habits</button>
           <button class="path-tab" id="behavioralCustomTab" data-path="custom-beh">Custom</button>
@@ -90,9 +90,9 @@
             <div class="panel-title">Groups</div>
             <div class="panel-hint">Save presets</div>
           </div>
-          <ul class="group-list m-scroll" id="groupList"></ul>
+          <ul class="group-list m-scroll" id="groupList" aria-label="Learner groups"></ul>
           <div style="padding: 6px 8px 8px">
-            <button class="add-btn" id="createGroupBtn">+ Create New Group</button>
+            <button class="add-btn" id="createGroupBtn" aria-label="Create a new learner group">+ Create New Group</button>
           </div>
         </div>
       </div>
@@ -107,10 +107,10 @@
             </div>
             <span class="subjects-counter" id="subjectCounter">0 / 5</span>
           </div>
-          <div class="subjects-library m-scroll" id="subjectsList"></div>
+          <div class="subjects-library m-scroll" id="subjectsList" role="list" aria-label="Learning subjects"></div>
           <div class="add-subject-row">
-            <input type="text" id="addSubjectInput" class="text-input add-subject-input" placeholder="Add custom topic..." />
-            <button class="add-subject-btn" id="addSubjectBtn">+</button>
+            <input type="text" id="addSubjectInput" class="text-input add-subject-input" placeholder="Add custom topic..." aria-label="Add a custom subject topic" />
+            <button class="add-subject-btn" id="addSubjectBtn" aria-label="Add subject">+</button>
           </div>
         </div>
       </div>
@@ -118,8 +118,8 @@
 
     <!-- Save bar -->
     <div class="save-bar m-step" style="animation-delay: 0.24s">
-      <button class="save-btn" id="saveBtn">Save &amp; Regenerate</button>
-      <div id="saveStatus" class="save-status"></div>
+      <button class="save-btn" id="saveBtn" aria-label="Save settings and regenerate lessons">Save &amp; Regenerate</button>
+      <div id="saveStatus" class="save-status" role="status" aria-live="polite"></div>
     </div>
 
     <!-- Learning Activity Dashboard -->
@@ -165,9 +165,9 @@
     </div>
 
     <!-- Modal overlay -->
-    <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal" id="modal">
-        <button class="modal-close" id="modalClose">&#10005;</button>
+        <button class="modal-close" id="modalClose" aria-label="Close dialog">&#10005;</button>
         <div class="modal-title" id="modalTitle">New Group</div>
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-actions" id="modalActions"></div>
@@ -175,40 +175,40 @@
     </div>
 
     <!-- Ad Containers Modal -->
-    <div class="modal-overlay" id="adContainersOverlay">
+    <div class="modal-overlay" id="adContainersOverlay" role="dialog" aria-modal="true" aria-labelledby="adContainersTitle">
       <div class="modal ad-containers-modal" id="adContainersModal">
-        <button class="modal-close" id="adContainersClose">✕</button>
-        <div class="modal-title">Customize Learning Container</div>
+        <button class="modal-close" id="adContainersClose" aria-label="Close Learning Containers dialog">✕</button>
+        <div class="modal-title" id="adContainersTitle">Customize Learning Container</div>
 
         <!-- Pattern Picker -->
-        <div class="pattern-section-label">Choose Background Pattern</div>
-        <div class="pattern-slideshow">
-          <button class="slide-arrow left" id="slideLeft">&#8249;</button>
+        <div class="pattern-section-label" id="patternPickerLabel">Choose Background Pattern</div>
+        <div class="pattern-slideshow" role="group" aria-labelledby="patternPickerLabel">
+          <button class="slide-arrow left" id="slideLeft" aria-label="Scroll patterns left">&#8249;</button>
           <div class="pattern-track-wrap">
-            <div class="pattern-track" id="patternTrack"></div>
+            <div class="pattern-track" id="patternTrack" role="listbox" aria-label="Background patterns"></div>
           </div>
-          <button class="slide-arrow right" id="slideRight">&#8250;</button>
+          <button class="slide-arrow right" id="slideRight" aria-label="Scroll patterns right">&#8250;</button>
         </div>
 
         <!-- Preview -->
-        <div class="pattern-section-label">Preview</div>
-        <div class="pattern-preview" id="patternPreview">
-          <div class="preview-placeholder-msg" id="previewPlaceholderMsg">
+        <div class="pattern-section-label" id="previewLabel">Preview</div>
+        <div class="pattern-preview" id="patternPreview" aria-labelledby="previewLabel">
+          <div class="preview-placeholder-msg" id="previewPlaceholderMsg" aria-live="polite">
             Choose a background pattern
           </div>
-          <div class="preview-card" id="previewCard" style="display: none">
+          <div class="preview-card" id="previewCard" style="display: none" aria-label="Pattern preview card">
             <div class="preview-topic">Path: Subject</div>
             <div class="preview-body">
               IPv4 uses 32-bit addresses divided into network and host portions;
               subnet masks define the boundary between them.
             </div>
-            <img src="images/logo 5.1.png" class="preview-logo" />
+            <img src="images/logo 5.1.png" class="preview-logo" alt="MicroLearn logo" />
           </div>
         </div>
 
         <div class="modal-actions" style="margin-top: 16px">
-          <button class="modal-btn secondary" id="adContainersCancel">Cancel</button>
-          <button class="modal-btn primary" id="adContainersSave">Save Pattern</button>
+          <button class="modal-btn secondary" id="adContainersCancel" aria-label="Cancel and close">Cancel</button>
+          <button class="modal-btn primary" id="adContainersSave" aria-label="Save selected pattern">Save Pattern</button>
         </div>
       </div>
     </div>
