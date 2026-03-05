@@ -346,10 +346,12 @@
   position: absolute;
   top: 0;
   left: 0;
+  right: 68px; /* leave room for prev + next buttons */
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .ml-header-sep {
@@ -360,13 +362,13 @@
 }
 
 /* ────────────────────────────────────────────── */
-/* Next Lesson Button                             */
+/* Prev / Next Lesson Buttons                     */
 /* ────────────────────────────────────────────── */
 
-.microlearn-next {
+.microlearn-next,
+.microlearn-prev {
   position: absolute;
   top: 8px;
-  right: 8px;
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -384,10 +386,22 @@
   z-index: 4;
 }
 
-.microlearn-placeholder:hover .microlearn-next {
+.microlearn-next { right: 8px; }
+.microlearn-prev { right: 36px; } /* 8px + 24px button + 4px gap */
+
+.microlearn-placeholder:hover .microlearn-next,
+.microlearn-placeholder:hover .microlearn-prev:not(:disabled) {
   opacity: 1;
 }
 
-.microlearn-next:hover {
+.microlearn-next:hover,
+.microlearn-prev:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.15);
+}
+
+/* Hide the back button when disabled (first lesson) */
+.microlearn-prev:disabled {
+  opacity: 0 !important;
+  pointer-events: none;
+  cursor: default;
 }

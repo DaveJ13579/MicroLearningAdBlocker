@@ -131,6 +131,7 @@
         <div class="microlearn-headline microlearn-loading">Loading...</div>
         <div class="microlearn-tagline"></div>
       </div>
+      <button class="microlearn-prev" title="Previous lesson" disabled>&#8249;</button>
       <button class="microlearn-next" title="Next lesson">&#8250;</button>`;
 
     const splash  = el.querySelector(".ml-splash");
@@ -153,7 +154,7 @@
     return el;
   }
 
-  function setLesson(placeholder, lessonData) {
+  function setLesson(placeholder, lessonData, pushToHistory = true) {
     const topicEl    = placeholder.querySelector(".microlearn-topic");
     const headlineEl = placeholder.querySelector(".microlearn-headline");
     const taglineEl  = placeholder.querySelector(".microlearn-tagline");
@@ -194,18 +195,54 @@
       }
     }, 10);
 
-    // Track lesson view
-    if (topic && isExtensionAlive()) {
-      try {
-        chrome.runtime.sendMessage({ type: "LESSON_VIEWED", topic });
-      } catch (e) { /* extension context may be gone */ }
+    // ── History tracking ──────────────────────────────
+    if (!placeholder._mlHistory) placeholder._mlHistory = [];
+    if (!("_mlHistIdx" in placeholder)) placeholder._mlHistIdx = -1;
+
+    if (pushToHistory) {
+      // Trim any forward entries if navigating from a mid-history position
+      placeholder._mlHistory = placeholder._mlHistory.slice(0, placeholder._mlHistIdx + 1);
+      placeholder._mlHistory.push(lessonData);
+      placeholder._mlHistIdx = placeholder._mlHistory.length - 1;
+
+      // Only track views for new (forward) lessons
+      if (topic && isExtensionAlive()) {
+        try {
+          chrome.runtime.sendMessage({ type: "LESSON_VIEWED", topic });
+        } catch (e) { /* extension context may be gone */ }
+      }
     }
 
-    // Attach Next button handler
+    // Show/hide prev button based on history position
+    const prevBtn = placeholder.querySelector(".microlearn-prev");
+    if (prevBtn) prevBtn.disabled = placeholder._mlHistIdx <= 0;
+
+    // ── Prev button handler ───────────────────────────
+    if (prevBtn && !prevBtn._mlBound) {
+      prevBtn._mlBound = true;
+      prevBtn.addEventListener("click", () => {
+        if (placeholder._mlHistIdx <= 0) return;
+        placeholder._mlHistIdx--;
+        const lesson = placeholder._mlHistory[placeholder._mlHistIdx];
+        if (taglineEl) taglineEl.style.display = "";
+        setLesson(placeholder, lesson, false);
+      });
+    }
+
+    // ── Next button handler ───────────────────────────
     const nextBtn = placeholder.querySelector(".microlearn-next");
     if (nextBtn && !nextBtn._mlBound) {
       nextBtn._mlBound = true;
       nextBtn.addEventListener("click", () => {
+        // If there are forward entries in history, use them without fetching
+        if (placeholder._mlHistIdx < placeholder._mlHistory.length - 1) {
+          placeholder._mlHistIdx++;
+          const lesson = placeholder._mlHistory[placeholder._mlHistIdx];
+          if (taglineEl) taglineEl.style.display = "";
+          setLesson(placeholder, lesson, false);
+          return;
+        }
+        // Otherwise fetch a new lesson
         if (!isExtensionAlive()) return;
         try {
           chrome.runtime.sendMessage({ type: "FETCH_LESSONS", count: 1 }, response => {
@@ -329,7 +366,8 @@
       });
       innerGuard.observe(placeholder, { childList: true });
 
-      // Guard 2: prevent ad scripts from injecting positioned overlays as SIBLINGS.
+      // Guard 2: prevent ad scripts from injecting positioned overlays or new
+      // ad elements as SIBLINGS after replacement.
       if (parent) {
         priorSiblings.add(placeholder);
         const siblingGuard = new MutationObserver(mutations => {
@@ -338,8 +376,11 @@
               if (node.nodeType !== 1 || priorSiblings.has(node)) return;
               const pos = node.style?.position;
               if (pos === "absolute" || pos === "fixed") { node.remove(); return; }
+              // Block ad scripts re-injecting a new ad element in the same slot.
+              try { if (node.matches(AD_SELECTORS)) { node.remove(); return; } } catch (e) {}
               setTimeout(() => {
                 if (!node.isConnected) return;
+                try { if (node.matches(AD_SELECTORS)) { node.remove(); return; } } catch (e) {}
                 if (node.querySelector("[style*='z-index']")) node.remove();
               }, 150);
             });
@@ -386,19 +427,6 @@
         removalGuard.observe(parent, { childList: true });
       }
 
-      // If dimensions still look suspect, watch the parent and correct once it settles.
-      if (parent && h < 100) {
-        const ro = new ResizeObserver(entries => {
-          for (const entry of entries) {
-            const ph = entry.contentRect.height;
-            if (ph > 50) {
-              placeholder.style.height = ph + "px";
-              ro.disconnect();
-            }
-          }
-        });
-        ro.observe(parent);
-      }
     });
 
     if (observer) observer.observe(document.body, { childList: true, subtree: true });
