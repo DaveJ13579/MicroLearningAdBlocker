@@ -48,7 +48,7 @@
   }
 
   // Returns the URL for the next placeholder background.
-  // Priority: user-selected pattern → Amanda's rotating landscape images.
+  // Priority: user-selected pattern → rotating landscape images.
   function getNextBgURL() {
     if (activePattern && PATTERN_FILES[activePattern] && isExtensionAlive()) {
       try { return chrome.runtime.getURL(PATTERN_FILES[activePattern]); } catch (e) {}
@@ -88,8 +88,8 @@
     if (height > 0) el.style.height = height + "px";
     if (width > 0 && height > 0) {
       const ratio = width / height;
-      if (ratio >= 3)    el.classList.add("ml-banner"); // wide-short (leaderboard/banner)
-      else if (ratio <= 0.5) el.classList.add("ml-tall"); // narrow-tall (skyscraper)
+      if (ratio >= 3)        el.classList.add("ml-banner"); // wide-short (leaderboard/banner)
+      else if (ratio <= 0.5) el.classList.add("ml-tall");   // narrow-tall (skyscraper)
     }
 
     const url = getNextBgURL();
@@ -116,7 +116,7 @@
       return el;
     }
 
-    // Get logo URL (Harman's logo over the splash image)
+    // Get logo URL
     let logoUrl = null;
     try {
       if (isExtensionAlive()) logoUrl = chrome.runtime.getURL("images/logo 5.1.png");
@@ -303,6 +303,7 @@
 
   // ── Ad Detection ──────────────────────────────────────
   const AD_SELECTORS = [
+    // ── General ───────────────────────────────────────
     ".ad-slot",
     '[data-ad-label-text="Advertisement"]',
     "[data-desktop-slot-id]",
@@ -313,8 +314,35 @@
     'div.uitk-layout-grid:has(a[href*="doubleclick.net"])',
     'div.uitk-layout-grid:has(a[href*="adform.net"])',
     'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"])',
-    'div[data-testid="text-ads-container"]'
+    'div[data-testid="text-ads-container"]',
+
+    // ── YouTube ───────────────────────────────────────
+    "ytd-promoted-sparkles-web-renderer",  // in-feed sponsored cards
+    "ytd-promoted-video-renderer",         // promoted video results
+    "ytd-ad-slot-renderer",                // general ad slot container
+    "ytd-banner-promo-renderer",           // banner promos
+    "ytd-statement-banner-renderer",       // statement banners
+    "#masthead-ad",                        // top masthead ad
+    "ytd-in-feed-ad-layout-renderer",      // in-feed ad layout
+    '#panels ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"]'
   ].join(", ");
+
+  // ── YouTube: hide non-replaceable ad types ────────────
+  // Pre-roll and overlay ads can't be replaced cleanly so we hide them.
+  const YT_HIDE_SELECTORS = [
+    ".ytp-ad-overlay-container",    // overlay ads on video
+    ".ytp-ad-text-overlay",         // text overlays on video
+    ".ytp-ad-skip-button-container" // skip button (pre-roll remnant)
+  ].join(", ");
+
+  function hideYouTubeVideoAds() {
+    document.querySelectorAll(YT_HIDE_SELECTORS).forEach(el => {
+      if (!el.hasAttribute(PROCESSED_ATTR)) {
+        el.style.display = "none";
+        el.setAttribute(PROCESSED_ATTR, "true");
+      }
+    });
+  }
 
   // offsetWidth/offsetHeight are preferred: they reflect actual layout space,
   // are unaffected by transforms, and don't shift with scroll position.
@@ -333,6 +361,9 @@
 
   function scanAndReplaceAds() {
     if (!isExtensionAlive()) return;
+
+    // Hide video overlay ads that can't be replaced with cards
+    hideYouTubeVideoAds();
 
     const candidates = document.querySelectorAll(AD_SELECTORS);
     const newAds = [];
@@ -465,9 +496,8 @@
   });
 
   chrome.storage.onChanged.addListener(changes => {
-    if ("enabled" in changes) {
+    if ("enabled" in changes)
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
-    }
     // Live-update pattern if it changes while page is open
     if ("adContainerPattern" in changes) {
       activePattern = changes.adContainerPattern.newValue || null;

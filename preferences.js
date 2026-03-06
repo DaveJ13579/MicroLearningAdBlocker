@@ -1,10 +1,10 @@
 // preferences.js
 
 // ── SVG Icons ────────────────────────────────────────
-const ICON_SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
-const ICON_MOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
-const ICON_GEAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>';
-const ICON_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const ICON_SUN   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+const ICON_MOON  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
+const ICON_GEAR  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>';
+const ICON_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
 
 // ── DOM References ────────────────────────────────────
 const settingsBtn         = document.getElementById("settingsBtn");
@@ -135,14 +135,16 @@ const BEHAVIORAL_PATHS = {
 const MAX_SUBJECTS = 5;
 
 // ── State ─────────────────────────────────────────────
-let subjects           = [...DEFAULT_SUBJECTS];
+let subjects                 = [...DEFAULT_SUBJECTS];
 let customEducationalSubjects = [...DEFAULT_SUBJECTS];
-let selectedSubjects   = [];
-let activeGroupId      = null;
-let isMentalHealthMode = false;
+let selectedSubjects         = [];
+let activeGroupId            = null;
+let isMentalHealthMode       = false;
 let selectedBehavioralTopics = [...BEHAVIORAL_PATHS.stress.topics.slice(0, MAX_SUBJECTS)];
-let apiKey             = "";
-let learningPath       = "ccna";
+let apiKey                   = "";
+let learningPath             = "ccna";
+let behavioralPath           = "stress";
+let behavioralCustomSubjects = [...BEHAVIORAL_PATHS["custom-beh"].topics];
 
 // Groups are shared across all paths within each content mode.
 let educationalGroups = [];
@@ -152,7 +154,6 @@ function getCurrentGroups()    { return isMentalHealthMode ? behavioralGroups : 
 function setCurrentGroups(arr) { if (isMentalHealthMode) behavioralGroups = arr; else educationalGroups = arr; }
 
 // ── Patterns (Harman) ─────────────────────────────────
-
 const PATTERNS = [
   { id: "green-dots",         label: "Green Dots",         file: "images/green dots.png" },
   { id: "confetti",           label: "Confetti",           file: "images/pink confetti.png" },
@@ -168,26 +169,73 @@ let slideOffset    = 0;
 let pendingPattern = null;
 let savedPattern   = null;
 
-// ── Behavioral path state (Amanda) ───────────────────
-let behavioralPath = "stress";
-let behavioralCustomSubjects = [...BEHAVIORAL_PATHS["custom-beh"].topics];
-
 function renderCurrentSubjects() {
   isMentalHealthMode ? renderBehavioralSubjects() : renderSubjects();
 }
 
+// ── Focus Trap for Modal ──────────────────────────────
+// WCAG 2.4.3: focus must be moved into modal when it opens and
+// restored to the trigger when it closes.
+let _modalTrigger = null;
+
+function getFocusableEls(container) {
+  return [...container.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+  )];
+}
+
 // ── Modal Helpers ─────────────────────────────────────
-function openModal(title, bodyHTML, actionsHTML) {
+function openModal(title, bodyHTML, actionsHTML, triggerEl) {
   modalTitle.textContent = title;
   modalBody.innerHTML    = bodyHTML;
   modalActions.innerHTML = actionsHTML;
+
+  // WCAG 4.1.2: remove aria-hidden so AT can see the dialog
+  modalOverlay.setAttribute("aria-hidden", "false");
   modalOverlay.classList.add("open");
+
+  // WCAG 2.4.3: save trigger, move focus to first focusable element in modal
+  _modalTrigger = triggerEl || document.activeElement;
+  const first = getFocusableEls(modalOverlay)[0];
+  if (first) first.focus();
+
+  // WCAG 2.1.1: trap Tab/Shift+Tab inside modal
+  modalOverlay.addEventListener("keydown", trapFocus);
+
+  // WCAG 2.1.1: Escape closes modal
+  modalOverlay.addEventListener("keydown", escClose);
 }
 
 function closeModal() {
   modalOverlay.classList.remove("open");
+  modalOverlay.setAttribute("aria-hidden", "true");
+  modalOverlay.removeEventListener("keydown", trapFocus);
+  modalOverlay.removeEventListener("keydown", escClose);
   modalBody.innerHTML    = "";
   modalActions.innerHTML = "";
+
+  // WCAG 2.4.3: return focus to the element that opened the modal
+  if (_modalTrigger && typeof _modalTrigger.focus === "function") {
+    _modalTrigger.focus();
+  }
+  _modalTrigger = null;
+}
+
+function trapFocus(e) {
+  if (e.key !== "Tab") return;
+  const focusable = getFocusableEls(modalOverlay);
+  if (!focusable.length) { e.preventDefault(); return; }
+  const first = focusable[0];
+  const last  = focusable[focusable.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+  } else {
+    if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+  }
+}
+
+function escClose(e) {
+  if (e.key === "Escape") closeModal();
 }
 
 modalClose.addEventListener("click", closeModal);
@@ -197,16 +245,20 @@ modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) clo
 function showAPISettingsModal() {
   openModal(
     "API Settings",
-    `<div class="api-settings-hint">Enter your Anthropic API key to generate lessons</div>
+    `<p class="api-settings-hint">Enter your Anthropic API key to generate lessons.</p>
      ${apiKey ? `<div class="api-key-status">
-       <span class="api-key-masked">●●●●●●●●●●●●</span>
+       <span class="api-key-masked" aria-label="API key connected">●●●●●●●●●●●●</span>
        <span class="api-key-connected">✓ Connected</span>
      </div>` : ""}
+     <label for="apiKeyModalInput" class="modal-hint">API Key</label>
      <input type="password" class="text-input" id="apiKeyModalInput"
-       placeholder="sk-ant-..." value="${apiKey}" autocomplete="off" spellcheck="false" />
-     <div id="apiStatusModal" class="api-status"></div>`,
+       placeholder="sk-ant-..." value="${apiKey}"
+       autocomplete="off" spellcheck="false"
+       aria-describedby="apiStatusModal" />
+     <div id="apiStatusModal" class="api-status" role="alert" aria-live="assertive"></div>`,
     `<button class="modal-btn secondary" id="cancelAPISettings">Cancel</button>
-     <button class="modal-btn primary"   id="saveAPISettings">Save</button>`
+     <button class="modal-btn primary"   id="saveAPISettings">Save</button>`,
+    settingsBtn
   );
 
   document.getElementById("cancelAPISettings").addEventListener("click", closeModal);
@@ -214,13 +266,17 @@ function showAPISettingsModal() {
     const key    = document.getElementById("apiKeyModalInput").value.trim();
     const status = document.getElementById("apiStatusModal");
     if (!key) {
-      status.textContent = "Please enter an API key";
+      // WCAG 3.3.1: error text is injected adjacent to the input and
+      // the input is aria-describedby'd to the status element.
+      status.textContent = "Please enter an API key.";
       status.className   = "api-status error";
+      document.getElementById("apiKeyModalInput").focus();
       return;
     }
     if (!key.startsWith("sk-ant-")) {
-      status.textContent = "Key should start with sk-ant-...";
+      status.textContent = "Key should start with sk-ant-…";
       status.className   = "api-status error";
+      document.getElementById("apiKeyModalInput").focus();
       return;
     }
     apiKey = key;
@@ -230,17 +286,19 @@ function showAPISettingsModal() {
 
 settingsBtn.addEventListener("click", showAPISettingsModal);
 
-// ── Theme Toggle ──────────────────────────────────────
+// ── Theme Toggle ─────────────────────────────────────
 let currentTheme = "light";
 
 function applyTheme(theme) {
   currentTheme = theme;
   if (theme === "dark") {
     document.documentElement.setAttribute("data-theme", "dark");
-    themeToggleBtn.innerHTML = ICON_SUN;
+    themeToggleBtn.innerHTML  = ICON_SUN;
+    themeToggleBtn.setAttribute("aria-label", "Switch to light theme");
   } else {
     document.documentElement.removeAttribute("data-theme");
-    themeToggleBtn.innerHTML = ICON_MOON;
+    themeToggleBtn.innerHTML  = ICON_MOON;
+    themeToggleBtn.setAttribute("aria-label", "Switch to dark theme");
   }
   chrome.storage.sync.set({ extensionTheme: theme });
 }
@@ -252,18 +310,26 @@ themeToggleBtn.addEventListener("click", () => {
 // ── Learning Path Tabs ────────────────────────────────
 function switchLearningPath(path) {
   learningPath = path;
-  document.querySelectorAll(".path-tab").forEach(t => t.classList.remove("active"));
+
+  // WCAG 4.1.2: sync aria-selected on all ed path tabs
+  [ccnaTab, securityPlusTab, customTab].forEach(t => {
+    t.classList.remove("active");
+    t.setAttribute("aria-selected", "false");
+  });
 
   if (path === "ccna") {
     ccnaTab.classList.add("active");
+    ccnaTab.setAttribute("aria-selected", "true");
     subjects         = [...CCNA_TOPICS];
     selectedSubjects = CCNA_TOPICS.slice(0, MAX_SUBJECTS);
   } else if (path === "security+") {
     securityPlusTab.classList.add("active");
+    securityPlusTab.setAttribute("aria-selected", "true");
     subjects         = [...SECURITY_PLUS_TOPICS];
     selectedSubjects = SECURITY_PLUS_TOPICS.slice(0, MAX_SUBJECTS);
   } else {
     customTab.classList.add("active");
+    customTab.setAttribute("aria-selected", "true");
     subjects         = [...customEducationalSubjects];
     selectedSubjects = [];
   }
@@ -281,16 +347,24 @@ customTab.addEventListener("click",       () => switchLearningPath("custom"));
 // ── Behavioral Path Tabs ─────────────────────────────
 function switchBehavioralPath(path) {
   behavioralPath = path;
-  behavioralPathSection.querySelectorAll(".path-tab").forEach(t => t.classList.remove("active"));
+
+  // WCAG 4.1.2: sync aria-selected on all beh path tabs
+  [stressTab, financialTab, behavioralCustomTab].forEach(t => {
+    t.classList.remove("active");
+    t.setAttribute("aria-selected", "false");
+  });
 
   if (path === "stress") {
     stressTab.classList.add("active");
+    stressTab.setAttribute("aria-selected", "true");
     selectedBehavioralTopics = [...BEHAVIORAL_PATHS.stress.topics.slice(0, MAX_SUBJECTS)];
   } else if (path === "finance") {
     financialTab.classList.add("active");
+    financialTab.setAttribute("aria-selected", "true");
     selectedBehavioralTopics = [...BEHAVIORAL_PATHS.finance.topics.slice(0, MAX_SUBJECTS)];
   } else {
     behavioralCustomTab.classList.add("active");
+    behavioralCustomTab.setAttribute("aria-selected", "true");
     selectedBehavioralTopics = [];
   }
 
@@ -314,16 +388,16 @@ function updateAddSubjectVisibility() {
 
 // ── Mode Toggle ───────────────────────────────────────
 function updateModeUI() {
+  // WCAG 4.1.2: update aria-pressed on both mode buttons
   modeOptionLeft.classList.toggle("active",  !isMentalHealthMode);
+  modeOptionLeft.setAttribute("aria-pressed",  String(!isMentalHealthMode));
   modeOptionRight.classList.toggle("active",  isMentalHealthMode);
+  modeOptionRight.setAttribute("aria-pressed", String(isMentalHealthMode));
 
-  // Show/hide the correct path tabs
   learningPathSection.style.display   = isMentalHealthMode ? "none" : "";
   behavioralPathSection.style.display = isMentalHealthMode ? ""     : "none";
 
-  // Topic selection stays enabled in both modes
   topicSelection.classList.remove("disabled");
-
   updateAddSubjectVisibility();
 
   // Create group button available in all paths
@@ -371,34 +445,49 @@ function renderSubjects() {
 
   displaySubjects.forEach(subject => {
     const isSelected = selectedSubjects.includes(subject);
-    const item = document.createElement("div");
-    item.className = "subject-item"
+
+    // WCAG 2.1.1 / 4.1.2: each subject is a <button> so it receives
+    // keyboard focus and has an implicit role of "button".
+    const btn = document.createElement("button");
+    btn.type      = "button";
+    btn.className = "subject-item"
       + (isSelected ? " selected" : "")
       + (!isSelected && atLimit ? " at-limit" : "");
+
+    // WCAG 4.1.2: communicate selected state to AT
+    btn.setAttribute("aria-pressed", String(isSelected));
+
+    // WCAG 1.4.3 / 4.1.2: mark unavailable items so AT can describe them
+    if (!isSelected && atLimit) {
+      btn.setAttribute("aria-disabled", "true");
+      btn.setAttribute("tabindex", "-1");
+    }
 
     if (isSelected) {
       const check = document.createElement("span");
       check.className = "check-icon";
       check.innerHTML = ICON_CHECK;
-      item.appendChild(check);
+      btn.appendChild(check);
     }
 
     const name = document.createElement("span");
     name.className   = "subject-item-name";
     name.textContent = subject;
-    name.addEventListener("click", () => toggleSubjectSelection(subject));
+    btn.appendChild(name);
 
-    item.appendChild(name);
+    btn.addEventListener("click", () => toggleSubjectSelection(subject));
 
     if (!activeGroupId && learningPath === "custom") {
       const removeBtn = document.createElement("button");
-      removeBtn.className   = "subject-remove-btn";
+      removeBtn.type      = "button";
+      removeBtn.className = "subject-remove-btn";
       removeBtn.textContent = "\u2715";
-      removeBtn.title       = "Remove subject";
+      removeBtn.setAttribute("aria-label", `Remove ${subject}`);
       removeBtn.addEventListener("click", e => {
         e.stopPropagation();
         if (getCurrentGroups().some(g => g.subjects.includes(subject))) {
-          alert(`Cannot remove "${subject}" — it's being used in a group.`);
+          // WCAG 3.3.1: surface error inline, not via alert()
+          showInlineError(`Cannot remove "${subject}" — it's used in a group.`);
           return;
         }
         subjects         = subjects.filter(s => s !== subject);
@@ -406,9 +495,9 @@ function renderSubjects() {
         customEducationalSubjects = [...subjects];
         renderSubjects();
       });
-      item.appendChild(removeBtn);
+      btn.appendChild(removeBtn);
     }
-    subjectsList.appendChild(item);
+    subjectsList.appendChild(btn);
   });
 
   updateSubjectCounter();
@@ -424,11 +513,9 @@ function renderBehavioralSubjects() {
     if (g) subjectList = g.subjects;
   }
   if (!subjectList) {
-    if (behavioralPath === "custom-beh") {
-      subjectList = behavioralCustomSubjects;
-    } else {
-      subjectList = BEHAVIORAL_PATHS[behavioralPath]?.topics || [];
-    }
+    subjectList = behavioralPath === "custom-beh"
+      ? behavioralCustomSubjects
+      : (BEHAVIORAL_PATHS[behavioralPath]?.topics || []);
   }
 
   if (!subjectList.length) {
@@ -443,22 +530,30 @@ function renderBehavioralSubjects() {
 
   subjectList.forEach(topic => {
     const isSelected = selectedBehavioralTopics.includes(topic);
-    const item = document.createElement("div");
-    item.className = "subject-item"
+
+    const btn = document.createElement("button");
+    btn.type      = "button";
+    btn.className = "subject-item"
       + (isSelected ? " selected" : "")
       + (!isSelected && atLimit ? " at-limit" : "");
+    btn.setAttribute("aria-pressed", String(isSelected));
+    if (!isSelected && atLimit) {
+      btn.setAttribute("aria-disabled", "true");
+      btn.setAttribute("tabindex", "-1");
+    }
 
     if (isSelected) {
       const check = document.createElement("span");
       check.className = "check-icon";
       check.innerHTML = ICON_CHECK;
-      item.appendChild(check);
+      btn.appendChild(check);
     }
 
     const name = document.createElement("span");
     name.className   = "subject-item-name";
     name.textContent = topic;
-    name.addEventListener("click", () => {
+
+    btn.addEventListener("click", () => {
       activeGroupId = null;
       if (selectedBehavioralTopics.includes(topic)) {
         if (selectedBehavioralTopics.length > 1) {
@@ -473,22 +568,23 @@ function renderBehavioralSubjects() {
 
     if (!activeGroupId && behavioralPath === "custom-beh") {
       const removeBtn = document.createElement("button");
-      removeBtn.className   = "subject-remove-btn";
+      removeBtn.type      = "button";
+      removeBtn.className = "subject-remove-btn";
       removeBtn.textContent = "\u2715";
-      removeBtn.title       = "Remove subject";
+      removeBtn.setAttribute("aria-label", `Remove ${topic}`);
       removeBtn.addEventListener("click", e => {
         e.stopPropagation();
         behavioralCustomSubjects = behavioralCustomSubjects.filter(s => s !== topic);
         selectedBehavioralTopics = selectedBehavioralTopics.filter(s => s !== topic);
         renderBehavioralSubjects();
       });
-      item.appendChild(name);
-      item.appendChild(removeBtn);
+      btn.appendChild(name);
+      btn.appendChild(removeBtn);
     } else {
-      item.appendChild(name);
+      btn.appendChild(name);
     }
 
-    subjectsList.appendChild(item);
+    subjectsList.appendChild(btn);
   });
 
   updateSubjectCounter();
@@ -506,18 +602,32 @@ function toggleSubjectSelection(subject) {
   renderGroups();
 }
 
+// ── Inline Error Helper ───────────────────────────────
+// WCAG 3.3.1: surfaces errors without alert() dialogs.
+function showInlineError(msg) {
+  showSaveStatus(msg, "error");
+}
+
 // ── Add Subject ───────────────────────────────────────
 function addSubject() {
   const val = addSubjectInput.value.trim();
   if (!val) return;
 
   if (isMentalHealthMode && behavioralPath === "custom-beh") {
-    if (behavioralCustomSubjects.includes(val)) { alert(`"${val}" is already in your library.`); return; }
+    if (behavioralCustomSubjects.includes(val)) {
+      showInlineError(`"${val}" is already in your library.`);
+      addSubjectInput.focus();
+      return;
+    }
     behavioralCustomSubjects.push(val);
     addSubjectInput.value = "";
     renderBehavioralSubjects();
   } else {
-    if (subjects.includes(val)) { alert(`"${val}" is already in your library.`); return; }
+    if (subjects.includes(val)) {
+      showInlineError(`"${val}" is already in your library.`);
+      addSubjectInput.focus();
+      return;
+    }
     subjects.push(val);
     customEducationalSubjects = [...subjects];
     addSubjectInput.value = "";
@@ -540,7 +650,13 @@ function renderGroups() {
 
   groups.forEach(group => {
     const li = document.createElement("li");
-    li.className = "group-item" + (group.id === activeGroupId ? " active" : "");
+
+    // WCAG 2.1.1 / 4.1.2: use <button> as the interactive element so it
+    // gets keyboard focus, click-on-Enter, and a button role for AT.
+    const btn = document.createElement("button");
+    btn.type      = "button";
+    btn.className = "group-item" + (group.id === activeGroupId ? " active" : "");
+    btn.setAttribute("aria-pressed", String(group.id === activeGroupId));
 
     const content = document.createElement("div");
     content.className = "group-item-content";
@@ -551,11 +667,17 @@ function renderGroups() {
 
     const topicsSpan = document.createElement("div");
     topicsSpan.className   = "group-topics";
-    topicsSpan.textContent = group.subjects.length ? group.subjects.join(", ") : "No subjects selected";
+    topicsSpan.textContent = group.subjects.length
+      ? group.subjects.join(", ")
+      : "No subjects selected";
+    // WCAG 1.4.5 / truncation: ensure full value is exposed to AT
+    topicsSpan.setAttribute("title", topicsSpan.textContent);
 
     content.appendChild(nameSpan);
     content.appendChild(topicsSpan);
-    content.addEventListener("click", () => {
+
+    btn.appendChild(content);
+    btn.addEventListener("click", () => {
       if (activeGroupId === group.id) {
         activeGroupId = null;
         if (isMentalHealthMode) {
@@ -579,22 +701,29 @@ function renderGroups() {
     });
 
     const ellipsis = document.createElement("button");
-    ellipsis.className   = "group-ellipsis";
+    ellipsis.type      = "button";
+    ellipsis.className = "group-ellipsis";
     ellipsis.textContent = "\u00B7\u00B7\u00B7";
-    ellipsis.addEventListener("click", e => { e.stopPropagation(); showGroupActions(group); });
+    // WCAG 4.1.2: icon-only button needs accessible name
+    ellipsis.setAttribute("aria-label", `Options for ${group.name}`);
+    ellipsis.addEventListener("click", e => {
+      e.stopPropagation();
+      showGroupActions(group, ellipsis);
+    });
 
-    li.appendChild(content);
+    li.appendChild(btn);
     li.appendChild(ellipsis);
     groupList.appendChild(li);
   });
 }
 
 // ── Group Modals ──────────────────────────────────────
-function showGroupActions(group) {
+function showGroupActions(group, triggerEl) {
   openModal(
     group.name, "",
     `<button class="modal-btn secondary" id="editGroupBtn">Edit Group</button>
-     <button class="modal-btn danger"    id="deleteGroupBtn">Delete Group</button>`
+     <button class="modal-btn danger"    id="deleteGroupBtn">Delete Group</button>`,
+    triggerEl
   );
   document.getElementById("editGroupBtn").addEventListener("click",   () => { closeModal(); showEditGroup(group); });
   document.getElementById("deleteGroupBtn").addEventListener("click", () => { closeModal(); showDeleteGroup(group); });
@@ -603,15 +732,15 @@ function showGroupActions(group) {
 function allSubjectsForMode() {
   if (isMentalHealthMode) {
     return [
-      { id: "stress",     label: "Stress & Resilience", topics: BEHAVIORAL_PATHS.stress.topics },
-      { id: "finance",    label: "Financial Habits",    topics: BEHAVIORAL_PATHS.finance.topics },
-      { id: "custom-beh", label: "Custom",              topics: behavioralCustomSubjects }
+      { id: "stress",      label: "Stress & Resilience", topics: BEHAVIORAL_PATHS.stress.topics },
+      { id: "finance",     label: "Financial Habits",    topics: BEHAVIORAL_PATHS.finance.topics },
+      { id: "custom-beh",  label: "Custom",              topics: behavioralCustomSubjects }
     ];
   }
   return [
-    { id: "ccna",      label: "CCNA",       topics: CCNA_TOPICS },
-    { id: "security+", label: "Security+",  topics: SECURITY_PLUS_TOPICS },
-    { id: "custom",    label: "Custom",     topics: customEducationalSubjects }
+    { id: "ccna",       label: "CCNA",       topics: CCNA_TOPICS },
+    { id: "security+",  label: "Security+",  topics: SECURITY_PLUS_TOPICS },
+    { id: "custom",     label: "Custom",     topics: customEducationalSubjects }
   ];
 }
 
@@ -621,22 +750,33 @@ function buildSubjectSelector(selectedSet) {
 
   const modeLabel = isMentalHealthMode ? "behavioral" : "educational";
   const hint = document.createElement("div");
-  hint.className = "subject-selector-hint";
+  hint.className   = "subject-selector-hint";
   hint.textContent = `Mix subjects from any ${modeLabel} path.`;
   selector.appendChild(hint);
 
   allSubjectsForMode().forEach(section => {
     const header = document.createElement("div");
-    header.className = "subject-selector-header";
+    header.className   = "subject-selector-header";
     header.textContent = section.label;
+    // WCAG 1.3.1: not a heading but a group label — use id + aria-label on chips
+    const sectionId = "sel-section-" + section.id;
+    header.id = sectionId;
     selector.appendChild(header);
 
     section.topics.forEach(subject => {
       const chip = document.createElement("button");
+      chip.type      = "button";
       chip.className = "subject-chip" + (selectedSet.has(subject) ? " selected" : "");
       chip.textContent = subject;
+      chip.setAttribute("aria-pressed", String(selectedSet.has(subject)));
       chip.addEventListener("click", () => {
-        selectedSet.has(subject) ? selectedSet.delete(subject) : selectedSet.add(subject);
+        if (selectedSet.has(subject)) {
+          selectedSet.delete(subject);
+          chip.setAttribute("aria-pressed", "false");
+        } else {
+          selectedSet.add(subject);
+          chip.setAttribute("aria-pressed", "true");
+        }
         chip.classList.toggle("selected", selectedSet.has(subject));
       });
       selector.appendChild(chip);
@@ -649,7 +789,10 @@ function buildSubjectSelector(selectedSet) {
 function showEditGroup(group) {
   openModal(
     "Edit Group",
-    `<input type="text" class="text-input" id="editGroupName" value="${group.name}" placeholder="Group name" />
+    `<label for="editGroupName" class="modal-hint">Group name</label>
+     <input type="text" class="text-input" id="editGroupName"
+       value="${group.name}" placeholder="Group name"
+       aria-required="true" />
      <div id="subjectSelector"></div>`,
     `<button class="modal-btn secondary" id="cancelEdit">Cancel</button>
      <button class="modal-btn primary"   id="confirmEdit">Save Group</button>`
@@ -660,8 +803,13 @@ function showEditGroup(group) {
 
   document.getElementById("cancelEdit").addEventListener("click", closeModal);
   document.getElementById("confirmEdit").addEventListener("click", () => {
-    const name = document.getElementById("editGroupName").value.trim();
-    if (!name) { alert("Please enter a group name."); return; }
+    const nameEl = document.getElementById("editGroupName");
+    const name   = nameEl.value.trim();
+    if (!name) {
+      nameEl.setAttribute("aria-invalid", "true");
+      nameEl.focus();
+      return;
+    }
     group.name     = name;
     group.subjects = [...selectedSet];
     closeModal();
@@ -672,7 +820,7 @@ function showEditGroup(group) {
 function showDeleteGroup(group) {
   openModal(
     "Delete Group?",
-    `<div class="subject-info">This will permanently remove <strong>${group.name}</strong>.</div>`,
+    `<p class="subject-info">This will permanently remove <strong>${group.name}</strong>.</p>`,
     `<button class="modal-btn secondary" id="cancelDelete">Cancel</button>
      <button class="modal-btn danger"    id="confirmDelete">Delete</button>`
   );
@@ -691,10 +839,14 @@ function showDeleteGroup(group) {
 createGroupBtn.addEventListener("click", () => {
   openModal(
     "New Group",
-    `<input type="text" class="text-input" id="newGroupName" placeholder="e.g. Work Skills" />
+    `<label for="newGroupName" class="modal-hint">Group name</label>
+     <input type="text" class="text-input" id="newGroupName"
+       placeholder="e.g. Work Skills"
+       aria-required="true" />
      <div id="subjectSelector"></div>`,
     `<button class="modal-btn secondary" id="cancelCreate">Cancel</button>
-     <button class="modal-btn primary"   id="confirmCreate">Create</button>`
+     <button class="modal-btn primary"   id="confirmCreate">Create</button>`,
+    createGroupBtn
   );
 
   const selectedSet = new Set();
@@ -702,8 +854,13 @@ createGroupBtn.addEventListener("click", () => {
 
   document.getElementById("cancelCreate").addEventListener("click", closeModal);
   document.getElementById("confirmCreate").addEventListener("click", () => {
-    const name = document.getElementById("newGroupName").value.trim();
-    if (!name) { alert("Please enter a group name."); return; }
+    const nameEl = document.getElementById("newGroupName");
+    const name   = nameEl.value.trim();
+    if (!name) {
+      nameEl.setAttribute("aria-invalid", "true");
+      nameEl.focus();
+      return;
+    }
     const newGroup = { id: Date.now(), name, subjects: [...selectedSet] };
     const updated  = [...getCurrentGroups(), newGroup];
     setCurrentGroups(updated);
@@ -790,7 +947,7 @@ adContainersOverlay.addEventListener("click", e => {
 
 adContainersSave.addEventListener("click", () => {
   if (!pendingPattern) {
-    alert("Please select a background pattern first.");
+    showInlineError("Please select a background pattern first.");
     return;
   }
   savedPattern = pendingPattern;
@@ -800,7 +957,7 @@ adContainersSave.addEventListener("click", () => {
   });
 });
 
-// ── Learning Activity Dashboard (Amanda) ──────────────
+// ── Learning Activity Dashboard ──────────────────────
 
 let statPeriod = "daily";
 let dashStats  = { today: 0, weekly: 0, monthly: 0, total: 0 };
@@ -815,8 +972,8 @@ function loadDashboard() {
 }
 
 function renderDashboard() {
-  const bigNum = statPeriod === "daily" ? dashStats.today
-    : statPeriod === "weekly" ? dashStats.weekly
+  const bigNum = statPeriod === "daily"   ? dashStats.today
+    : statPeriod === "weekly"  ? dashStats.weekly
     : dashStats.monthly;
   dashBigNumber.textContent = bigNum;
 
@@ -824,8 +981,11 @@ function renderDashboard() {
   dashWeekly.textContent  = dashStats.weekly;
   dashMonthly.textContent = dashStats.monthly;
 
+  // WCAG 4.1.2: update aria-pressed on period tabs
   document.querySelectorAll(".dash-tab").forEach(tab => {
-    tab.classList.toggle("active", tab.dataset.period === statPeriod);
+    const active = tab.dataset.period === statPeriod;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-pressed", String(active));
   });
 
   dashTopicsList.innerHTML = "";
@@ -836,27 +996,31 @@ function renderDashboard() {
     return;
   }
 
-  const maxCount   = entries[0][1];
+  const maxCount  = entries[0][1];
   const totalViews = Object.values(dashTopics).reduce((s, c) => s + c, 0);
 
   entries.forEach(([name, count]) => {
     const pct      = totalViews > 0 ? Math.round((count / totalViews) * 100) : 0;
-    const barWidth = maxCount   > 0 ? Math.round((count / maxCount)   * 100) : 0;
+    const barWidth = maxCount  > 0 ? Math.round((count / maxCount)  * 100) : 0;
 
     const row = document.createElement("div");
     row.className = "dash-topic-row";
+
+    // WCAG 1.3.1: bar is purely visual; the count/pct text conveys the same
+    // information, so the bar is aria-hidden.
     row.innerHTML = `
       <div class="dash-topic-meta">
         <span class="dash-topic-name">${name}</span>
         <span class="dash-topic-count">${count} · ${pct}%</span>
       </div>
-      <div class="dash-topic-bar">
+      <div class="dash-topic-bar" aria-hidden="true">
         <div class="dash-topic-fill" style="width: ${barWidth}%"></div>
       </div>`;
     dashTopicsList.appendChild(row);
   });
 }
 
+// Period tab click handlers
 document.querySelectorAll(".dash-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     statPeriod = tab.dataset.period;
@@ -867,7 +1031,7 @@ document.querySelectorAll(".dash-tab").forEach(tab => {
 // ── Save & Regenerate ─────────────────────────────────
 saveBtn.addEventListener("click", () => {
   if (!apiKey.startsWith("sk-ant-")) {
-    showSaveStatus("Please set your API key first (click the gear icon)", "error");
+    showSaveStatus("Please set your API key first (click the gear icon ⚙)", "error");
     return;
   }
 
@@ -909,7 +1073,9 @@ saveBtn.addEventListener("click", () => {
             showSaveStatus("Your settings have been saved.", "success");
           } else {
             showSaveStatus(
-              response?.error ? "Saved, but generation failed. Please try again." : "Your settings have been saved.",
+              response?.error
+                ? "Saved, but generation failed. Please try again."
+                : "Your settings have been saved.",
               response?.error ? "error" : "success"
             );
           }
@@ -966,8 +1132,8 @@ chrome.storage.sync.get(
     }
 
     if (result.activeGroupId) activeGroupId = result.activeGroupId;
-
-    if (result.selectedBehavioralTopics?.length) selectedBehavioralTopics = result.selectedBehavioralTopics;
+    if (result.selectedBehavioralTopics?.length)
+      selectedBehavioralTopics = result.selectedBehavioralTopics;
 
     // Restore behavioral state (with migration from old keys)
     if (result.behavioralPath) {
@@ -976,15 +1142,16 @@ chrome.storage.sync.get(
       if (bp === "behavioral-custom") bp = "custom-beh";
       behavioralPath = bp;
     }
-    if (result.behavioralCustomSubjects?.length) behavioralCustomSubjects = result.behavioralCustomSubjects;
+    if (result.behavioralCustomSubjects?.length)
+      behavioralCustomSubjects = result.behavioralCustomSubjects;
 
     // Restore behavioral groups (migrate from old per-path format)
     if (result.behavioralGroups?.length) {
       behavioralGroups = result.behavioralGroups;
     } else if (result.behavioralGroupsByPath) {
       const old = result.behavioralGroupsByPath;
-      if (old.financial        && !old.finance)       old.finance       = old.financial;
-      if (old["behavioral-custom"] && !old["custom-beh"]) old["custom-beh"] = old["behavioral-custom"];
+      if (old.financial        && !old.finance)            old.finance       = old.financial;
+      if (old["behavioral-custom"] && !old["custom-beh"])  old["custom-beh"] = old["behavioral-custom"];
       behavioralGroups = [
         ...(old.stress       || []),
         ...(old.finance      || []),
