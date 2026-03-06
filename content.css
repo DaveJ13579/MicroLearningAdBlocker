@@ -56,7 +56,7 @@
 /* ────────────────────────────────────────────── */
 
 .microlearn-header {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -72,9 +72,8 @@
   font-weight: 600;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  opacity: 0.6;
-  margin-bottom: 6px;
-  color: #0d6b2a;
+  opacity: 0.5;
+  color: #000000;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -217,6 +216,21 @@
   margin-bottom: 4px;
 }
 
+.microlearn-placeholder[style*="height: 90px"] .microlearn-brand,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-brand,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-brand,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-brand,
+.microlearn-placeholder[style*="height: 90px"] .microlearn-topic,
+.microlearn-placeholder[style*="height: 66px"] .microlearn-topic,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-topic,
+.microlearn-placeholder[style*="height: 50px"] .microlearn-topic {
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .microlearn-placeholder[style*="height: 90px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 66px"] .microlearn-body,
 .microlearn-placeholder[style*="height: 60px"] .microlearn-body,
@@ -243,9 +257,15 @@
   -webkit-line-clamp: 1;
 }
 
+/* Hide tagline on very short banners to prioritise headline */
+.microlearn-placeholder[style*="height: 50px"] .microlearn-tagline,
+.microlearn-placeholder[style*="height: 60px"] .microlearn-tagline {
+  display: none;
+}
+
 /* ────────────────────────────────────────────── */
-/* Tall class (aspect-ratio-based, height ≥ 2×w)  */
-/* e.g. 120×600, 160×600 skyscrapers              */
+/* Tall class (aspect-ratio-based, height >= 2xw) */
+/* e.g. 120x600, 160x600 skyscrapers              */
 /* Width is the constraint here — cap to cqw only  */
 /* ────────────────────────────────────────────── */
 
@@ -260,7 +280,7 @@
 }
 
 /* ────────────────────────────────────────────── */
-/* Banner class (aspect-ratio-based, width ≥ 3×h) */
+/* Banner class (aspect-ratio-based, width >= 3xh) */
 /* Applies regardless of exact pixel height value */
 /* ────────────────────────────────────────────── */
 
@@ -403,6 +423,7 @@
   font-weight: 400;
   color: #000000;
   opacity: 0.3;
+  flex-shrink: 0;
 }
 
 /* Override per-component defaults inside the header row so brand + topic
@@ -411,6 +432,33 @@
 .ml-header-row .microlearn-topic {
   font-size: 8px;
   margin-bottom: 0;
+}
+
+/* ────────────────────────────────────────────── */
+/* Narrow containers: stack brand + topic         */
+/* ────────────────────────────────────────────── */
+
+@container (max-width: 199px) {
+  .ml-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    top: 6px;
+  }
+
+  .ml-header-sep {
+    display: none;
+  }
+
+  .microlearn-brand,
+  .microlearn-topic {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+  }
 }
 
 /* ────────────────────────────────────────────── */
