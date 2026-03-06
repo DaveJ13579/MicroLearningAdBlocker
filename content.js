@@ -8,9 +8,6 @@
   let flushTimer    = null;
   let observer      = null;
   let pollInterval  = null;
-  let activePattern = null;
-
-  // Amanda's rotating background images — used when no user pattern is selected
   const BG_IMAGES = [
     "images/northern-lights.png",
     "images/warm-gradient.jpg",
@@ -28,31 +25,7 @@
     }
   }
 
-  // ── Pattern System ────────────────────────────────────
-  const PATTERN_FILES = {
-    "green-dots":         "images/green dots.png",
-    "confetti":           "images/pink confetti.png",
-    "orange-waves":       "images/orange waves.png",
-    "orange+blue floral": "images/orange+blue floral.png",
-    "testpic1":           "images/testpic1.png",
-    "PinkBlueSwirl":      "images/PinkBlueSwirl.jpg",
-    "flowers":            "images/flowers.png"
-  };
-
-  // ── Load pattern from storage ─────────────────────────
-  function loadPattern(callback) {
-    chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
-      activePattern = adContainerPattern || null;
-      if (callback) callback();
-    });
-  }
-
-  // Returns the URL for the next placeholder background.
-  // Priority: user-selected pattern → Amanda's rotating landscape images.
   function getNextBgURL() {
-    if (activePattern && PATTERN_FILES[activePattern] && isExtensionAlive()) {
-      try { return chrome.runtime.getURL(PATTERN_FILES[activePattern]); } catch (e) {}
-    }
     try {
       const url = chrome.runtime.getURL(BG_IMAGES[bgIndex % BG_IMAGES.length]);
       bgIndex++;
@@ -60,21 +33,6 @@
     } catch (e) {
       return null;
     }
-  }
-
-  // Re-apply the user-selected pattern to all existing placeholders.
-  // Only runs when activePattern is set — rotating images stay as-is.
-  function refreshAllPatterns() {
-    if (!activePattern) return;
-    const splashFile = PATTERN_FILES[activePattern];
-    const url = (splashFile && isExtensionAlive()) ? chrome.runtime.getURL(splashFile) : null;
-    if (!url) return;
-    document.querySelectorAll(".microlearn-placeholder").forEach(el => {
-      el.style.backgroundImage    = `url("${url}")`;
-      el.style.backgroundSize     = "cover";
-      el.style.backgroundPosition = "center";
-      el.style.backgroundRepeat   = "no-repeat";
-    });
   }
 
   // ── Splash Animation ──────────────────────────────────

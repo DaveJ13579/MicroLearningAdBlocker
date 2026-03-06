@@ -41,19 +41,6 @@ const dashWeekly              = document.getElementById("dashWeekly");
 const dashMonthly             = document.getElementById("dashMonthly");
 const dashTopicsList          = document.getElementById("dashTopicsList");
 
-// Pattern carousel DOM refs (Harman)
-const adContainersBtn       = document.getElementById("adContainersBtn");
-const adContainersOverlay   = document.getElementById("adContainersOverlay");
-const adContainersClose     = document.getElementById("adContainersClose");
-const adContainersCancel    = document.getElementById("adContainersCancel");
-const adContainersSave      = document.getElementById("adContainersSave");
-const patternTrack          = document.getElementById("patternTrack");
-const slideLeft             = document.getElementById("slideLeft");
-const slideRight            = document.getElementById("slideRight");
-const patternPreview        = document.getElementById("patternPreview");
-const previewPlaceholderMsg = document.getElementById("previewPlaceholderMsg");
-const previewCard           = document.getElementById("previewCard");
-
 // Inject SVG icons into header buttons
 settingsBtn.innerHTML    = ICON_GEAR;
 themeToggleBtn.innerHTML = ICON_MOON;
@@ -150,18 +137,6 @@ let behavioralGroups  = [];
 
 function getCurrentGroups()    { return isMentalHealthMode ? behavioralGroups : educationalGroups; }
 function setCurrentGroups(arr) { if (isMentalHealthMode) behavioralGroups = arr; else educationalGroups = arr; }
-
-// ── Patterns (Harman) ─────────────────────────────────
-
-const PATTERNS = [
-  { id: "green-dots",         label: "Green Dots",         file: "images/green dots.png" },
-  { id: "confetti",           label: "Confetti",           file: "images/pink confetti.png" },
-  { id: "orange-waves",       label: "Orange Waves",       file: "images/orange waves.png" },
-  { id: "orange+blue floral", label: "Orange+Blue Floral", file: "images/orange+blue floral.png" },
-  { id: "testpic1",           label: "Test Pattern",       file: "images/testpic1.png" },
-  { id: "PinkBlueSwirl",      label: "Pink Blue Swirl",    file: "images/PinkBlueSwirl.jpg" },
-  { id: "flowers",            label: "Flowers",            file: "images/flowers.png" }
-];
 
 // ── Behavioral path state ────────────────────────────
 let behavioralPath           = "stress";
@@ -872,68 +847,6 @@ createGroupBtn.addEventListener("click", () => {
   });
 });
 
-// ── Ad Containers Modal (Harman) ──────────────────────
-let pendingPattern = null;
-
-function buildPatternThumbs() {
-  patternTrack.innerHTML = "";
-  PATTERNS.forEach(p => {
-    const thumb = document.createElement("div");
-    thumb.className = "pattern-thumb" + (pendingPattern === p.id ? " selected" : "");
-    thumb.style.backgroundImage = `url("${chrome.runtime.getURL(p.file)}")`;
-    thumb.title = p.label;
-    thumb.addEventListener("click", () => selectPattern(p.id));
-    patternTrack.appendChild(thumb);
-  });
-}
-
-function selectPattern(id) {
-  pendingPattern = id;
-  buildPatternThumbs();
-  // Update preview
-  const pat = PATTERNS.find(p => p.id === id);
-  if (pat) {
-    previewPlaceholderMsg.style.display = "none";
-    previewCard.style.display = "";
-    previewCard.style.backgroundImage = `url("${chrome.runtime.getURL(pat.file)}")`;
-    previewCard.style.backgroundSize = "cover";
-    previewCard.style.backgroundPosition = "center";
-  }
-}
-
-function openAdContainersModal() {
-  chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
-    pendingPattern = adContainerPattern || null;
-    buildPatternThumbs();
-    if (pendingPattern) {
-      selectPattern(pendingPattern);
-    } else {
-      previewPlaceholderMsg.style.display = "";
-      previewCard.style.display = "none";
-    }
-    adContainersOverlay.setAttribute("aria-hidden", "false");
-    adContainersOverlay.classList.add("open");
-  });
-}
-
-function closeAdContainersModal() {
-  adContainersOverlay.classList.remove("open");
-  adContainersOverlay.setAttribute("aria-hidden", "true");
-}
-
-if (adContainersBtn)    adContainersBtn.addEventListener("click", openAdContainersModal);
-if (adContainersClose)  adContainersClose.addEventListener("click", closeAdContainersModal);
-if (adContainersCancel) adContainersCancel.addEventListener("click", closeAdContainersModal);
-if (adContainersSave) {
-  adContainersSave.addEventListener("click", () => {
-    chrome.storage.sync.set({ adContainerPattern: pendingPattern || "" }, () => {
-      closeAdContainersModal();
-    });
-  });
-}
-if (slideLeft)  slideLeft.addEventListener("click",  () => { patternTrack.scrollLeft -= 120; });
-if (slideRight) slideRight.addEventListener("click", () => { patternTrack.scrollLeft += 120; });
-
 // ── Learning Activity Dashboard ──────────────────────
 
 let statPeriod = "daily";
@@ -1077,7 +990,6 @@ chrome.storage.sync.get(
     "apiKey", "subjects", "selectedSubjects",
     "educationalGroups", "groupsByPath", "activeGroupId",
     "isMentalHealthMode", "learningPath", "extensionTheme",
-    "adContainerPattern",
     "selectedBehavioralTopics", "behavioralPath", "behavioralCustomSubjects",
     "behavioralGroups", "behavioralGroupsByPath"
   ],
