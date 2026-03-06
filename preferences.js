@@ -163,8 +163,7 @@ function openModal(title, bodyHTML, actionsHTML, triggerEl) {
   modalBody.innerHTML    = bodyHTML;
   modalActions.innerHTML = actionsHTML;
 
-  // WCAG 4.1.2: remove aria-hidden so AT can see the dialog
-  modalOverlay.setAttribute("aria-hidden", "false");
+  modalOverlay.removeAttribute("inert");
   modalOverlay.classList.add("open");
 
   // WCAG 2.4.3: save trigger, move focus to first focusable element in modal
@@ -181,7 +180,7 @@ function openModal(title, bodyHTML, actionsHTML, triggerEl) {
 
 function closeModal() {
   modalOverlay.classList.remove("open");
-  modalOverlay.setAttribute("aria-hidden", "true");
+  modalOverlay.setAttribute("inert", "");
   modalOverlay.removeEventListener("keydown", trapFocus);
   modalOverlay.removeEventListener("keydown", escClose);
   modalBody.innerHTML    = "";
