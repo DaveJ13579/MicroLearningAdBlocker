@@ -207,6 +207,7 @@
   width: 100%;
   max-width: 100%;
   justify-content: center;
+  padding-top: 14px; /* clear header row in short banners */
 }
 
 .microlearn-placeholder[style*="height: 90px"] .ml-header-row,
@@ -291,6 +292,7 @@
 
 .ml-banner .ml-content {
   justify-content: center;
+  padding-top: 14px; /* smaller clearance for short banners */
 }
 
 .ml-banner .ml-header-row {
@@ -380,8 +382,10 @@
   align-items: stretch;
 
   text-align: center !important;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   width: 100%;
+  padding-top: 20px; /* clear absolute-positioned header row */
 }
 
 /* Logo centered over the splash image */
