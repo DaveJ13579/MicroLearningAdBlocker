@@ -41,19 +41,6 @@ const dashWeekly              = document.getElementById("dashWeekly");
 const dashMonthly             = document.getElementById("dashMonthly");
 const dashTopicsList          = document.getElementById("dashTopicsList");
 
-// Pattern carousel DOM refs (Harman)
-const adContainersBtn       = document.getElementById("adContainersBtn");
-const adContainersOverlay   = document.getElementById("adContainersOverlay");
-const adContainersClose     = document.getElementById("adContainersClose");
-const adContainersCancel    = document.getElementById("adContainersCancel");
-const adContainersSave      = document.getElementById("adContainersSave");
-const patternTrack          = document.getElementById("patternTrack");
-const slideLeft             = document.getElementById("slideLeft");
-const slideRight            = document.getElementById("slideRight");
-const patternPreview        = document.getElementById("patternPreview");
-const previewPlaceholderMsg = document.getElementById("previewPlaceholderMsg");
-const previewCard           = document.getElementById("previewCard");
-
 // Inject SVG icons into header buttons
 settingsBtn.innerHTML    = ICON_GEAR;
 themeToggleBtn.innerHTML = ICON_MOON;
@@ -153,22 +140,6 @@ let behavioralGroups  = [];
 function getCurrentGroups()    { return isMentalHealthMode ? behavioralGroups : educationalGroups; }
 function setCurrentGroups(arr) { if (isMentalHealthMode) behavioralGroups = arr; else educationalGroups = arr; }
 
-// ── Patterns (Harman) ─────────────────────────────────
-const PATTERNS = [
-  { id: "green-dots",         label: "Green Dots",         file: "images/green dots.png" },
-  { id: "confetti",           label: "Confetti",           file: "images/pink confetti.png" },
-  { id: "orange-waves",       label: "Orange Waves",       file: "images/orange waves.png" },
-  { id: "orange+blue floral", label: "Orange+Blue Floral", file: "images/orange+blue floral.png" },
-  { id: "testpic1",           label: "Test Pattern",       file: "images/testpic1.png" },
-  { id: "PinkBlueSwirl",      label: "Pink Blue Swirl",    file: "images/PinkBlueSwirl.jpg" },
-  { id: "flowers",            label: "Flowers",            file: "images/flowers.png" }
-];
-
-const VISIBLE = 3;
-let slideOffset    = 0;
-let pendingPattern = null;
-let savedPattern   = null;
-
 function renderCurrentSubjects() {
   isMentalHealthMode ? renderBehavioralSubjects() : renderSubjects();
 }
@@ -190,8 +161,7 @@ function openModal(title, bodyHTML, actionsHTML, triggerEl) {
   modalBody.innerHTML    = bodyHTML;
   modalActions.innerHTML = actionsHTML;
 
-  // WCAG 4.1.2: remove aria-hidden so AT can see the dialog
-  modalOverlay.setAttribute("aria-hidden", "false");
+  modalOverlay.removeAttribute("inert");
   modalOverlay.classList.add("open");
 
   // WCAG 2.4.3: save trigger, move focus to first focusable element in modal
@@ -208,7 +178,7 @@ function openModal(title, bodyHTML, actionsHTML, triggerEl) {
 
 function closeModal() {
   modalOverlay.classList.remove("open");
-  modalOverlay.setAttribute("aria-hidden", "true");
+  modalOverlay.setAttribute("inert", "");
   modalOverlay.removeEventListener("keydown", trapFocus);
   modalOverlay.removeEventListener("keydown", escClose);
   modalBody.innerHTML    = "";
@@ -876,87 +846,6 @@ createGroupBtn.addEventListener("click", () => {
   });
 });
 
-// ── Ad Containers Modal (Harman) ──────────────────────
-function buildPatternThumbs() {
-  patternTrack.innerHTML = "";
-  PATTERNS.forEach(p => {
-    const thumb = document.createElement("div");
-    thumb.className = "pattern-thumb" + (pendingPattern === p.id ? " selected" : "");
-    thumb.style.backgroundImage = `url("${chrome.runtime.getURL(p.file)}")`;
-    thumb.title = p.label;
-    thumb.addEventListener("click", () => selectPattern(p.id));
-    patternTrack.appendChild(thumb);
-  });
-  updateSlideArrows();
-}
-
-function updateSlidePosition() {
-  const thumbWidth = patternTrack.parentElement.offsetWidth / VISIBLE;
-  patternTrack.style.transform = `translateX(-${slideOffset * (thumbWidth + 10)}px)`;
-  updateSlideArrows();
-}
-
-function updateSlideArrows() {
-  slideLeft.disabled  = slideOffset <= 0;
-  slideRight.disabled = slideOffset >= PATTERNS.length - VISIBLE;
-}
-
-slideLeft.addEventListener("click", () => {
-  if (slideOffset > 0) { slideOffset--; updateSlidePosition(); }
-});
-
-slideRight.addEventListener("click", () => {
-  if (slideOffset < PATTERNS.length - VISIBLE) { slideOffset++; updateSlidePosition(); }
-});
-
-function selectPattern(id) {
-  pendingPattern = id;
-  patternTrack.querySelectorAll(".pattern-thumb").forEach((el, i) => {
-    el.classList.toggle("selected", PATTERNS[i].id === id);
-  });
-  const p = PATTERNS.find(x => x.id === id);
-  if (p) {
-    previewPlaceholderMsg.style.display  = "none";
-    previewCard.style.display            = "flex";
-    previewCard.style.backgroundImage    = `url("${chrome.runtime.getURL(p.file)}")`;
-    previewCard.style.backgroundSize     = "cover";
-    previewCard.style.backgroundPosition = "center";
-  }
-}
-
-function openAdContainersModal() {
-  pendingPattern = null;
-  slideOffset    = 0;
-  adContainersOverlay.classList.add("open");
-  previewPlaceholderMsg.style.display = "";
-  previewCard.style.display           = "none";
-  buildPatternThumbs();
-  requestAnimationFrame(updateSlidePosition);
-}
-
-function closeAdContainersModal() {
-  adContainersOverlay.classList.remove("open");
-}
-
-adContainersBtn.addEventListener("click", openAdContainersModal);
-adContainersClose.addEventListener("click", closeAdContainersModal);
-adContainersCancel.addEventListener("click", closeAdContainersModal);
-adContainersOverlay.addEventListener("click", e => {
-  if (e.target === adContainersOverlay) closeAdContainersModal();
-});
-
-adContainersSave.addEventListener("click", () => {
-  if (!pendingPattern) {
-    showInlineError("Please select a background pattern first.");
-    return;
-  }
-  savedPattern = pendingPattern;
-  chrome.storage.sync.set({ adContainerPattern: savedPattern }, () => {
-    closeAdContainersModal();
-    showSaveStatus("Pattern saved!", "success");
-  });
-});
-
 // ── Learning Activity Dashboard ──────────────────────
 
 let statPeriod = "daily";
@@ -1100,15 +989,13 @@ chrome.storage.sync.get(
     "apiKey", "subjects", "selectedSubjects",
     "educationalGroups", "groupsByPath", "activeGroupId",
     "isMentalHealthMode", "learningPath", "extensionTheme",
-    "adContainerPattern",
     "selectedBehavioralTopics", "behavioralPath", "behavioralCustomSubjects",
     "behavioralGroups", "behavioralGroupsByPath"
   ],
   result => {
-    if (result.apiKey)             apiKey = result.apiKey;
-    if (result.adContainerPattern) savedPattern = result.adContainerPattern;
-    if (result.extensionTheme)     applyTheme(result.extensionTheme);
-    else                           applyTheme("light");
+    if (result.apiKey)         apiKey = result.apiKey;
+    if (result.extensionTheme) applyTheme(result.extensionTheme);
+    else                       applyTheme("light");
 
     // Restore educational groups (migrate from old per-path format)
     if (result.educationalGroups?.length) {

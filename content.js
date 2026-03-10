@@ -8,9 +8,7 @@
   let flushTimer    = null;
   let observer      = null;
   let pollInterval  = null;
-  let activePattern = null;
 
-  // Amanda's rotating background images — used when no user pattern is selected
   const BG_IMAGES = [
     "images/northern-lights.png",
     "images/warm-gradient.jpg",
@@ -28,31 +26,7 @@
     }
   }
 
-  // ── Pattern System ────────────────────────────────────
-  const PATTERN_FILES = {
-    "green-dots":         "images/green dots.png",
-    "confetti":           "images/pink confetti.png",
-    "orange-waves":       "images/orange waves.png",
-    "orange+blue floral": "images/orange+blue floral.png",
-    "testpic1":           "images/testpic1.png",
-    "PinkBlueSwirl":      "images/PinkBlueSwirl.jpg",
-    "flowers":            "images/flowers.png"
-  };
-
-  // ── Load pattern from storage ─────────────────────────
-  function loadPattern(callback) {
-    chrome.storage.sync.get("adContainerPattern", ({ adContainerPattern }) => {
-      activePattern = adContainerPattern || null;
-      if (callback) callback();
-    });
-  }
-
-  // Returns the URL for the next placeholder background.
-  // Priority: user-selected pattern → rotating landscape images.
   function getNextBgURL() {
-    if (activePattern && PATTERN_FILES[activePattern] && isExtensionAlive()) {
-      try { return chrome.runtime.getURL(PATTERN_FILES[activePattern]); } catch (e) {}
-    }
     try {
       const url = chrome.runtime.getURL(BG_IMAGES[bgIndex % BG_IMAGES.length]);
       bgIndex++;
@@ -62,21 +36,6 @@
     }
   }
 
-  // Re-apply the user-selected pattern to all existing placeholders.
-  // Only runs when activePattern is set — rotating images stay as-is.
-  function refreshAllPatterns() {
-    if (!activePattern) return;
-    const splashFile = PATTERN_FILES[activePattern];
-    const url = (splashFile && isExtensionAlive()) ? chrome.runtime.getURL(splashFile) : null;
-    if (!url) return;
-    document.querySelectorAll(".microlearn-placeholder").forEach(el => {
-      el.style.backgroundImage    = `url("${url}")`;
-      el.style.backgroundSize     = "cover";
-      el.style.backgroundPosition = "center";
-      el.style.backgroundRepeat   = "no-repeat";
-    });
-  }
-
   // ── Splash Animation ──────────────────────────────────
   const SPLASH_MS      = 3000;
   const SPLASH_FADE_MS = 700;
@@ -84,7 +43,7 @@
   function createPlaceholder(width, height) {
     const el = document.createElement("div");
     el.className = "microlearn-placeholder ml-has-splash";
-    // Width/height are set by the host element; we only use them for layout classification.
+    // Width/height are set by the wrapper; we only use them for layout classification.
     if (width > 0 && height > 0) {
       const ratio = width / height;
       if (ratio >= 3)        el.classList.add("ml-banner"); // wide-short (leaderboard/banner)
@@ -115,16 +74,9 @@
       return el;
     }
 
-    // Get logo URL
-    let logoUrl = null;
-    try {
-      if (isExtensionAlive()) logoUrl = chrome.runtime.getURL("images/logo 5.1.png");
-    } catch (e) { /* ignore */ }
-
     el.innerHTML = `
       <div class="ml-splash" aria-hidden="true">
         <img class="ml-splash-img" src="${url}" alt="" />
-        ${logoUrl ? `<img class="ml-splash-logo" src="${logoUrl}" alt="MicroLearn" />` : ""}
       </div>
       <div class="ml-content ml-hidden">
         <div class="ml-header-row">
@@ -669,12 +621,10 @@
 
   // ── Enable / Disable ──────────────────────────────────
   function enableMicroLearn() {
-    loadPattern(() => {
-      scanAndReplaceAds();
-      observer = new MutationObserver(scanAndReplaceAds);
-      observer.observe(document.body, { childList: true, subtree: true });
-      pollInterval = setInterval(scanAndReplaceAds, 2000);
-    });
+    scanAndReplaceAds();
+    observer = new MutationObserver(scanAndReplaceAds);
+    observer.observe(document.body, { childList: true, subtree: true });
+    pollInterval = setInterval(scanAndReplaceAds, 2000);
   }
 
   function disableMicroLearn() {
@@ -695,11 +645,6 @@
   chrome.storage.onChanged.addListener(changes => {
     if ("enabled" in changes)
       changes.enabled.newValue ? enableMicroLearn() : disableMicroLearn();
-    // Live-update pattern if it changes while page is open
-    if ("adContainerPattern" in changes) {
-      activePattern = changes.adContainerPattern.newValue || null;
-      refreshAllPatterns();
-    }
   });
 
 })();

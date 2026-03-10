@@ -23,7 +23,6 @@
       </div>
       <div class="header-actions">
         <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark/light theme"></button>
-        <button class="icon-btn" id="adContainersBtn" title="Learning Containers" aria-label="Customize Learning Containers"></button>
         <button class="icon-btn" id="settingsBtn" aria-label="API Settings"></button>
       </div>
     </header>
@@ -237,52 +236,13 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="modalTitle"
-      aria-hidden="true"
+      inert
     >
       <div class="modal" id="modal">
         <button class="modal-close" id="modalClose" aria-label="Close dialog">&#10005;</button>
         <h2 class="modal-title" id="modalTitle">New Group</h2>
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-actions" id="modalActions"></div>
-      </div>
-    </div>
-
-    <!-- Ad Containers Modal -->
-    <div class="modal-overlay" id="adContainersOverlay" role="dialog" aria-modal="true" aria-labelledby="adContainersTitle">
-      <div class="modal ad-containers-modal" id="adContainersModal">
-        <button class="modal-close" id="adContainersClose" aria-label="Close Learning Containers dialog">✕</button>
-        <div class="modal-title" id="adContainersTitle">Customize Learning Container</div>
-
-        <!-- Pattern Picker -->
-        <div class="pattern-section-label" id="patternPickerLabel">Choose Background Pattern</div>
-        <div class="pattern-slideshow" role="group" aria-labelledby="patternPickerLabel">
-          <button class="slide-arrow left" id="slideLeft" aria-label="Scroll patterns left">&#8249;</button>
-          <div class="pattern-track-wrap">
-            <div class="pattern-track" id="patternTrack" role="listbox" aria-label="Background patterns"></div>
-          </div>
-          <button class="slide-arrow right" id="slideRight" aria-label="Scroll patterns right">&#8250;</button>
-        </div>
-
-        <!-- Preview -->
-        <div class="pattern-section-label" id="previewLabel">Preview</div>
-        <div class="pattern-preview" id="patternPreview" aria-labelledby="previewLabel">
-          <div class="preview-placeholder-msg" id="previewPlaceholderMsg" aria-live="polite">
-            Choose a background pattern
-          </div>
-          <div class="preview-card" id="previewCard" style="display: none" aria-label="Pattern preview card">
-            <div class="preview-topic">Path: Subject</div>
-            <div class="preview-body">
-              IPv4 uses 32-bit addresses divided into network and host portions;
-              subnet masks define the boundary between them.
-            </div>
-            <img src="images/logo 5.1.png" class="preview-logo" alt="MicroLearn logo" />
-          </div>
-        </div>
-
-        <div class="modal-actions" style="margin-top: 16px">
-          <button class="modal-btn secondary" id="adContainersCancel" aria-label="Cancel and close">Cancel</button>
-          <button class="modal-btn primary" id="adContainersSave" aria-label="Save selected pattern">Save Pattern</button>
-        </div>
       </div>
     </div>
 
