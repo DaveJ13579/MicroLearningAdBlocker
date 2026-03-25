@@ -269,7 +269,6 @@
 
     // ── Reddit ────────────────────────────────────────
     "shreddit-ad-post",                    // Reddit's custom ad post element
-    ".promoted-label",                     // promoted label on feed posts
     ":has(> a[href*='alb.reddit.com'])",   // ad overlay link (Reddit's ad domain)
 
     // ── CNN ──────────────────────────────────────────
