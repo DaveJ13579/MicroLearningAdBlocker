@@ -340,10 +340,12 @@
   // data-attributes, aria-labels, or ancestor containers.
   const AD_KEYWORDS = [
     "advertisement", "advertising", "sponsored", "sponsor",
-    "promo", "promotion", "banner", "leaderboard", "skyscraper",
+    "promo", "promotion", "promoted", "banner", "leaderboard", "skyscraper",
     "dfp", "gpt", "prebid", "pubads", "adsense", "doubleclick",
     "adslot", "ad-slot", "adunit", "ad-unit", "adzone", "ad-zone",
-    "adcontainer", "ad-container", "adwrapper", "ad-wrapper"
+    "adcontainer", "ad-container", "adwrapper", "ad-wrapper",
+    // ── Reddit ────────────────────────────────────────────
+    "shreddit"  // Reddit web component prefix (e.g. shreddit-ad-post)
   ];
 
   function isIABSize(w, h) {
