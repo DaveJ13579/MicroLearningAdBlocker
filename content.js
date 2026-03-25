@@ -267,6 +267,14 @@
     'div.uitk-card:has(a.uitk-card-link[href*="one-key-cards"])',
     'div[data-testid="text-ads-container"]',
 
+    // ── Reddit ────────────────────────────────────────
+    "shreddit-ad-post",                    // Reddit's custom ad post element
+    ".promoted-label",                     // promoted label on feed posts
+    ":has(> a[href*='alb.reddit.com'])",   // ad overlay link (Reddit's ad domain)
+
+    // ── CNN ──────────────────────────────────────────
+    '[data-component-name="video-player"][data-show-ads="true"]', // CNN video player with ads enabled
+
     // ── YouTube ───────────────────────────────────────
     "ytd-promoted-sparkles-web-renderer",  // in-feed sponsored cards
     "ytd-promoted-video-renderer",         // promoted video results
