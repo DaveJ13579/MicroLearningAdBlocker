@@ -516,9 +516,17 @@
     // We ALWAYS replace with a fresh div — no inherited CSS classes, no site
     // styles that could fight our sizing. The wrapper gets explicit pixel
     // dimensions so it is identical in size to the original ad on every load.
+    //
+    // Width strategy: ads with an explicit inline/attribute width (e.g. 728x90,
+    // 300x250) get a fixed pixel width — they're always measured accurately.
+    // Ads sized by CSS or parent layout (e.g. full-width banners, CNN video
+    // players, Reddit posts) get width:100% so the wrapper always fills the
+    // slot regardless of when the scan ran relative to page layout completion.
+    const hasExplicitWidth = (el.style.width && el.style.width.endsWith("px"))
+                          || el.getAttribute("width");
     const wrapper = document.createElement("div");
     wrapper.setAttribute(PROCESSED_ATTR, "true");
-    wrapper.style.width     = finalW + "px";
+    wrapper.style.width     = hasExplicitWidth ? finalW + "px" : "100%";
     wrapper.style.height    = finalH + "px";
     wrapper.style.overflow  = "hidden";
     wrapper.style.position  = "relative"; // containing block for absolute placeholder
